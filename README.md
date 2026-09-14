@@ -9,9 +9,9 @@ Research and decisions live in [`docs/`](./docs).
 
 | Path | What |
 |---|---|
-| `apps/android` | Expo / React Native app |
-| `apps/web` | Next.js landing + web app |
-| `apps/backend` | Fastify API |
+| `android` | Expo / React Native app |
+| `web` | Astro landing + web app |
+| `backend` | Fastify API |
 | `packages/shared` | Chain config shared by all three |
 | `contracts` | Foundry contracts |
 
@@ -19,7 +19,7 @@ Research and decisions live in [`docs/`](./docs).
 
 ```sh
 pnpm install
-pnpm web       # http://localhost:3000
+pnpm web       # http://localhost:4321
 pnpm backend   # http://localhost:8787/health
 pnpm android   # Expo dev server
 ```

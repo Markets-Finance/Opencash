@@ -8,7 +8,7 @@ importers:
 
   .: {}
 
-  apps/android:
+  android:
     dependencies:
       expo:
         specifier: ~57.0.22
@@ -30,14 +30,14 @@ importers:
         specifier: ~6.0.3
         version: 6.0.3
 
-  apps/backend:
+  backend:
     dependencies:
       fastify:
         specifier: ^5.2.1
         version: 5.12.4
       shared:
         specifier: workspace:*
-        version: link:../../packages/shared
+        version: link:../packages/shared
       viem:
         specifier: ^2.22.8
         version: 2.56.5(typescript@5.9.3)(zod@3.25.76)
@@ -52,7 +52,13 @@ importers:
         specifier: ^5.7.3
         version: 5.9.3
 
-  apps/web:
+  packages/shared:
+    devDependencies:
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
+  web:
     dependencies:
       astro:
         specifier: ^5.14.3
@@ -61,12 +67,6 @@ importers:
       '@types/node':
         specifier: ^22.10.7
         version: 22.20.2
-      typescript:
-        specifier: ^5.7.3
-        version: 5.9.3
-
-  packages/shared:
-    devDependencies:
       typescript:
         specifier: ^5.7.3
         version: 5.9.3

@@ -1,3 +1,5 @@
 packages:
-  - apps/*
+  - android
+  - backend
+  - web
   - packages/*

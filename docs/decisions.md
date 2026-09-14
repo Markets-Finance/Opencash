@@ -57,7 +57,7 @@ Sponsor *perks* are separate from bounties: Quicknode Build Plan (3 months), Ten
 
 ## Stack
 
-pnpm workspaces. `apps/android` Expo/React Native · `apps/web` Astro · `apps/backend`
+pnpm workspaces. `android` Expo/React Native · `web` Astro · `backend`
 Fastify + viem · `packages/shared` chain config · `contracts` Foundry.
 
 Android is Expo rather than native Kotlin to keep one TypeScript codebase across all
