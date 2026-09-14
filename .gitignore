@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.*
+!.env.example
+.next/
+dist/
+build/
+.expo/
+*.log
+.DS_Store
+contracts/out/
+contracts/cache/
+contracts/broadcast/

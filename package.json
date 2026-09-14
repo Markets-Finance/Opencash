@@ -1,0 +1,10 @@
+{
+  "name": "monad-market-factory",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "web": "pnpm --filter web dev",
+    "backend": "pnpm --filter backend dev",
+    "android": "pnpm --filter android start"
+  }
+}
