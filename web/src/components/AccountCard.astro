@@ -1,0 +1,243 @@
+---
+interface Props {
+  name?: string;
+  email?: string;
+  tier?: string;
+}
+
+const { name = "—", email = "", tier } = Astro.props;
+---
+
+<article class="card" data-account-card>
+  <div class="card__field"></div>
+
+  <div class="card__inner">
+    <header class="card__head">
+      <div class="card__identity">
+        <h3 class="card__name" data-account-name>{name}</h3>
+        <p class="card__email" data-account-email>{email}</p>
+      </div>
+      <span class="card__mark">OpenCash</span>
+    </header>
+
+    {tier && <span class="card__tier" data-account-tier>{tier}</span>}
+
+    <div class="card__avatar">
+      <img data-account-avatar alt="" width="132" height="132" />
+    </div>
+
+    <dl class="card__details">
+      <div class="card__details-wide">
+        <dt>Address</dt>
+        <dd>
+          <button type="button" class="card__copy" data-account-address data-copy>
+            <span data-address-text>—</span>
+            <span class="card__copy-hint" data-copy-hint aria-hidden="true">Copy</span>
+          </button>
+        </dd>
+      </div>
+      <div><dt>Network</dt><dd>Monad · 143</dd></div>
+    </dl>
+  </div>
+</article>
+
+<style>
+  .card {
+    position: relative;
+    width: 100%;
+    max-width: 340px;
+    aspect-ratio: 9 / 12;
+    border-radius: 24px;
+    border: 1px solid var(--line);
+    background: transparent;
+    transform-style: preserve-3d;
+    will-change: transform;
+    transition: transform 0.4s ease-in-out;
+  }
+
+  .card__field {
+    position: absolute;
+    inset: 0;
+    border-radius: 23px;
+    overflow: hidden;
+    background:
+      radial-gradient(120% 90% at 50% 8%, #8d83f2 0%, var(--purple) 46%, #4b40c4 100%);
+    transform: translateZ(-20px) scale(1.021);
+  }
+
+  .card__field::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(37, 37, 39, 0.55), transparent 62%);
+  }
+
+  .card__inner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    transform: translateZ(40px);
+  }
+
+  .card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid rgba(247, 246, 242, 0.18);
+    border-radius: 14px;
+    background: rgba(247, 246, 242, 0.1);
+    backdrop-filter: blur(12px);
+  }
+
+  .card__identity {
+    min-width: 0;
+  }
+
+  .card__name {
+    font-size: 19px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    color: var(--paper);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .card__email {
+    margin-top: 2px;
+    font-size: 12px;
+    color: rgba(247, 246, 242, 0.72);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .card__mark {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(247, 246, 242, 0.85);
+  }
+
+  .card__tier {
+    align-self: flex-start;
+    margin-top: 12px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(37, 37, 39, 0.42);
+    backdrop-filter: blur(6px);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--paper);
+  }
+
+  .card__avatar {
+    display: grid;
+    place-items: center;
+    flex: 1;
+  }
+
+  .card__avatar img {
+    width: 132px;
+    height: 132px;
+    border-radius: 50%;
+    border: 1px solid rgba(247, 246, 242, 0.28);
+    background: rgba(247, 246, 242, 0.08);
+  }
+
+  .card__details {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(247, 246, 242, 0.14);
+    background: rgba(247, 246, 242, 0.08);
+    backdrop-filter: blur(10px);
+  }
+
+  .card__details div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .card__details dt {
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(247, 246, 242, 0.6);
+  }
+
+  .card__details dd {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--paper);
+  }
+
+  .card__copy {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 0;
+    background: none;
+    font-size: 13px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--paper);
+  }
+
+  .card__copy-hint {
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(247, 246, 242, 0.55);
+  }
+
+  .card__copy:hover .card__copy-hint {
+    color: var(--paper);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const maxTilt = 8;
+
+  for (const card of document.querySelectorAll<HTMLElement>("[data-account-card]")) {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) continue;
+
+    card.addEventListener("pointermove", (event) => {
+      if (event.pointerType !== "mouse") return;
+
+      const bounds = card.getBoundingClientRect();
+      const x = event.clientX - bounds.left;
+      const y = event.clientY - bounds.top;
+      const rotateX = ((y - bounds.height / 2) / (bounds.height / 2)) * -maxTilt;
+      const rotateY = ((x - bounds.width / 2) / (bounds.width / 2)) * maxTilt;
+
+      card.style.transition = "transform 0.1s ease-out";
+      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
+    });
+
+    card.addEventListener("pointerleave", () => {
+      card.style.transition = "transform 0.4s ease-in-out";
+      card.style.transform = "perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)";
+    });
+  }
+</script>

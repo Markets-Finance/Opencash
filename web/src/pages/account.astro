@@ -1,0 +1,370 @@
+---
+import AccountCard from "../components/AccountCard.astro";
+import "../styles/landing.css";
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Account · OpenCash</title>
+  </head>
+  <body>
+    <main class="account">
+      <header class="account__head">
+        <p class="account__eyebrow">Account</p>
+        <h1 class="account__title">Your OpenCash identity</h1>
+        <p class="account__lede">
+          One passkey derives your address. No seed phrase, no password, nothing
+          stored on this device.
+        </p>
+      </header>
+
+      <div class="account__body">
+        <div class="account__slot" data-card-slot hidden>
+          <AccountCard tier="Unranked" />
+        </div>
+
+        <div class="account__actions">
+          <button type="button" data-sign-in class="account__button account__button--primary">
+            Sign in with passkey
+          </button>
+          <button type="button" data-create class="account__button">
+            Create a new account
+          </button>
+
+          <form class="account__form" data-create-form hidden>
+            <label class="account__field">
+              <span>Name</span>
+              <input name="name" type="text" required autocomplete="name" placeholder="Ada Lovelace" />
+            </label>
+            <label class="account__field">
+              <span>Email</span>
+              <input name="email" type="email" required autocomplete="email" placeholder="ada@example.com" />
+            </label>
+            <button type="submit" class="account__button account__button--primary">
+              Create passkey
+            </button>
+            <p class="account__note">
+              Your name and email label the passkey in your password manager, and
+              are encrypted with a key only your passkey can derive.
+            </p>
+          </form>
+          <button type="button" data-shuffle class="account__button account__button--quiet" hidden>
+            Shuffle avatar
+          </button>
+          <button type="button" data-sign-out class="account__button account__button--quiet" hidden>
+            Sign out
+          </button>
+          <p class="account__status" data-status role="status"></p>
+        </div>
+      </div>
+    </main>
+
+    <style>
+      .account {
+        min-height: 100vh;
+        display: grid;
+        align-content: center;
+        justify-content: center;
+        gap: 44px;
+        padding: 64px var(--gutter);
+      }
+      .account__head,
+      .account__body {
+        width: min(860px, 100%);
+      }
+      .account__eyebrow {
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--purple);
+      }
+      .account__title {
+        margin-top: 10px;
+        font-size: clamp(30px, 5vw, 46px);
+        font-weight: 300;
+        letter-spacing: -0.04em;
+      }
+      .account__lede {
+        margin-top: 12px;
+        max-width: 46ch;
+        font-size: 15px;
+        line-height: 1.55;
+        color: #5c5c5f;
+      }
+      .account__body {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 56px;
+        align-items: center;
+      }
+      .account__slot {
+        flex: 0 0 340px;
+        max-width: 100%;
+      }
+      .account__slot[hidden] {
+        display: none;
+      }
+      .account__actions {
+        flex: 1 1 260px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .account__button {
+        padding: 13px 22px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: transparent;
+        font-size: 14px;
+        font-weight: 500;
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+      .account__button:hover {
+        border-color: var(--ink);
+      }
+      .account__button--primary {
+        border-color: var(--purple);
+        background: var(--purple);
+        color: var(--paper);
+      }
+      .account__button--primary:hover {
+        border-color: var(--purple);
+        background: #5f52e4;
+      }
+      .account__button--quiet {
+        border-style: dashed;
+        font-weight: 400;
+      }
+      .account__form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 18px;
+        border: 1px dashed var(--line);
+        border-radius: 18px;
+      }
+      .account__form[hidden] {
+        display: none;
+      }
+      .account__field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .account__field span {
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #5c5c5f;
+      }
+      .account__field input {
+        padding: 11px 14px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--paper);
+        font: inherit;
+        font-size: 14px;
+        color: var(--ink);
+      }
+      .account__field input:focus-visible {
+        outline: 2px solid var(--purple);
+        outline-offset: 2px;
+      }
+      .account__note {
+        font-size: 12px;
+        line-height: 1.5;
+        color: #5c5c5f;
+      }
+      .account__status {
+        min-height: 20px;
+        font-size: 13px;
+        line-height: 1.5;
+        color: #5c5c5f;
+      }
+      .account__status[data-tone="error"] {
+        color: #b4443a;
+      }
+    </style>
+
+    <script>
+      import { isMeraError } from "@category-labs/mera";
+      import type { TradingAccount } from "shared";
+      import { createAccount, signIn } from "../scripts/mera";
+
+      type AvatarModule = typeof import("../lib/avatar");
+      let avatarModule: AvatarModule | null = null;
+
+      async function avatars(): Promise<AvatarModule> {
+        avatarModule ??= await import("../lib/avatar");
+        return avatarModule;
+      }
+
+      const variantKey = "opencash.avatar.variant";
+      const profileKey = "opencash.profile";
+
+      type Profile = { name: string; email: string };
+
+      const status = document.querySelector<HTMLElement>("[data-status]")!;
+      const nameEl = document.querySelector<HTMLElement>("[data-account-name]")!;
+      const addressEl = document.querySelector<HTMLElement>("[data-address-text]")!;
+      const emailEl = document.querySelector<HTMLElement>("[data-account-email]")!;
+      const copyButton = document.querySelector<HTMLButtonElement>("[data-copy]")!;
+      const copyHint = document.querySelector<HTMLElement>("[data-copy-hint]")!;
+      const createForm = document.querySelector<HTMLFormElement>("[data-create-form]")!;
+      const avatarEl = document.querySelector<HTMLImageElement>("[data-account-avatar]")!;
+      const shuffleButton = document.querySelector<HTMLButtonElement>("[data-shuffle]")!;
+      const signOutButton = document.querySelector<HTMLButtonElement>("[data-sign-out]")!;
+      const cardSlot = document.querySelector<HTMLElement>("[data-card-slot]")!;
+      const signInButton = document.querySelector<HTMLButtonElement>("[data-sign-in]")!;
+      const createButton = document.querySelector<HTMLButtonElement>("[data-create]")!;
+
+      let account: TradingAccount | null = null;
+      let address: string | null = null;
+
+      function say(message: string, tone: "info" | "error" = "info") {
+        status.textContent = message;
+        status.dataset.tone = tone;
+      }
+
+      function variant(): number {
+        return Number(localStorage.getItem(variantKey) ?? 0);
+      }
+
+      async function paintAvatar() {
+        if (address === null) return;
+        const { avatarDataUri, avatarSeed, shortenAddress } = await avatars();
+        avatarEl.src = avatarDataUri(avatarSeed(address, variant()));
+        avatarEl.alt = `Avatar for ${shortenAddress(address)}`;
+      }
+
+      function saveProfile(next: TradingAccount, profile: Profile) {
+        localStorage.setItem(
+          profileKey,
+          JSON.stringify(next.sealProfile(JSON.stringify(profile))),
+        );
+      }
+
+      function loadProfile(next: TradingAccount): Profile | null {
+        const raw = localStorage.getItem(profileKey);
+        if (raw === null) return null;
+        try {
+          return JSON.parse(next.openProfile(JSON.parse(raw)));
+        } catch {
+          return null;
+        }
+      }
+
+      function setSignedIn(signedIn: boolean) {
+        createForm.hidden = true;
+        cardSlot.hidden = !signedIn;
+        shuffleButton.hidden = !signedIn;
+        signOutButton.hidden = !signedIn;
+        signInButton.hidden = signedIn;
+        createButton.hidden = signedIn;
+      }
+
+      async function show(next: TradingAccount, profile: Profile | null) {
+        account = next;
+        address = next.address;
+
+        const resolved = profile ?? loadProfile(next);
+        if (profile !== null) saveProfile(next, profile);
+
+        const { shortenAddress } = await avatars();
+        nameEl.textContent = resolved?.name ?? "Trader";
+        emailEl.textContent = resolved?.email ?? "";
+        addressEl.textContent = shortenAddress(address);
+        await paintAvatar();
+        setSignedIn(true);
+        say(
+          resolved === null
+            ? "Signed in. No profile on this device yet — create one to label your passkey."
+            : "Signed in. Your profile was decrypted locally; the key came from your passkey.",
+        );
+      }
+
+      function signOut() {
+        account?.end();
+        account = null;
+        address = null;
+        avatarEl.removeAttribute("src");
+        nameEl.textContent = "—";
+        emailEl.textContent = "";
+        addressEl.textContent = "—";
+        setSignedIn(false);
+        say("Signed out. The derived key was zeroed.");
+      }
+
+      function explain(error: unknown) {
+        if (!isMeraError(error)) {
+          say(error instanceof Error ? error.message : "Something went wrong.", "error");
+          return;
+        }
+
+        const messages: Record<string, string> = {
+          PRF_UNAVAILABLE:
+            "This passkey cannot derive keys. Its authenticator does not support the PRF extension, so it cannot be used for an OpenCash account. Try a passkey stored in iCloud Keychain, Google Password Manager or 1Password.",
+          PASSKEY_OPERATION_FAILED:
+            "The passkey prompt was cancelled or unavailable.",
+          CRYPTO_UNAVAILABLE:
+            "This browser is missing a required crypto primitive.",
+        };
+
+        say(messages[error.code] ?? `${error.code}: ${error.message}`, "error");
+      }
+
+      async function run(
+        action: () => Promise<TradingAccount>,
+        pending: string,
+        profile: Profile | null = null,
+      ) {
+        say(pending);
+        try {
+          await show(await action(), profile);
+        } catch (error) {
+          explain(error);
+        }
+      }
+
+      signInButton.addEventListener("click", () =>
+        run(signIn, "Waiting for your passkey…"),
+      );
+
+      createButton.addEventListener("click", () => {
+        createForm.hidden = !createForm.hidden;
+        if (!createForm.hidden) createForm.querySelector("input")?.focus();
+      });
+
+      createForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const data = new FormData(createForm);
+        const profile: Profile = {
+          name: String(data.get("name") ?? "").trim(),
+          email: String(data.get("email") ?? "").trim(),
+        };
+
+        void run(
+          () => createAccount(profile.email, profile.name),
+          "Creating a passkey…",
+          profile,
+        );
+      });
+
+      signOutButton.addEventListener("click", signOut);
+
+      copyButton.addEventListener("click", async () => {
+        if (address === null) return;
+        await navigator.clipboard.writeText(address);
+        copyHint.textContent = "Copied";
+        setTimeout(() => (copyHint.textContent = "Copy"), 1400);
+      });
+
+      shuffleButton.addEventListener("click", () => {
+        localStorage.setItem(variantKey, String((variant() + 1) % 12));
+        void paintAvatar();
+      });
+    </script>
+  </body>
+</html>

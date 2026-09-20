@@ -10,9 +10,15 @@
     "typecheck": "astro check"
   },
   "dependencies": {
-    "astro": "^5.14.3"
+    "@category-labs/mera": "0.2.0",
+    "@dicebear/core": "^10.7.0",
+    "@dicebear/styles": "^10.6.0",
+    "astro": "^5.14.3",
+    "shared": "workspace:^",
+    "viem": "^2.28.0"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.10",
     "@types/node": "^22.10.7",
     "typescript": "^5.7.3"
   }

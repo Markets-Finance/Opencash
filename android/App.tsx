@@ -1,20 +1,32 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import {
+  DMSans_300Light,
+  DMSans_400Regular,
+  DMSans_500Medium,
+  DMSans_600SemiBold,
+  useFonts,
+} from "@expo-google-fonts/dm-sans";
+import { StatusBar } from "expo-status-bar";
+import { View } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { Landing } from "./src/screens/Landing";
+import { color } from "./src/theme";
 
 export default function App() {
+  const [loaded, error] = useFonts({
+    DMSans_300Light,
+    DMSans_400Regular,
+    DMSans_500Medium,
+    DMSans_600SemiBold,
+  });
+
+  if (!loaded && !error) {
+    return <View style={{ flex: 1, backgroundColor: color.paper }} />;
+  }
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SafeAreaProvider>
+      <StatusBar style="light" />
+      <Landing />
+    </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
