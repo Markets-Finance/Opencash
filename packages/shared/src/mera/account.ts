@@ -13,12 +13,21 @@ import {
   seal as sealPlaintext,
   type SealedRecord,
 } from "./namespace.js";
+import { isDevAuth } from "./config.js";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { utf8 } from "@scure/base";
 import { HDKey } from "@scure/bip32";
 import { entropyToMnemonic, mnemonicToSeedSync } from "@scure/bip39";
 import { wordlist } from "@scure/bip39/wordlists/english.js";
 import type { LocalAccount } from "viem";
 
 const evmAccountPath = "m/44'/60'/0'/0/0";
+
+const devEntropy = sha256(utf8.decode("opencash.dev.account.v1"));
+
+function devTradingAccount(): TradingAccount {
+  return deriveTradingAccount(Uint8Array.from(devEntropy));
+}
 
 export const profileNamespace = "terminal.profile.v1";
 
@@ -50,6 +59,10 @@ function deriveTradingAccount(prfOutput: Uint8Array): TradingAccount {
   const session = createSecp256k1SigningSession({ privateKey: node.privateKey });
   const profileKey = deriveNamespaceKey(prfOutput, profileNamespace);
 
+  seed.fill(0);
+  node.wipePrivateData();
+  prfOutput.fill(0);
+
   return {
     address: getEvmAddress(session.publicKey),
     account: toViemAccount(session),
@@ -66,6 +79,8 @@ function deriveTradingAccount(prfOutput: Uint8Array): TradingAccount {
 export async function createTradingAccount(
   context: PasskeyContext & { userName: string; displayName: string },
 ): Promise<TradingAccount> {
+  if (isDevAuth) return devTradingAccount();
+
   const created = await createPasskeyWithPrfOutput({
     rp: { id: context.rpId, name: context.rpName },
     user: { name: context.userName, displayName: context.displayName },
@@ -82,12 +97,19 @@ export async function createTradingAccount(
   return deriveTradingAccount(created.prfOutput);
 }
 
+async function readCredential(
+  context: PasskeyContext,
+): Promise<PasskeyCredentialMetadata | undefined> {
+  const stored = await context.store.read();
+  return stored === null ? undefined : JSON.parse(stored);
+}
+
 export async function signInTradingAccount(
   context: PasskeyContext,
 ): Promise<TradingAccount> {
-  const stored = await context.store.read();
-  const known: PasskeyCredentialMetadata | undefined =
-    stored === null ? undefined : JSON.parse(stored);
+  if (isDevAuth) return devTradingAccount();
+
+  const known = await readCredential(context);
 
   const { prfOutput, credentialId } = await getPasskeyPrfOutput({
     rpId: context.rpId,
@@ -100,4 +122,20 @@ export async function signInTradingAccount(
   }
 
   return deriveTradingAccount(prfOutput);
+}
+
+export async function revealRecoveryPhrase(
+  context: PasskeyContext,
+): Promise<string> {
+  if (isDevAuth) return entropyToMnemonic(devEntropy, wordlist);
+
+  const { prfOutput } = await getPasskeyPrfOutput({
+    rpId: context.rpId,
+    credential: await readCredential(context),
+    webAuthnClient: context.webAuthnClient,
+  });
+
+  const phrase = entropyToMnemonic(prfOutput, wordlist);
+  prfOutput.fill(0);
+  return phrase;
 }

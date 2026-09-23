@@ -3,6 +3,8 @@ export type { MonadChain } from "./chains.js";
 export { monad, monadTestnetChain } from "./viem-chain.js";
 export {
   alertsNamespace,
+  authMode,
+  isDevAuth,
   createTradingAccount,
   deriveNamespaceKey,
   journalNamespace,
@@ -13,6 +15,7 @@ export {
   profileNamespace,
   relyingPartyId,
   relyingPartyName,
+  revealRecoveryPhrase,
   seal,
   signInTradingAccount,
 } from "./mera/index.js";
@@ -23,3 +26,10 @@ export type {
   SealedRecord,
   TradingAccount,
 } from "./mera/index.js";
+export {
+  parseAttestedPublicKey,
+  parseCoseP256PublicKey,
+  parseSpkiP256PublicKey,
+  relyingPartyIdHash,
+} from "./webauthn/publicKey.js";
+export type { P256PublicKey } from "./webauthn/publicKey.js";

@@ -1,5 +1,6 @@
 export {
   createTradingAccount,
+  revealRecoveryPhrase,
   signInTradingAccount,
 } from "./account.js";
 export type {
@@ -8,7 +9,7 @@ export type {
   TradingAccount,
 } from "./account.js";
 export { profileNamespace } from "./account.js";
-export { relyingPartyId, relyingPartyName } from "./config.js";
+export { authMode, isDevAuth, relyingPartyId, relyingPartyName } from "./config.js";
 export {
   alertsNamespace,
   journalNamespace,

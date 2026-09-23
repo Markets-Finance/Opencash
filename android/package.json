@@ -9,6 +9,7 @@
     "@scure/bip32": "^2.4.0",
     "@scure/bip39": "^2.4.0",
     "expo": "~57.0.22",
+    "expo-clipboard": "~57.0.2",
     "expo-font": "~57.0.4",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",

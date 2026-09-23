@@ -7,6 +7,7 @@ import {
   monad,
   relyingPartyId,
   relyingPartyName,
+  revealRecoveryPhrase,
   signInTradingAccount,
   type CredentialStore,
   type TradingAccount,
@@ -39,6 +40,10 @@ export function createAccount(
 
 export function signIn(): Promise<TradingAccount> {
   return signInTradingAccount(passkeyContext());
+}
+
+export function revealPhrase(): Promise<string> {
+  return revealRecoveryPhrase(passkeyContext());
 }
 
 export const publicClient = createPublicClient({

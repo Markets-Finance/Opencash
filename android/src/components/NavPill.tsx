@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Diamond } from "./Diamond";
 import { color, family, radius, space, track } from "../theme";
 
@@ -6,9 +6,10 @@ type NavPillProps = {
   wordmark: string;
   accent: string;
   action: string;
+  onPress?: () => void;
 };
 
-export function NavPill({ wordmark, accent, action }: NavPillProps) {
+export function NavPill({ wordmark, accent, action, onPress }: NavPillProps) {
   return (
     <View style={styles.pill}>
       <View style={styles.brand}>
@@ -18,7 +19,13 @@ export function NavPill({ wordmark, accent, action }: NavPillProps) {
         </Text>
         <Diamond size={8} fill={color.paper} />
       </View>
-      <Text style={styles.action}>{action}</Text>
+      <Pressable
+        onPress={onPress}
+        hitSlop={space.md}
+        style={({ pressed }) => pressed && styles.pressed}
+      >
+        <Text style={styles.action}>{action}</Text>
+      </Pressable>
     </View>
   );
 }
@@ -52,5 +59,8 @@ const styles = StyleSheet.create({
     fontFamily: family.regular,
     fontSize: 13,
     color: color.onDarkMuted,
+  },
+  pressed: {
+    opacity: 0.6,
   },
 });

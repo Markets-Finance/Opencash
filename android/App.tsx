@@ -6,12 +6,15 @@ import {
   useFonts,
 } from "@expo-google-fonts/dm-sans";
 import { StatusBar } from "expo-status-bar";
+import { useState } from "react";
 import { View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { Account } from "./src/screens/Account";
 import { Landing } from "./src/screens/Landing";
 import { color } from "./src/theme";
 
 export default function App() {
+  const [screen, setScreen] = useState<"landing" | "account">("landing");
   const [loaded, error] = useFonts({
     DMSans_300Light,
     DMSans_400Regular,
@@ -25,8 +28,12 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" />
-      <Landing />
+      <StatusBar style={screen === "landing" ? "light" : "dark"} />
+      {screen === "landing" ? (
+        <Landing onSignIn={() => setScreen("account")} />
+      ) : (
+        <Account onBack={() => setScreen("landing")} />
+      )}
     </SafeAreaProvider>
   );
 }

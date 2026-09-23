@@ -1,0 +1,8 @@
+{
+  "lib/webauthn-sol": {
+    "tag": {
+      "name": "v1.0.0",
+      "rev": "619f20ab0f074fef41066ee4ab24849a913263b2"
+    }
+  }
+}

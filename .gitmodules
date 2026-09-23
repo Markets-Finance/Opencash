@@ -1,0 +1,3 @@
+[submodule "contracts/lib/webauthn-sol"]
+	path = contracts/lib/webauthn-sol
+	url = https://github.com/base-org/webauthn-sol

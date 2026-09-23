@@ -37,7 +37,7 @@ const stages = [
   },
 ];
 
-export function Landing() {
+export function Landing({ onSignIn }: { onSignIn: () => void }) {
   const insets = useSafeAreaInsets();
 
   return (
@@ -92,7 +92,12 @@ export function Landing() {
       </ScrollView>
 
       <View style={[styles.header, { top: insets.top + space.md }]}>
-        <NavPill wordmark="meu" accent="terminal" action="Explore" />
+        <NavPill
+          wordmark="meu"
+          accent="terminal"
+          action="Sign in"
+          onPress={onSignIn}
+        />
       </View>
     </View>
   );
