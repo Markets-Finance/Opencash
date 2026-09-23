@@ -1,7 +1,7 @@
 import { isMeraError } from "@category-labs/mera";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Clipboard from "expo-clipboard";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -19,10 +19,9 @@ import { createAccount, revealPhrase, signIn } from "../lib/mera";
 import { color, family, radius, space, track } from "../theme";
 
 const profileKey = "opencash.profile";
-const variantKey = "opencash.avatar.variant";
 const variants = 12;
 
-type Profile = { name: string; email: string };
+type Profile = { name: string; email: string; variant?: number };
 
 const failures: Record<string, string> = {
   PRF_UNAVAILABLE:
@@ -79,12 +78,6 @@ export function Account({ onBack }: { onBack: () => void }) {
   const [email, setEmail] = useState("");
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    void AsyncStorage.getItem(variantKey).then((stored) =>
-      setVariant(Number(stored ?? 0)),
-    );
-  }, []);
-
   function explain(error: unknown) {
     setFailed(true);
     if (!isMeraError(error)) {
@@ -124,6 +117,7 @@ export function Account({ onBack }: { onBack: () => void }) {
       }
       setAccount(next);
       setProfile(resolved);
+      setVariant(resolved?.variant ?? 0);
       setFormMode(null);
       setStatus(
         resolved === null
@@ -139,6 +133,7 @@ export function Account({ onBack }: { onBack: () => void }) {
     account?.end();
     setAccount(null);
     setProfile(null);
+    setVariant(0);
     setPhrase(null);
     setFormMode(null);
     setFailed(false);
@@ -155,7 +150,8 @@ export function Account({ onBack }: { onBack: () => void }) {
   async function shuffle() {
     const next = (variant + 1) % variants;
     setVariant(next);
-    await AsyncStorage.setItem(variantKey, String(next));
+    if (account === null || profile === null) return;
+    await persistProfile(account, { ...profile, variant: next });
   }
 
   async function showPhrase() {
@@ -169,19 +165,23 @@ export function Account({ onBack }: { onBack: () => void }) {
     }
   }
 
-  async function saveProfile(next: Profile) {
-    if (account === null) return;
+  async function persistProfile(on: TradingAccount, next: Profile) {
     await AsyncStorage.setItem(
       profileKey,
-      JSON.stringify(account.sealProfile(JSON.stringify(next))),
+      JSON.stringify(on.sealProfile(JSON.stringify(next))),
     );
     setProfile(next);
+  }
+
+  async function saveProfile(next: Profile) {
+    if (account === null) return;
+    await persistProfile(account, next);
     setFormMode(null);
     setStatus("Saved on this device, encrypted with a key only your passkey derives.");
   }
 
   function submit() {
-    const entered = { name: name.trim(), email: email.trim() };
+    const entered = { name: name.trim(), email: email.trim(), variant };
     if (entered.name === "" || entered.email === "") {
       setFailed(true);
       setStatus("A name and an email are both needed to label the passkey.");

@@ -148,10 +148,9 @@ svg.arrow {
   margin-bottom: 3px;
 }
 .wordmark svg {
-  width: 9px;
-  height: 9px;
-  fill: var(--purple);
-  margin-left: 3px;
+  width: 21px;
+  height: 21px;
+  margin-right: 3px;
 }
 .nav-links {
   display: flex;
@@ -518,6 +517,13 @@ svg.arrow {
   flex-direction: column;
   pointer-events: none;
 }
+.center-mark {
+  width: 34px;
+  height: 34px;
+  color: var(--purple);
+  z-index: 1;
+  margin-bottom: 10px;
+}
 .connection-center strong {
   font-size: 43px;
   font-weight: 500;
@@ -586,13 +592,13 @@ svg.arrow {
   letter-spacing: 0.12em;
   color: #6d6870;
 }
-.hedera-mark {
+.chain-mark {
   font-size: 32px;
   display: flex;
   align-items: center;
   gap: 12px;
 }
-.hedera-mark b {
+.chain-mark b {
   font-size: 23px;
   font-weight: 450;
   letter-spacing: -0.04em;
@@ -649,11 +655,11 @@ svg.arrow {
   object-position: 30% center;
   filter: brightness(1.4);
 }
-.funds-image img {
+.notional-image img {
   object-position: 80% 20%;
   transform: scale(1.2);
 }
-.repo-image img {
+.bins-image img {
   object-position: center;
   filter: none;
 }
@@ -926,8 +932,52 @@ svg.arrow {
   font-size: clamp(40px, 5vw, 74px);
   font-weight: 300;
 }
-.closing .light-button {
-  margin-top: 40px;
+.closing-lede {
+  margin-top: 22px;
+  font-size: 14px;
+  color: #d8d6d3;
+}
+.waitlist {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 30px;
+}
+.waitlist input {
+  width: 270px;
+  padding: 14px 16px;
+  font: inherit;
+  font-size: 13px;
+  color: #fff;
+  background: #ffffff14;
+  border: 1px solid #ffffff3d;
+  border-radius: 3px;
+}
+.waitlist input::placeholder {
+  color: #ffffff7a;
+}
+.waitlist input:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 2px;
+}
+.waitlist .light-button {
+  margin-top: 0;
+  border: 1px solid var(--paper);
+}
+.waitlist-status {
+  min-height: 20px;
+  margin-top: 16px;
+  font-size: 12px;
+  color: #c9c5f5;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .site-footer {
   padding: 70px var(--gutter) 25px;
@@ -1225,6 +1275,11 @@ svg.arrow {
   .diamond-stack i:nth-child(3) {
     inset: 21px;
   }
+  .center-mark {
+    width: 26px;
+    height: 26px;
+    margin-bottom: 7px;
+  }
   .connection-center strong {
     font-size: 30px;
   }
@@ -1244,10 +1299,10 @@ svg.arrow {
   .tech-strip > span:last-child {
     font-size: 10px;
   }
-  .hedera-mark {
+  .chain-mark {
     font-size: 26px;
   }
-  .hedera-mark b {
+  .chain-mark b {
     font-size: 19px;
   }
   .applications {
@@ -1361,6 +1416,9 @@ svg.arrow {
   }
   .closing .light-button {
     font-size: 12px;
+  }
+  .waitlist input {
+    width: 100%;
   }
   .footer-top {
     flex-wrap: wrap;

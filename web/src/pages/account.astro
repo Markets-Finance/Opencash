@@ -220,10 +220,10 @@ import "../styles/landing.css";
         return avatarModule;
       }
 
-      const variantKey = "opencash.avatar.variant";
       const profileKey = "opencash.profile";
+      const variants = 12;
 
-      type Profile = { name: string; email: string };
+      type Profile = { name: string; email: string; variant?: number };
 
       const status = document.querySelector<HTMLElement>("[data-status]")!;
       const nameEl = document.querySelector<HTMLElement>("[data-account-name]")!;
@@ -243,6 +243,8 @@ import "../styles/landing.css";
 
       let account: TradingAccount | null = null;
       let address: string | null = null;
+      let profile: Profile | null = null;
+      let variant = 0;
       let formMode: "create" | "profile" = "create";
 
       function say(message: string, tone: "info" | "error" = "info") {
@@ -250,21 +252,18 @@ import "../styles/landing.css";
         status.dataset.tone = tone;
       }
 
-      function variant(): number {
-        return Number(localStorage.getItem(variantKey) ?? 0);
-      }
-
       async function paintAvatar() {
         if (address === null) return;
         const { avatarDataUri, avatarSeed, shortenAddress } = await avatars();
-        avatarEl.src = avatarDataUri(avatarSeed(address, variant()));
+        avatarEl.src = avatarDataUri(avatarSeed(address, variant));
         avatarEl.alt = `Avatar for ${shortenAddress(address)}`;
       }
 
-      function saveProfile(next: TradingAccount, profile: Profile) {
+      function saveProfile(next: TradingAccount, value: Profile) {
+        profile = value;
         localStorage.setItem(
           profileKey,
-          JSON.stringify(next.sealProfile(JSON.stringify(profile))),
+          JSON.stringify(next.sealProfile(JSON.stringify(value))),
         );
       }
 
@@ -296,12 +295,14 @@ import "../styles/landing.css";
         if (!createForm.hidden) createForm.querySelector("input")?.focus();
       }
 
-      async function show(next: TradingAccount, profile: Profile | null) {
+      async function show(next: TradingAccount, incoming: Profile | null) {
         account = next;
         address = next.address;
 
-        const resolved = profile ?? loadProfile(next);
-        if (profile !== null) saveProfile(next, profile);
+        const resolved = incoming ?? loadProfile(next);
+        if (incoming !== null) saveProfile(next, incoming);
+        profile = resolved;
+        variant = resolved?.variant ?? 0;
 
         const { shortenAddress } = await avatars();
         nameEl.textContent = resolved?.name ?? "Trader";
@@ -320,6 +321,8 @@ import "../styles/landing.css";
         account?.end();
         account = null;
         address = null;
+        profile = null;
+        variant = 0;
         avatarEl.removeAttribute("src");
         nameEl.textContent = "—";
         emailEl.textContent = "";
@@ -369,23 +372,23 @@ import "../styles/landing.css";
       createForm.addEventListener("submit", (event) => {
         event.preventDefault();
         const data = new FormData(createForm);
-        const profile: Profile = {
+        const entered: Profile = {
           name: String(data.get("name") ?? "").trim(),
           email: String(data.get("email") ?? "").trim(),
+          variant,
         };
 
         if (formMode === "profile") {
           if (account === null) return;
-          saveProfile(account, profile);
-          void show(account, profile);
+          void show(account, entered);
           say("Saved on this device, encrypted with a key only your passkey derives.");
           return;
         }
 
         void run(
-          () => createAccount(profile.email, profile.name),
+          () => createAccount(entered.email, entered.name),
           "Creating a passkey…",
-          profile,
+          entered,
         );
       });
 
@@ -399,7 +402,10 @@ import "../styles/landing.css";
       });
 
       shuffleButton.addEventListener("click", () => {
-        localStorage.setItem(variantKey, String((variant() + 1) % 12));
+        variant = (variant + 1) % variants;
+        if (account !== null && profile !== null) {
+          saveProfile(account, { ...profile, variant });
+        }
         void paintAvatar();
       });
     </script>

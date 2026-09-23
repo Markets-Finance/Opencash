@@ -7,7 +7,7 @@ const loadImage = (src: string) => new Promise<HTMLImageElement>((resolve, rejec
   image.onerror = reject;
   image.src = src;
 });
-const layers = Promise.all([loadImage('/images/city-mesh.webp'), loadImage('/images/city-xray.webp')]);
+const layers = Promise.all([loadImage('/images/skyline-bins.webp'), loadImage('/images/skyline-section.webp')]);
 let paused = reducedMotion.matches;
 const scannerUpdates: Array<() => void> = [];
 
@@ -43,7 +43,7 @@ function initialiseScanner(section: HTMLElement) {
     const thermalContext = thermal.getContext('2d')!;
     thermalContext.drawImage(prepared[1], 0, 0);
     const pixels = thermalContext.getImageData(0, 0, thermal.width, thermal.height);
-    const palette = [[13,22,84],[27,105,210],[20,208,208],[149,233,93],[254,208,45],[244,64,31]];
+    const palette = [[11,16,48],[27,58,140],[34,224,208],[243,236,225],[255,157,46],[255,77,94]];
     for (let index = 0; index < pixels.data.length; index += 4) {
       const intensity = (pixels.data[index] * .3 + pixels.data[index + 1] * .59 + pixels.data[index + 2] * .11) / 255;
       const position = Math.min(4.999, intensity * 5);
@@ -214,12 +214,12 @@ tabs.forEach((tab,index) => {
 });
 let step = 0;
 const descriptions = [
-  'Start with an issuer-defined note and its offering terms.',
-  'The sample participant meets the illustrative eligibility requirements.',
-  'A collateral proposal links the note to the terms of a repo agreement.',
-  'The transfer intent is prepared. An external wallet would sign the next transaction.',
+  'Start with gAUSD already earning in an Euler vault.',
+  'A bin pools the framing into one position; each leg still prices on its own venue.',
+  'Notional is margin × leverage. Nothing is lent and no interest accrues.',
+  'The batch is ready. Your passkey signs it; OpenCash never holds withdrawal power.',
 ];
-const actions = ['Verify participant','Propose collateral','Prepare transfer','Start again'];
+const actions = ['Pick a bin','Set the notional','Sign with your passkey','Start again'];
 function updateDemo() {
   document.querySelectorAll<HTMLElement>('[data-demo-step]').forEach((row,index) => {
     row.classList.toggle('current',index===step);row.classList.toggle('done',index<step);
@@ -230,3 +230,26 @@ function updateDemo() {
 }
 document.getElementById('demo-advance')!.addEventListener('click',()=>{step=(step+1)%4;updateDemo();});
 document.getElementById('demo-reset')!.addEventListener('click',()=>{step=0;updateDemo();});
+
+const waitlistForm = document.querySelector<HTMLFormElement>('#waitlist-form');
+if (waitlistForm) {
+  const waitlistStatus = document.getElementById('waitlist-status')!;
+  waitlistForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    const email = new FormData(waitlistForm).get('email');
+    waitlistStatus.textContent = 'Sending…';
+    try {
+      const response = await fetch(waitlistForm.action, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) { waitlistStatus.textContent = body.error ?? 'That did not go through. Try again.'; return; }
+      waitlistStatus.textContent = 'You are on the list.';
+      waitlistForm.reset();
+    } catch {
+      waitlistStatus.textContent = 'That did not go through. Try again.';
+    }
+  });
+}
