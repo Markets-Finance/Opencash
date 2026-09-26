@@ -5,6 +5,7 @@
   "scripts": {
     "web": "pnpm --filter web dev",
     "backend": "pnpm --filter backend dev",
-    "android": "pnpm --filter android start"
+    "android": "pnpm --filter mobile start -- --dev-client",
+    "mobile": "pnpm --filter mobile start"
   }
 }

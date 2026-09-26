@@ -1,13 +1,21 @@
 import Fastify from "fastify";
-import { monadMainnet, monadTestnet } from "shared";
+import { hoodMainnet } from "shared";
+import { agentAccount } from "./chain.js";
+import { registerMcpRoute } from "./mcp/route.js";
 
 const port = Number(process.env.PORT ?? 8787);
 const app = Fastify({ logger: true });
 
 app.get("/health", async () => ({
   ok: true,
-  chains: [monadMainnet.id, monadTestnet.id],
+  chainId: hoodMainnet.chainId,
 }));
+
+// Public: the address a user authorizes as a session key on their own
+// OpenCashDelegate. Never the private key — that stays server-side.
+app.get("/agent/address", async () => ({ address: agentAccount().address }));
+
+registerMcpRoute(app);
 
 app.listen({ port, host: "0.0.0.0" }).catch((err) => {
   app.log.error(err);

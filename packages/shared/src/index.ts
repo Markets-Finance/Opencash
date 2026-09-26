@@ -26,6 +26,8 @@ export type {
   SealedRecord,
   TradingAccount,
 } from "./mera/index.js";
+export * from "./hood/index.js";
+export * from "./bins/index.js";
 export {
   parseAttestedPublicKey,
   parseCoseP256PublicKey,
