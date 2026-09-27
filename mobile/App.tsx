@@ -6,7 +6,7 @@ import {
   useFonts,
 } from "@expo-google-fonts/dm-sans";
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import type { Bin, TradingAccount } from "shared";
@@ -15,18 +15,38 @@ import { AuthorizeAgent } from "./src/screens/AuthorizeAgent";
 import { BinDetail } from "./src/screens/BinDetail";
 import { Bins } from "./src/screens/Bins";
 import { Trade } from "./src/screens/Trade";
+import { TradeDetail } from "./src/screens/TradeDetail";
 import type { TabKey } from "./src/components/TabBar";
 import { BotHome } from "./src/screens/BotHome";
 import { Landing } from "./src/screens/Landing";
-import { loadPositions, loadTokens, loadUsdgBalance, type HoodData } from "./src/lib/hood";
+import { MandateDetail } from "./src/screens/MandateDetail";
+import type { Mandate } from "./src/lib/backend";
+import {
+  loadPositions,
+  loadTokens,
+  loadUsdgBalance,
+  type HoodData,
+  type TradeAsset,
+} from "./src/lib/hood";
 import { color } from "./src/theme";
 
-type Screen = "landing" | "account" | "bins" | "bin" | "agent" | "home" | "trade";
+type Screen =
+  | "landing"
+  | "account"
+  | "bins"
+  | "bin"
+  | "agent"
+  | "home"
+  | "trade"
+  | "tradeAsset"
+  | "mandate";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("landing");
   const [agentBackTo, setAgentBackTo] = useState<"account" | "home">("home");
   const [bin, setBin] = useState<Bin | null>(null);
+  const [tradeAsset, setTradeAsset] = useState<TradeAsset | null>(null);
+  const [mandate, setMandate] = useState<Mandate | null>(null);
   const [markets, setMarkets] = useState<HoodData | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
   const [trader, setTrader] = useState<TradingAccount | null>(null);
@@ -38,8 +58,14 @@ export default function App() {
     DMSans_500Medium,
     DMSans_600SemiBold,
   });
+  const [fontTimedOut, setFontTimedOut] = useState(false);
 
-  if (!loaded && !error) {
+  useEffect(() => {
+    const timer = setTimeout(() => setFontTimedOut(true), 4000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!loaded && !error && !fontTimedOut) {
     return <View style={{ flex: 1, backgroundColor: color.paper }} />;
   }
 
@@ -101,7 +127,25 @@ export default function App() {
           }}
         />
       ) : screen === "trade" ? (
-        trader !== null ? <Trade trader={trader} onSelectTab={goTab} /> : null
+        trader !== null ? (
+          <Trade
+            trader={trader}
+            onSelectTab={goTab}
+            onOpenAsset={(asset) => {
+              setTradeAsset(asset);
+              setScreen("tradeAsset");
+            }}
+          />
+        ) : null
+      ) : screen === "tradeAsset" ? (
+        tradeAsset !== null && trader !== null ? (
+          <TradeDetail
+            asset={tradeAsset}
+            balance={balance}
+            trader={trader}
+            onBack={() => setScreen("trade")}
+          />
+        ) : null
       ) : screen === "home" ? (
         trader !== null ? (
           <BotHome
@@ -111,7 +155,15 @@ export default function App() {
               setAgentBackTo("home");
               setScreen("agent");
             }}
+            onOpenMandate={(selected) => {
+              setMandate(selected);
+              setScreen("mandate");
+            }}
           />
+        ) : null
+      ) : screen === "mandate" ? (
+        mandate !== null && trader !== null ? (
+          <MandateDetail mandate={mandate} trader={trader} onBack={() => setScreen("home")} />
         ) : null
       ) : bin !== null && markets !== null && trader !== null ? (
         <BinDetail

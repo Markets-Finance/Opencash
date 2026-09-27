@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "android",
-    "slug": "android",
+    "name": "OpenCash",
+    "slug": "opencash",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "xyz.example.terminal",
+      "bundleIdentifier": "xyz.opencash.mobile",
       "associatedDomains": [
         "webcredentials:terminal.example.xyz"
       ]
@@ -21,7 +21,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "xyz.example.terminal"
+      "package": "xyz.opencash.mobile"
     },
     "web": {
       "favicon": "./assets/favicon.png"

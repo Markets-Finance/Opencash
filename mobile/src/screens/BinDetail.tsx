@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -9,11 +10,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Bin, BinSizingIssue, SizedBin, TradingAccount } from "shared";
-import { DashedRule } from "../components/DashedRule";
-import { Diamond } from "../components/Diamond";
-import { SectionLabel } from "../components/SectionLabel";
 import { openBin, sizeBinFor, type EntryStep, type HoodData } from "../lib/hood";
-import { color, family, radius, space, track } from "../theme";
+import { family, space, track } from "../theme";
 
 type BinDetailProps = {
   bin: Bin;
@@ -29,6 +27,10 @@ const stepLabels: Record<EntryStep, string> = {
 };
 
 const presets = [10, 25, 50, 100];
+
+function initial(text: string): string {
+  return text.slice(0, 1).toUpperCase();
+}
 
 export function BinDetail({ bin, data, balance, trader, onBack }: BinDetailProps) {
   const insets = useSafeAreaInsets();
@@ -86,208 +88,261 @@ export function BinDetail({ bin, data, balance, trader, onBack }: BinDetailProps
             : null;
 
   return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={[
-        styles.content,
-        {
-          paddingTop: insets.top + space.xl,
-          paddingBottom: insets.bottom + space.section,
-        },
-      ]}
-      keyboardShouldPersistTaps="handled"
-    >
-      <Pressable onPress={onBack} hitSlop={12}>
-        <Text style={styles.back}>← Bins</Text>
-      </Pressable>
-
-      <SectionLabel>{bin.name.toUpperCase()}</SectionLabel>
-      <Text style={styles.thesis}>{bin.thesis}</Text>
-
-      <DashedRule />
-
-      <Text style={styles.fieldLabel}>Amount</Text>
-      <View style={styles.amountRow}>
-        <Text style={styles.currency}>$</Text>
-        <TextInput
-          value={amount}
-          onChangeText={setAmount}
-          keyboardType="decimal-pad"
-          placeholder="0"
-          placeholderTextColor="#b6b4b0"
-          style={styles.amountInput}
-        />
-      </View>
-      <View style={styles.presets}>
-        {presets.map((preset) => (
-          <Pressable
-            key={preset}
-            onPress={() => setAmount(String(preset))}
-            style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]}
-          >
-            <Text style={styles.chipLabel}>${preset}</Text>
-          </Pressable>
-        ))}
-      </View>
-      {balance !== null ? (
-        <Text style={styles.balance}>
-          USDG balance ${balance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-        </Text>
-      ) : null}
-
-      <DashedRule />
-
-      <Text style={styles.fieldLabel}>Legs</Text>
-      {(result?.sized.legs ?? []).map((leg) => (
-        <View key={leg.leg.symbol} style={styles.legCard}>
-          <View style={styles.legHead}>
-            <Diamond size={5} fill={color.purple} />
-            <Text style={styles.legSymbol}>{leg.leg.symbol}</Text>
-            <View style={styles.spacer} />
-            <Text style={styles.legPrice}>${leg.quote.price.toFixed(2)}</Text>
-          </View>
-          <View style={styles.legStats}>
-            <Text style={styles.legStat}>usdg ${leg.usdgIn.toFixed(2)}</Text>
-            <Text style={styles.legStat}>
-              ≈ {leg.quote.tokensOut.toFixed(4)} shares
-            </Text>
-          </View>
-        </View>
-      ))}
-
-      {(result?.issues ?? []).map((issue) => (
-        <Text key={`${issue.symbol}-${issue.reason}`} style={styles.issue}>
-          {issue.detail}
-        </Text>
-      ))}
-
-      <DashedRule />
-
-      <View style={styles.totals}>
-        <Text style={styles.totalLabel}>Total USDG</Text>
-        <Text style={styles.totalValue}>
-          ${(result?.sized.usdgIn ?? 0).toFixed(2)}
-        </Text>
+    <View style={styles.screen}>
+      <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
+        <Pressable onPress={onBack} hitSlop={12} style={styles.iconButton}>
+          <Text style={styles.back}>←</Text>
+        </Pressable>
+        <Text style={styles.heading}>{bin.name}</Text>
+        <View style={styles.iconButton} />
       </View>
 
-      <Pressable
-        disabled={blocked !== null}
-        onPress={() => void submit()}
-        style={({ pressed }) => [
-          styles.cta,
-          blocked !== null && styles.ctaDisabled,
-          pressed && styles.ctaPressed,
-        ]}
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: 160 + insets.bottom }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <Text
-          style={[styles.ctaLabel, blocked !== null && styles.ctaLabelDisabled]}
+        <View style={styles.identityRow}>
+          <View style={styles.mark}>
+            <Text style={styles.markText}>{initial(bin.name)}</Text>
+          </View>
+          <Text style={styles.thesis}>{bin.thesis}</Text>
+        </View>
+
+        <View style={styles.amountCard}>
+          <Text style={styles.fieldLabel}>Amount</Text>
+          <View style={styles.amountRow}>
+            <Text style={styles.currency}>$</Text>
+            <TextInput
+              value={amount}
+              onChangeText={setAmount}
+              keyboardType="decimal-pad"
+              placeholder="0"
+              placeholderTextColor="#b3b3b6"
+              style={styles.amountInput}
+            />
+          </View>
+          <View style={styles.presets}>
+            {presets.map((preset) => (
+              <Pressable
+                key={preset}
+                onPress={() => setAmount(String(preset))}
+                style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]}
+              >
+                <Text style={styles.chipLabel}>${preset}</Text>
+              </Pressable>
+            ))}
+          </View>
+          {balance !== null ? (
+            <Text style={styles.balance}>
+              USDG balance ${balance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            </Text>
+          ) : null}
+        </View>
+
+        {(result?.sized.legs.length ?? 0) > 0 && (
+          <View style={styles.legsCard}>
+            <Text style={styles.fieldLabel}>Legs</Text>
+            {(result?.sized.legs ?? []).map((leg) => (
+              <View key={leg.leg.symbol} style={styles.legRow}>
+                <View style={styles.legMark}>
+                  <Text style={styles.legMarkText}>{initial(leg.leg.symbol)}</Text>
+                </View>
+                <View style={styles.legIdentity}>
+                  <Text style={styles.legSymbol}>{leg.leg.symbol}</Text>
+                  <Text style={styles.legStat}>
+                    ${leg.usdgIn.toFixed(2)} · ≈ {leg.quote.tokensOut.toFixed(4)}
+                  </Text>
+                </View>
+                <Text style={styles.legPrice}>${leg.quote.price.toFixed(2)}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {(result?.issues ?? []).map((issue) => (
+          <View key={`${issue.symbol}-${issue.reason}`} style={styles.warnCard}>
+            <Text style={styles.warnText}>{issue.detail}</Text>
+          </View>
+        ))}
+
+        {status !== null ? (
+          <Text style={[styles.status, failed && styles.statusFailed]}>{status}</Text>
+        ) : null}
+
+        <Text style={styles.footnote}>
+          All legs swap together or none do. Price and slippage are quoted live
+          from Uniswap on Robinhood Chain.
+        </Text>
+      </ScrollView>
+
+      <View style={[styles.footer, { paddingBottom: insets.bottom + space.md }]}>
+        <View style={styles.totals}>
+          <Text style={styles.totalLabel}>Total USDG</Text>
+          <Text style={styles.totalValue}>${(result?.sized.usdgIn ?? 0).toFixed(2)}</Text>
+        </View>
+        <Pressable
+          disabled={blocked !== null}
+          onPress={() => void submit()}
+          style={({ pressed }) => [
+            styles.primaryButton,
+            blocked !== null && styles.primaryButtonDisabled,
+            pressed && styles.primaryButtonPressed,
+          ]}
         >
-          {blocked ?? `Open ${bin.name}`}
-        </Text>
-      </Pressable>
-
-      {status !== null ? (
-        <Text style={[styles.status, failed && styles.statusFailed]}>
-          {status}
-        </Text>
-      ) : null}
-
-      <Text style={styles.footnote}>
-        All legs swap together or none do. Price and slippage are quoted live
-        from Uniswap on Robinhood Chain.
-      </Text>
-    </ScrollView>
+          {busy ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text
+              style={[
+                styles.primaryLabel,
+                blocked !== null && styles.primaryLabelDisabled,
+              ]}
+            >
+              {blocked ?? `Open ${bin.name}`}
+            </Text>
+          )}
+        </Pressable>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: color.paper },
-  content: { paddingHorizontal: space.xl, gap: space.lg },
-  back: {
+  screen: { flex: 1, backgroundColor: "#ededed" },
+  header: {
+    paddingHorizontal: space.lg,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  heading: {
+    fontFamily: family.semibold,
+    fontSize: 19,
+    letterSpacing: track(19, -0.03),
+    color: "#0c0c0c",
+  },
+  iconButton: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: "#f8f8f8",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  back: { fontFamily: family.regular, fontSize: 22, color: "#55555a" },
+  content: { padding: space.lg, gap: space.lg },
+  identityRow: { flexDirection: "row", alignItems: "center", gap: space.md },
+  mark: {
+    width: 48,
+    height: 48,
+    borderRadius: 15,
+    backgroundColor: "#090909",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  markText: { fontFamily: family.semibold, fontSize: 22, color: "#fff" },
+  thesis: {
+    flex: 1,
     fontFamily: family.regular,
     fontSize: 13,
-    color: color.purpleLabel,
-    marginBottom: space.md,
+    lineHeight: 13 * 1.6,
+    color: "#77777a",
   },
-  thesis: {
-    fontFamily: family.light,
-    fontSize: 15,
-    lineHeight: 15 * 1.6,
-    color: "#6f6d6a",
+  amountCard: {
+    padding: space.lg,
+    borderRadius: 18,
+    backgroundColor: "#fafafa",
+    gap: space.sm,
   },
   fieldLabel: {
     fontFamily: family.medium,
     fontSize: 11,
     letterSpacing: track(11, 0.12),
-    color: "#8a8884",
+    color: "#858589",
   },
   amountRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  currency: {
-    fontFamily: family.light,
-    fontSize: 34,
-    color: color.ink,
-  },
+  currency: { fontFamily: family.light, fontSize: 32, color: "#131315" },
   amountInput: {
     flex: 1,
     fontFamily: family.light,
-    fontSize: 44,
-    letterSpacing: track(44, -0.04),
-    color: color.ink,
+    fontSize: 40,
+    letterSpacing: track(40, -0.04),
+    color: "#131315",
     padding: 0,
   },
   presets: { flexDirection: "row", gap: space.sm },
   chip: {
-    borderWidth: 1,
-    borderColor: color.line,
-    borderRadius: radius,
+    borderRadius: 999,
     paddingVertical: space.sm,
     paddingHorizontal: space.md,
+    backgroundColor: "#f0f0f0",
   },
-  chipPressed: { borderColor: color.purple },
-  chipLabel: { fontFamily: family.regular, fontSize: 13, color: color.ink },
-  balance: { fontFamily: family.light, fontSize: 12, color: "#8a8884" },
-  legCard: {
-    borderWidth: 1,
-    borderColor: color.line,
-    padding: space.md,
-    gap: space.sm,
+  chipPressed: { backgroundColor: "#e4e4e4" },
+  chipLabel: { fontFamily: family.medium, fontSize: 13, color: "#131315" },
+  balance: { fontFamily: family.regular, fontSize: 12, color: "#858589" },
+  legsCard: {
+    padding: space.lg,
+    borderRadius: 18,
+    backgroundColor: "#fafafa",
+    gap: space.md,
   },
-  legHead: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  legSymbol: { fontFamily: family.medium, fontSize: 14, color: color.ink },
-  spacer: { flex: 1 },
-  legPrice: { fontFamily: family.regular, fontSize: 13, color: color.purpleLabel },
-  legStats: { flexDirection: "row", flexWrap: "wrap", gap: space.md },
-  legStat: { fontFamily: family.light, fontSize: 12, color: "#6f6d6a" },
-  issue: { fontFamily: family.light, fontSize: 12, color: "#a5382a" },
-  totals: { flexDirection: "row", alignItems: "baseline" },
-  totalLabel: { fontFamily: family.light, fontSize: 13, color: "#6f6d6a", flex: 1 },
-  totalValue: {
-    fontFamily: family.regular,
-    fontSize: 20,
-    letterSpacing: track(20, -0.03),
-    color: color.ink,
-  },
-  cta: {
-    backgroundColor: color.purple,
-    borderRadius: radius,
-    paddingVertical: space.lg,
+  legRow: { flexDirection: "row", alignItems: "center", gap: space.md },
+  legMark: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor: "#e8e8e8",
     alignItems: "center",
+    justifyContent: "center",
   },
-  ctaDisabled: { backgroundColor: "#e6e4e0" },
-  ctaPressed: { opacity: 0.9 },
-  ctaLabel: { fontFamily: family.medium, fontSize: 15, color: color.paper },
-  ctaLabelDisabled: { color: "#8a8884" },
-  status: {
-    fontFamily: family.light,
+  legMarkText: { fontFamily: family.semibold, fontSize: 14, color: "#1b1b1d" },
+  legIdentity: { flex: 1, minWidth: 0 },
+  legSymbol: { fontFamily: family.semibold, fontSize: 14, color: "#131315" },
+  legStat: { fontFamily: family.regular, fontSize: 11, color: "#858589" },
+  legPrice: { fontFamily: family.medium, fontSize: 13, color: "#131315" },
+  warnCard: { padding: space.md, borderRadius: 14, backgroundColor: "#fdeceb" },
+  warnText: {
+    fontFamily: family.regular,
     fontSize: 12,
     lineHeight: 12 * 1.6,
-    color: color.purpleLabel,
+    color: "#a5382a",
   },
+  status: { fontFamily: family.regular, fontSize: 13, color: "#4e4e51" },
   statusFailed: { color: "#a5382a" },
   footnote: {
-    fontFamily: family.light,
+    fontFamily: family.regular,
     fontSize: 11,
     lineHeight: 11 * 1.6,
-    color: "#8a8884",
+    color: "#9a9a9d",
   },
+  footer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: space.xl,
+    paddingTop: space.md,
+    backgroundColor: "rgba(237,237,237,0.96)",
+    gap: space.sm,
+  },
+  totals: { flexDirection: "row", alignItems: "baseline" },
+  totalLabel: { flex: 1, fontFamily: family.regular, fontSize: 13, color: "#77777a" },
+  totalValue: {
+    fontFamily: family.semibold,
+    fontSize: 20,
+    letterSpacing: track(20, -0.03),
+    color: "#0c0c0c",
+  },
+  primaryButton: {
+    minHeight: 64,
+    borderRadius: 33,
+    backgroundColor: "#050505",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  primaryButtonDisabled: { backgroundColor: "#dcdcdc" },
+  primaryButtonPressed: { opacity: 0.85 },
+  primaryLabel: { fontFamily: family.medium, fontSize: 16, color: "#fff" },
+  primaryLabelDisabled: { color: "#8a8a8d" },
 });

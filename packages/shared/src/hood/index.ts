@@ -20,8 +20,10 @@ export {
   fetchDisplayedBalance,
 } from "./registry.js";
 export type { StockTokenEntry } from "./registry.js";
-export { findDeepestPool, quoteUsdgToToken } from "./quote.js";
-export type { HoodPool, HoodQuote } from "./quote.js";
+export { findDeepestPool, quoteTokenToUsdg, quoteUsdgToToken } from "./quote.js";
+export type { HoodPool, HoodQuote, HoodSellQuote } from "./quote.js";
+export { fetchOfficialPrice, fetchOfficialPrices } from "./prices.js";
+export type { OfficialQuote } from "./prices.js";
 export {
   allowanceRequest,
   approveRequest,

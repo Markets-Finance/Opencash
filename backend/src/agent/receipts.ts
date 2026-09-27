@@ -15,6 +15,7 @@ export async function recordReceipt(input: {
   proposalId: string;
   status: Receipt["status"];
   detail: string;
+  usdgAmount?: number;
   txHash?: Hash | null;
 }): Promise<Receipt> {
   const payload = {
@@ -22,6 +23,7 @@ export async function recordReceipt(input: {
     proposalId: input.proposalId,
     status: input.status,
     detail: input.detail,
+    usdgAmount: input.status === "executed" ? (input.usdgAmount ?? 0) : 0,
     txHash: input.txHash ?? null,
   };
   const hash = createHash("sha256").update(JSON.stringify(payload)).digest("hex");
@@ -43,4 +45,11 @@ export function getReceipt(id: string): Promise<Receipt | undefined> {
 export async function receiptsForMandate(mandateId: string): Promise<Receipt[]> {
   const all = await store.all();
   return all.filter((receipt) => receipt.mandateId === mandateId);
+}
+
+export async function cumulativeSpent(mandateId: string): Promise<number> {
+  const receipts = await receiptsForMandate(mandateId);
+  return receipts
+    .filter((receipt) => receipt.status === "executed")
+    .reduce((sum, receipt) => sum + receipt.usdgAmount, 0);
 }

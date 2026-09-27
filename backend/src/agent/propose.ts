@@ -9,7 +9,7 @@ import { servChatCompletion } from "../serv/client.js";
 import { promptGuardTool, proposeBinActionTool, shadowAgentTool } from "../serv/tools.js";
 import { getMandate } from "./mandates.js";
 import { saveProposal } from "./proposals.js";
-import { recordReceipt } from "./receipts.js";
+import { cumulativeSpent, recordReceipt } from "./receipts.js";
 import type { Proposal } from "./types.js";
 
 export async function proposeAction(mandateId: string): Promise<Proposal> {
@@ -18,6 +18,26 @@ export async function proposeAction(mandateId: string): Promise<Proposal> {
 
   const bin = binById(mandate.binId);
   if (!bin) throw new Error(`Unknown bin ${mandate.binId}`);
+
+  const spent = await cumulativeSpent(mandateId);
+  const remaining = Math.max(0, mandate.usdgBudget - spent);
+
+  if (remaining <= 0) {
+    const proposal = await saveProposal({
+      mandateId: mandate.id,
+      binId: mandate.binId,
+      usdgAmount: 0,
+      reasoning: `Lifetime budget of $${mandate.usdgBudget} already spent — nothing left to allocate.`,
+      servFinishReason: "budget_exhausted",
+    });
+    await recordReceipt({
+      mandateId: mandate.id,
+      proposalId: proposal.id,
+      status: "proposed",
+      detail: proposal.reasoning,
+    });
+    return proposal;
+  }
 
   const tokens = tokensBySymbol(await loadStockTokens());
   const legLines = await Promise.all(
@@ -32,8 +52,8 @@ export async function proposeAction(mandateId: string): Promise<Proposal> {
   );
 
   const hint =
-    "usdgAmount must never exceed the mandate's usdgBudget, must be 0 if any leg has no pool, " +
-    "and the reasoning must cite the mandate's policy text.";
+    "usdgAmount must never exceed the remaining lifetime budget given below, must be 0 if any " +
+    "leg has no pool, and the reasoning must cite the mandate's policy text.";
 
   const response = await servChatCompletion({
     messages: [
@@ -41,13 +61,16 @@ export async function proposeAction(mandateId: string): Promise<Proposal> {
         role: "system",
         content:
           "You allocate USDG into a fixed-weight basket of Robinhood Chain Stock Tokens on behalf " +
-          "of a user-authored mandate. You never exceed the mandate's budget. Propose exactly one action.",
+          "of a user-authored mandate. You never exceed the remaining lifetime budget. Propose " +
+          "exactly one action.",
       },
       {
         role: "user",
         content: [
           `Mandate policy: ${mandate.policyText}`,
-          `Mandate USDG budget: ${mandate.usdgBudget}`,
+          `Mandate lifetime USDG budget: ${mandate.usdgBudget}`,
+          `Already spent across this mandate's lifetime: ${spent}`,
+          `Remaining budget available now: ${remaining}`,
           `Bin "${bin.name}" (${bin.id}): ${bin.thesis}`,
           "Legs:",
           ...legLines,
@@ -70,13 +93,17 @@ export async function proposeAction(mandateId: string): Promise<Proposal> {
     reasoning: string;
   };
 
-  const usdgAmount = Math.max(0, Math.min(args.usdgAmount, mandate.usdgBudget));
+  const usdgAmount = Math.max(0, Math.min(args.usdgAmount, remaining));
 
   const proposal = await saveProposal({
     mandateId: mandate.id,
     binId: mandate.binId,
     usdgAmount,
     reasoning: args.reasoning,
+    // Forcing tool_choice means this is "tool_calls" whether shadow-agent
+    // validation passed or was exhausted after retries — SERV doesn't expose
+    // that distinction in the response, only in its own console. Diagnostic
+    // for API-level failures (length/content_filter), not a validation signal.
     servFinishReason: choice.finish_reason,
   });
 

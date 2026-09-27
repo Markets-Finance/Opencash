@@ -32,3 +32,10 @@ export function getMandate(id: string): Promise<Mandate | undefined> {
 export function listMandates(): Promise<Mandate[]> {
   return store.all();
 }
+
+export async function listMandatesForOwner(owner: Address): Promise<Mandate[]> {
+  const all = await store.all();
+  return all
+    .filter((mandate) => mandate.owner.toLowerCase() === owner.toLowerCase())
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}

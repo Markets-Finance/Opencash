@@ -214,12 +214,12 @@ tabs.forEach((tab,index) => {
 });
 let step = 0;
 const descriptions = [
-  'Start with gAUSD already earning in an Euler vault.',
+  'Start with USDG on Robinhood Chain.',
   'A bin pools the framing into one position; each leg still prices on its own venue.',
-  'Notional is margin × leverage. Nothing is lent and no interest accrues.',
+  'Every trade is a spot swap. Nothing is lent and no interest accrues.',
   'The batch is ready. Your passkey signs it; OpenCash never holds withdrawal power.',
 ];
-const actions = ['Pick a bin','Set the notional','Sign with your passkey','Start again'];
+const actions = ['Pick a bin','Set the size','Sign with your passkey','Start again'];
 function updateDemo() {
   document.querySelectorAll<HTMLElement>('[data-demo-step]').forEach((row,index) => {
     row.classList.toggle('current',index===step);row.classList.toggle('done',index<step);

@@ -1,9 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { DashedRule } from "../components/DashedRule";
 import { Mark } from "../components/Mark";
-import { SectionLabel } from "../components/SectionLabel";
-import { color, family, radius, space, track } from "../theme";
+import { family, space, track } from "../theme";
 
 export function Landing({ onSignIn }: { onSignIn: () => void }) {
   const insets = useSafeAreaInsets();
@@ -19,18 +17,18 @@ export function Landing({ onSignIn }: { onSignIn: () => void }) {
       ]}
     >
       <View style={styles.content}>
-        <Mark size={72} />
+        <View style={styles.mark}>
+          <Mark size={40} tint="#fff" />
+        </View>
 
         <View style={styles.copy}>
-          <SectionLabel>OPENCASH</SectionLabel>
+          <Text style={styles.eyebrow}>OPENCASH</Text>
           <Text style={styles.title}>Take a framing{"\n"}in one tap.</Text>
           <Text style={styles.subtitle}>
             A bin pools a whole theme into one position. Every leg prices on its
             own market, and your passkey signs every call.
           </Text>
         </View>
-
-        <DashedRule />
 
         <View style={styles.facts}>
           {[
@@ -59,52 +57,62 @@ export function Landing({ onSignIn }: { onSignIn: () => void }) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: color.paper,
+    backgroundColor: "#ededed",
     paddingHorizontal: space.xl,
   },
   content: { flex: 1, justifyContent: "center", gap: space.xl },
+  mark: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    backgroundColor: "#090909",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   copy: { gap: space.md },
+  eyebrow: {
+    fontFamily: family.medium,
+    fontSize: 11,
+    letterSpacing: track(11, 0.14),
+    color: "#858589",
+  },
   title: {
-    fontFamily: family.light,
-    fontSize: 40,
-    lineHeight: 40 * 1.14,
-    letterSpacing: track(40, -0.04),
-    color: color.ink,
+    fontFamily: family.semibold,
+    fontSize: 38,
+    lineHeight: 38 * 1.14,
+    letterSpacing: track(38, -0.04),
+    color: "#0c0c0c",
   },
   subtitle: {
-    fontFamily: family.light,
+    fontFamily: family.regular,
     fontSize: 15,
     lineHeight: 15 * 1.6,
-    color: "#6f6d6a",
+    color: "#77777a",
     maxWidth: 320,
   },
-  facts: { gap: space.md },
+  facts: { gap: space.md, padding: space.lg, borderRadius: 18, backgroundColor: "#fafafa" },
   fact: { flexDirection: "row", alignItems: "baseline", gap: space.md },
   factLabel: {
     fontFamily: family.medium,
     fontSize: 11,
     letterSpacing: track(11, 0.12),
-    color: "#8a8884",
+    color: "#858589",
     width: 96,
   },
   factValue: {
     flex: 1,
-    fontFamily: family.light,
+    fontFamily: family.regular,
     fontSize: 13,
     lineHeight: 13 * 1.55,
-    color: color.ink,
+    color: "#131315",
   },
   button: {
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 56,
-    borderRadius: radius,
-    backgroundColor: color.purple,
+    minHeight: 64,
+    borderRadius: 33,
+    backgroundColor: "#050505",
   },
-  buttonLabel: {
-    fontFamily: family.medium,
-    fontSize: 16,
-    color: color.paper,
-  },
-  pressed: { opacity: 0.9 },
+  buttonLabel: { fontFamily: family.medium, fontSize: 16, color: "#fff" },
+  pressed: { opacity: 0.85 },
 });

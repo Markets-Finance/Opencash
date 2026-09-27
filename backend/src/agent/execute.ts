@@ -97,6 +97,7 @@ export async function executeProposal(proposalId: string): Promise<Receipt> {
       proposalId: proposal.id,
       status: "executed",
       detail: `Swapped $${sized.usdgIn.toFixed(2)} into ${bin.name} across ${sized.legs.length} leg(s)`,
+      usdgAmount: sized.usdgIn,
       txHash,
     });
   } catch (error) {

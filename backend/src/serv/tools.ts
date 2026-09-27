@@ -45,6 +45,7 @@ export const proposeBinActionTool: ServTool = {
         },
       },
       required: ["binId", "usdgAmount", "reasoning"],
+      additionalProperties: false,
     },
   },
 };

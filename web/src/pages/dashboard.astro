@@ -1,0 +1,1565 @@
+---
+import { isDevAuth } from "shared";
+import AccountCard from "../components/AccountCard.astro";
+import Mark from "../components/Mark.astro";
+import "../styles/landing.css";
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard · OpenCash</title>
+  </head>
+  <body>
+    <div class="gate" data-gate>
+      {isDevAuth && (
+        <p class="gate__dev">
+          DEV MODE — no passkey. This is a shared test account, not yours.
+        </p>
+      )}
+      <a class="wordmark gate__wordmark" href="/"><Mark />open<span>cash</span></a>
+      <h1 class="gate__title">Sign in to trade</h1>
+      <p class="gate__lede">
+        One passkey derives your address. No seed phrase, no password, nothing
+        stored on this device.
+      </p>
+      <div class="gate__actions">
+        <button type="button" data-sign-in class="btn btn--primary">
+          Sign in with passkey
+        </button>
+        <button type="button" data-create class="btn">Create a new account</button>
+        <form class="gate__form" data-create-form hidden>
+          <label class="field">
+            <span>Name</span>
+            <input name="name" type="text" required autocomplete="name" placeholder="Ada Lovelace" />
+          </label>
+          <label class="field">
+            <span>Email</span>
+            <input name="email" type="email" required autocomplete="email" placeholder="ada@example.com" />
+          </label>
+          <button type="submit" class="btn btn--primary">Create passkey</button>
+        </form>
+      </div>
+      <p class="gate__status" data-gate-status role="status"></p>
+    </div>
+
+    <div class="dash" data-dash hidden>
+      <header class="dash__topbar">
+        <a class="wordmark" href="/"><Mark />open<span>cash</span></a>
+        <nav class="dash__tabs" data-tabs role="tablist" aria-label="Dashboard sections">
+          <button data-tab="home" role="tab" aria-selected="true">Home</button>
+          <button data-tab="bins" role="tab" aria-selected="false">Bins</button>
+          <button data-tab="bots" role="tab" aria-selected="false">Bots</button>
+          <button data-tab="trade" role="tab" aria-selected="false">Trade</button>
+          <button data-tab="account" role="tab" aria-selected="false">Account</button>
+        </nav>
+      </header>
+
+      <div class="dash__body">
+        <aside class="dash__card">
+          <div data-card-slot><AccountCard tier="Trader" /></div>
+        </aside>
+
+        <main class="dash__content">
+          <section data-panel="home">
+            <h2 class="panel__title">Home</h2>
+            <div class="card card--stat">
+              <span class="card__label">USDG balance</span>
+              <span class="card__value" data-home-balance>—</span>
+            </div>
+            <div class="quick-grid">
+              <button type="button" class="quick-card" data-goto="bins">
+                <span class="quick-card__title">Open a bin</span>
+                <span class="quick-card__body">Take a whole framing in one swap.</span>
+              </button>
+              <button type="button" class="quick-card" data-goto="trade">
+                <span class="quick-card__title">Trade a stock token</span>
+                <span class="quick-card__body">Search, buy or sell a single symbol.</span>
+              </button>
+              <button type="button" class="quick-card" data-goto="bots">
+                <span class="quick-card__title">Set up a mandate</span>
+                <span class="quick-card__body">Let SERV propose an allocation you approve.</span>
+              </button>
+            </div>
+            <h3 class="panel__subtitle">Open positions</h3>
+            <div data-home-positions class="list list--loading">Loading…</div>
+          </section>
+
+          <section data-panel="bins" hidden>
+            <h2 class="panel__title">Bins</h2>
+            <p class="panel__lede">
+              A bin pools stock tokens around one theme. Fund it once — every
+              leg swaps from USDG in a single passkey signature.
+            </p>
+            <div data-bins-grid class="grid grid--loading">Loading…</div>
+            <div data-bin-detail class="drawer" hidden></div>
+          </section>
+
+          <section data-panel="bots" hidden>
+            <h2 class="panel__title">Bots</h2>
+            <p class="panel__lede">
+              SERV reasons over a mandate you write and proposes an
+              allocation. Every proposal needs your tap to execute — it signs
+              with your own passkey key, the same as any manual trade.
+            </p>
+            <div class="section-row">
+              <span class="panel__label">Mandates</span>
+              <button type="button" class="link-btn" data-toggle-mandate-form>New mandate</button>
+            </div>
+            <form class="card card--form" data-mandate-form hidden>
+              <span class="field__label">Bin</span>
+              <div class="chip-row" data-mandate-bins></div>
+              <label class="field">
+                <span>Policy</span>
+                <textarea name="policyText" rows="3" placeholder="e.g. Allocate in $25 steps only while under budget"></textarea>
+              </label>
+              <label class="field">
+                <span>Lifetime USDG budget</span>
+                <input name="usdgBudget" type="number" min="0" step="any" placeholder="0" />
+              </label>
+              <button type="submit" class="btn btn--primary">Create mandate</button>
+              <p class="form-error" data-mandate-error></p>
+            </form>
+            <div data-mandate-list class="list list--loading">Loading…</div>
+            <div data-mandate-detail class="drawer" hidden></div>
+            <div class="card card--muted">
+              <div class="mark-badge"><Mark /></div>
+              <h3 class="card__title card__title--center">Autonomous mode — not available yet</h3>
+              <p class="card__body card__body--center">
+                Unattended execution (SERV trades without a tap) needs a
+                scoped session key granted through the OpenCashDelegate
+                contract, which isn't deployed to mainnet. Mandates above work
+                today without it — you approve every trade.
+              </p>
+            </div>
+          </section>
+
+          <section data-panel="trade" hidden>
+            <h2 class="panel__title">Trade</h2>
+            <input
+              type="search"
+              class="search-input"
+              placeholder="Search symbol or name"
+              data-trade-search
+              autocomplete="off"
+            />
+            <div class="chip-row" data-trade-category>
+              <button type="button" class="chip chip--active" data-category="all">All</button>
+              <button type="button" class="chip" data-category="held">Held</button>
+            </div>
+            <div data-trade-list class="list list--loading">Loading…</div>
+            <div data-trade-detail class="drawer" hidden></div>
+          </section>
+
+          <section data-panel="account" hidden>
+            <h2 class="panel__title">Account</h2>
+            <div class="card">
+              <label class="field">
+                <span>Name</span>
+                <input type="text" data-profile-name placeholder="Trader" />
+              </label>
+              <label class="field">
+                <span>Email</span>
+                <input type="email" data-profile-email placeholder="you@domain.com" />
+              </label>
+              <div class="btn-row">
+                <button type="button" class="btn btn--primary" data-save-profile>Save profile</button>
+                <button type="button" class="btn" data-shuffle>Shuffle avatar</button>
+              </div>
+            </div>
+            <button type="button" class="btn btn--quiet" data-sign-out>Sign out</button>
+            <p class="account-status" data-account-status role="status"></p>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <style>
+      .gate {
+        min-height: 100vh;
+        display: grid;
+        justify-items: center;
+        align-content: center;
+        gap: 18px;
+        padding: 64px var(--gutter);
+        text-align: center;
+      }
+      .gate__dev {
+        padding: 12px 16px;
+        border-radius: 4px;
+        background: var(--purple);
+        color: #fff;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+      }
+      .gate__wordmark {
+        font-size: 28px;
+        font-weight: 650;
+        letter-spacing: -0.04em;
+      }
+      .gate__wordmark svg {
+        width: 24px;
+        height: 24px;
+        margin-right: 4px;
+      }
+      .gate__title {
+        margin-top: 8px;
+        font-size: clamp(28px, 4vw, 40px);
+        font-weight: 300;
+        letter-spacing: -0.04em;
+      }
+      .gate__lede {
+        max-width: 46ch;
+        font-size: 14px;
+        color: #5c5c5f;
+      }
+      .gate__actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: min(360px, 100%);
+        margin-top: 12px;
+      }
+      .gate__form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 16px;
+        border: 1px dashed var(--line);
+        border-radius: 18px;
+        text-align: left;
+      }
+      .gate__status {
+        min-height: 20px;
+        font-size: 13px;
+        color: #5c5c5f;
+      }
+      .gate__status[data-tone="error"] {
+        color: #b4443a;
+      }
+
+      .btn {
+        padding: 13px 22px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: transparent;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--ink);
+        cursor: pointer;
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+      .btn:hover {
+        border-color: var(--ink);
+      }
+      .btn--primary {
+        border-color: var(--purple);
+        background: var(--purple);
+        color: var(--paper);
+      }
+      .btn--primary:hover {
+        background: #5f52e4;
+      }
+      .btn--primary:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .btn--quiet {
+        border-style: dashed;
+        font-weight: 400;
+      }
+      .btn-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .link-btn {
+        background: none;
+        border: 0;
+        font: inherit;
+        font-size: 13px;
+        color: #4a45c9;
+        cursor: pointer;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .field span,
+      .field__label {
+        font-size: 10px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #5c5c5f;
+      }
+      .field input,
+      .field textarea {
+        padding: 11px 14px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--paper);
+        font: inherit;
+        font-size: 14px;
+        color: var(--ink);
+        resize: vertical;
+      }
+      .field input:focus-visible,
+      .field textarea:focus-visible {
+        outline: 2px solid var(--purple);
+        outline-offset: 2px;
+      }
+      .search-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--paper);
+        font: inherit;
+        font-size: 14px;
+        margin-bottom: 14px;
+      }
+
+      .dash {
+        min-height: 100vh;
+      }
+      .dash__topbar {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 18px var(--gutter);
+        background: rgba(247, 246, 242, 0.92);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line);
+      }
+      .dash__topbar .wordmark {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 20px;
+        font-weight: 650;
+        letter-spacing: -0.04em;
+      }
+      .dash__topbar .wordmark svg {
+        width: 18px;
+        height: 18px;
+        margin-right: 2px;
+      }
+      .dash__tabs {
+        display: flex;
+        gap: 6px;
+        background: #ece9e3;
+        border-radius: 999px;
+        padding: 4px;
+      }
+      .dash__tabs button {
+        border: 0;
+        background: transparent;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 500;
+        color: #5c5c5f;
+        padding: 9px 16px;
+        border-radius: 999px;
+        cursor: pointer;
+      }
+      .dash__tabs button[aria-selected="true"] {
+        background: var(--ink);
+        color: var(--paper);
+      }
+      .dash__body {
+        display: flex;
+        gap: 48px;
+        padding: 40px var(--gutter) 100px;
+        align-items: flex-start;
+        max-width: 1280px;
+        margin: 0 auto;
+      }
+      .dash__card {
+        flex: 0 0 300px;
+        position: sticky;
+        top: 100px;
+      }
+      .dash__content {
+        flex: 1;
+        min-width: 0;
+      }
+      .panel__title {
+        font-size: clamp(26px, 3vw, 36px);
+        font-weight: 300;
+        letter-spacing: -0.04em;
+        margin-bottom: 6px;
+      }
+      .panel__subtitle {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #858589;
+        margin: 24px 0 10px;
+      }
+      .panel__lede {
+        font-size: 14px;
+        line-height: 1.6;
+        color: #5c5c5f;
+        max-width: 60ch;
+        margin-bottom: 20px;
+      }
+      .panel__label {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #858589;
+      }
+      .section-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .card {
+        border-radius: 18px;
+        background: #f0efe9;
+        padding: 20px;
+        margin-bottom: 16px;
+      }
+      .card--stat {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .card--muted {
+        text-align: center;
+      }
+      .card--form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .card__label {
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #858589;
+      }
+      .card__value {
+        font-size: 32px;
+        font-weight: 500;
+        letter-spacing: -0.03em;
+      }
+      .card__title {
+        font-size: 15px;
+        font-weight: 600;
+        margin-top: 10px;
+      }
+      .card__title--center {
+        text-align: center;
+      }
+      .card__body {
+        font-size: 13px;
+        line-height: 1.6;
+        color: #6a686b;
+        margin-top: 6px;
+      }
+      .card__body--center {
+        text-align: center;
+      }
+      .mark-badge {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+        background: var(--ink);
+        color: var(--paper);
+        display: grid;
+        place-items: center;
+        margin: 0 auto;
+      }
+      .mark-badge svg {
+        width: 24px;
+        height: 24px;
+      }
+
+      .quick-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin: 20px 0;
+      }
+      .quick-card {
+        text-align: left;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 16px;
+        background: transparent;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .quick-card:hover {
+        border-color: var(--purple);
+      }
+      .quick-card__title {
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .quick-card__body {
+        font-size: 12px;
+        color: #6a686b;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+      }
+      .bin-card {
+        text-align: left;
+        border-radius: 18px;
+        background: #f0efe9;
+        padding: 18px;
+        border: 0;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .bin-card:hover {
+        outline: 2px solid var(--purple);
+      }
+      .bin-card__name {
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .bin-card__thesis {
+        font-size: 12px;
+        color: #6a686b;
+      }
+      .bin-card__legs {
+        font-size: 11px;
+        color: #858589;
+      }
+
+      .list {
+        border-radius: 18px;
+        background: #f0efe9;
+        overflow: hidden;
+      }
+      .list--loading,
+      .grid--loading {
+        padding: 20px;
+        font-size: 13px;
+        color: #858589;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 16px;
+        cursor: pointer;
+        border-bottom: 1px solid #e2e0d9;
+      }
+      .row:last-child {
+        border-bottom: 0;
+      }
+      .row:hover {
+        background: #e8e6df;
+      }
+      .row__mark {
+        width: 34px;
+        height: 34px;
+        border-radius: 11px;
+        background: #dedbd2;
+        display: grid;
+        place-items: center;
+        font-size: 13px;
+        font-weight: 600;
+        flex-shrink: 0;
+      }
+      .row__identity {
+        flex: 1;
+        min-width: 0;
+      }
+      .row__title {
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .row__subtitle {
+        font-size: 12px;
+        color: #858589;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .row__value {
+        font-size: 13px;
+        font-weight: 500;
+        flex-shrink: 0;
+      }
+      .empty {
+        padding: 20px;
+        font-size: 13px;
+        color: #858589;
+      }
+      .error-text {
+        font-size: 13px;
+        color: #a5382a;
+      }
+
+      .drawer {
+        margin-top: 16px;
+        border-radius: 18px;
+        background: #f7f6f2;
+        border: 1px solid var(--line);
+        padding: 20px;
+      }
+      .drawer__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+      .drawer__title {
+        font-size: 17px;
+        font-weight: 600;
+      }
+      .drawer__close {
+        background: none;
+        border: 0;
+        font-size: 18px;
+        color: #858589;
+        cursor: pointer;
+      }
+
+      .chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .chip {
+        border-radius: 999px;
+        padding: 9px 16px;
+        background: #ece9e3;
+        border: 0;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--ink);
+        cursor: pointer;
+      }
+      .chip--active {
+        background: var(--ink);
+        color: var(--paper);
+      }
+      .mode-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+      .mode-row .chip {
+        flex: 1;
+        text-align: center;
+      }
+
+      .amount-row {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin: 10px 0;
+      }
+      .amount-row input {
+        flex: 1;
+        border: 0;
+        background: transparent;
+        font-size: 34px;
+        font-weight: 300;
+        letter-spacing: -0.03em;
+        color: var(--ink);
+        padding: 0;
+      }
+      .amount-row input:focus-visible {
+        outline: none;
+      }
+      .quote-line {
+        font-size: 13px;
+        color: #6a686b;
+        margin: 4px 0;
+      }
+      .warn-line {
+        font-size: 12px;
+        color: #a5382a;
+        margin: 8px 0;
+      }
+      .status-line {
+        font-size: 13px;
+        color: #6a686b;
+        margin-top: 10px;
+      }
+      .status-line[data-tone="error"] {
+        color: #a5382a;
+      }
+      .form-error {
+        font-size: 12px;
+        color: #a5382a;
+        min-height: 14px;
+      }
+
+      .leg-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        padding: 6px 0;
+        border-top: 1px solid var(--line);
+      }
+      .leg-row:first-child {
+        border-top: 0;
+      }
+
+      .mandate-row {
+        padding: 16px;
+        border-bottom: 1px solid #e2e0d9;
+        cursor: pointer;
+      }
+      .mandate-row:last-child {
+        border-bottom: 0;
+      }
+      .mandate-row:hover {
+        background: #e8e6df;
+      }
+      .mandate-row__bin {
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .mandate-row__policy {
+        font-size: 12px;
+        color: #6a686b;
+        margin-top: 2px;
+      }
+      .mandate-row__budget {
+        font-size: 12px;
+        color: #858589;
+        margin-top: 4px;
+      }
+      .receipt-row {
+        padding: 10px 0;
+        border-top: 1px solid var(--line);
+        font-size: 12px;
+      }
+      .receipt-row:first-child {
+        border-top: 0;
+      }
+      .receipt-row__status {
+        font-weight: 600;
+        text-transform: capitalize;
+      }
+      .receipt-row__detail {
+        color: #6a686b;
+        margin-top: 2px;
+      }
+
+      .account-status {
+        min-height: 20px;
+        font-size: 13px;
+        color: #5c5c5f;
+        margin-top: 12px;
+      }
+
+      @media (max-width: 900px) {
+        .dash__topbar {
+          flex-wrap: wrap;
+          gap: 12px;
+        }
+        .dash__tabs {
+          order: 3;
+          width: 100%;
+          overflow-x: auto;
+        }
+        .dash__body {
+          flex-direction: column;
+          padding-inline: 20px;
+        }
+        .dash__card {
+          position: static;
+          width: 100%;
+          max-width: 320px;
+        }
+        .quick-grid,
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+
+    <script>
+      import { isMeraError } from "@category-labs/mera";
+      import type { BinPosition, TradingAccount } from "shared";
+      import { createAccount, signIn } from "../scripts/mera";
+      import {
+        bins,
+        buyToken,
+        checkTradable,
+        loadPositions,
+        loadTokenHolding,
+        loadTokens,
+        loadTradeAssets,
+        loadUsdgBalance,
+        openBin,
+        quoteSell,
+        quoteTrade,
+        sellToken,
+        sizeBinFor,
+        sizeProposal,
+        type Bin,
+        type EntryStep,
+        type HoodData,
+        type TradeAsset,
+      } from "../scripts/hood";
+      import {
+        createMandate,
+        fetchReceipts,
+        listMandates,
+        proposeAction,
+        type Mandate,
+      } from "../scripts/backend";
+
+      type AvatarModule = typeof import("../lib/avatar");
+      let avatarModule: AvatarModule | null = null;
+      async function avatars(): Promise<AvatarModule> {
+        avatarModule ??= await import("../lib/avatar");
+        return avatarModule;
+      }
+
+      const stepLabels: Record<EntryStep, string> = {
+        approve: "Approving USDG…",
+        swap: "Swapping…",
+      };
+
+      function usd(value: number): string {
+        return `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+      }
+      function initial(text: string): string {
+        return text.slice(0, 1).toUpperCase();
+      }
+
+      // ---- Gate (sign-in) ----
+      const gate = document.querySelector<HTMLElement>("[data-gate]")!;
+      const dash = document.querySelector<HTMLElement>("[data-dash]")!;
+      const gateStatus = document.querySelector<HTMLElement>("[data-gate-status]")!;
+      const gateSignIn = document.querySelector<HTMLButtonElement>("[data-sign-in]")!;
+      const gateCreate = document.querySelector<HTMLButtonElement>("[data-create]")!;
+      const gateCreateForm = document.querySelector<HTMLFormElement>("[data-create-form]")!;
+
+      let trader: TradingAccount | null = null;
+
+      function sayGate(message: string, tone: "info" | "error" = "info") {
+        gateStatus.textContent = message;
+        gateStatus.dataset.tone = tone;
+      }
+
+      function explain(error: unknown): string {
+        if (!isMeraError(error)) {
+          return error instanceof Error ? error.message : "Something went wrong.";
+        }
+        const messages: Record<string, string> = {
+          PRF_UNAVAILABLE:
+            "This passkey cannot derive keys. Try a passkey stored in iCloud Keychain, Google Password Manager or 1Password.",
+          PASSKEY_OPERATION_FAILED: "The passkey prompt was cancelled or unavailable.",
+          CRYPTO_UNAVAILABLE: "This browser is missing a required crypto primitive.",
+        };
+        return messages[error.code] ?? `${error.code}: ${error.message}`;
+      }
+
+      async function enterDashboard(account: TradingAccount) {
+        trader = account;
+        gate.hidden = true;
+        dash.hidden = false;
+
+        const { avatarDataUri, avatarSeed, shortenAddress } = await avatars();
+        const nameEl = document.querySelector<HTMLElement>("[data-account-name]");
+        const addressEl = document.querySelector<HTMLElement>("[data-address-text]");
+        const avatarEl = document.querySelector<HTMLImageElement>("[data-account-avatar]");
+        if (nameEl) nameEl.textContent = "Trader";
+        if (addressEl) addressEl.textContent = shortenAddress(account.address);
+        if (avatarEl) {
+          avatarEl.src = avatarDataUri(avatarSeed(account.address, 0));
+          avatarEl.alt = `Avatar for ${shortenAddress(account.address)}`;
+        }
+
+        initHome();
+      }
+
+      async function run(action: () => Promise<TradingAccount>, pending: string) {
+        sayGate(pending);
+        try {
+          await enterDashboard(await action());
+        } catch (error) {
+          sayGate(explain(error), "error");
+        }
+      }
+
+      gateSignIn.addEventListener("click", () => run(signIn, "Waiting for your passkey…"));
+      gateCreate.addEventListener("click", () => {
+        gateCreateForm.hidden = !gateCreateForm.hidden;
+        if (!gateCreateForm.hidden) gateCreateForm.querySelector("input")?.focus();
+      });
+      gateCreateForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const data = new FormData(gateCreateForm);
+        const name = String(data.get("name") ?? "").trim();
+        const email = String(data.get("email") ?? "").trim();
+        void run(() => createAccount(email, name), "Creating a passkey…");
+      });
+
+      // ---- Tabs ----
+      const tabButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-tab]"));
+      const panels = new Map(
+        Array.from(document.querySelectorAll<HTMLElement>("[data-panel]")).map((el) => [
+          el.dataset.panel!,
+          el,
+        ]),
+      );
+      const loadedPanels = new Set<string>();
+
+      function activateTab(key: string) {
+        for (const button of tabButtons) {
+          const active = button.dataset.tab === key;
+          button.setAttribute("aria-selected", String(active));
+        }
+        for (const [panelKey, el] of panels) {
+          el.hidden = panelKey !== key;
+        }
+        if (!loadedPanels.has(key)) {
+          loadedPanels.add(key);
+          if (key === "bins") void initBins();
+          if (key === "trade") void initTrade();
+          if (key === "bots") void initBots();
+          if (key === "account") void initAccount();
+        }
+      }
+      tabButtons.forEach((button) =>
+        button.addEventListener("click", () => activateTab(button.dataset.tab!)),
+      );
+      document.querySelectorAll<HTMLButtonElement>("[data-goto]").forEach((button) =>
+        button.addEventListener("click", () => activateTab(button.dataset.goto!)),
+      );
+
+      // ---- Shared market data ----
+      let hoodData: HoodData | null = null;
+      let hoodDataPromise: Promise<HoodData> | null = null;
+      function getHoodData(): Promise<HoodData> {
+        hoodDataPromise ??= loadTokens().then((data) => (hoodData = data));
+        return hoodDataPromise;
+      }
+
+      let positionsCache: BinPosition[] | null = null;
+      async function getPositions(force = false): Promise<BinPosition[]> {
+        if (!trader) return [];
+        if (positionsCache && !force) return positionsCache;
+        const data = await getHoodData();
+        positionsCache = await loadPositions(trader.address, data.tokens);
+        return positionsCache;
+      }
+
+      // ---- Home ----
+      async function initHome() {
+        if (!trader) return;
+        const balanceEl = document.querySelector<HTMLElement>("[data-home-balance]")!;
+        const positionsEl = document.querySelector<HTMLElement>("[data-home-positions]")!;
+        loadUsdgBalance(trader.address)
+          .then((balance) => (balanceEl.textContent = usd(balance)))
+          .catch(() => (balanceEl.textContent = "—"));
+
+        try {
+          const positions = await getPositions();
+          if (positions.length === 0) {
+            positionsEl.className = "empty";
+            positionsEl.textContent = "No open positions yet. Open a bin to take a framing.";
+            return;
+          }
+          positionsEl.className = "list";
+          positionsEl.innerHTML = "";
+          for (const position of positions) {
+            const row = document.createElement("div");
+            row.className = "row";
+            row.innerHTML = `
+              <span class="row__mark">${initial(position.bin.name)}</span>
+              <span class="row__identity">
+                <span class="row__title">${position.bin.name}</span>
+                <span class="row__subtitle">${position.legs.map((leg) => leg.symbol).join(" · ")}</span>
+              </span>
+              <span class="row__value">${usd(position.valueUsdg)}</span>
+            `;
+            positionsEl.appendChild(row);
+          }
+        } catch (error) {
+          positionsEl.className = "error-text";
+          positionsEl.textContent = error instanceof Error ? error.message : String(error);
+        }
+      }
+
+      // ---- Bins ----
+      async function initBins() {
+        const grid = document.querySelector<HTMLElement>("[data-bins-grid]")!;
+        const detail = document.querySelector<HTMLElement>("[data-bin-detail]")!;
+        grid.className = "grid";
+        grid.innerHTML = "";
+        for (const bin of bins) {
+          const card = document.createElement("button");
+          card.type = "button";
+          card.className = "bin-card";
+          card.innerHTML = `
+            <span class="bin-card__name">${bin.name}</span>
+            <span class="bin-card__thesis">${bin.thesis}</span>
+            <span class="bin-card__legs">${bin.legs.map((leg) => `${leg.symbol} ${(leg.weightBps / 100).toFixed(0)}%`).join(" · ")}</span>
+          `;
+          card.addEventListener("click", () => openBinDetail(bin, detail));
+          grid.appendChild(card);
+        }
+      }
+
+      function openBinDetail(bin: Bin, detail: HTMLElement) {
+        detail.hidden = false;
+        detail.innerHTML = `
+          <div class="drawer__head">
+            <span class="drawer__title">${bin.name}</span>
+            <button type="button" class="drawer__close" data-close>×</button>
+          </div>
+          <div class="amount-row">
+            <span>$</span>
+            <input type="number" min="0" step="any" placeholder="0" data-bin-amount />
+          </div>
+          <button type="button" class="btn btn--primary" data-bin-size>Size this bin</button>
+          <div data-bin-sizing></div>
+          <p class="status-line" data-bin-status></p>
+        `;
+        detail.querySelector<HTMLButtonElement>("[data-close]")!.addEventListener("click", () => {
+          detail.hidden = true;
+        });
+        const status = detail.querySelector<HTMLElement>("[data-bin-status]")!;
+        const sizingEl = detail.querySelector<HTMLElement>("[data-bin-sizing]")!;
+        const amountInput = detail.querySelector<HTMLInputElement>("[data-bin-amount]")!;
+
+        detail.querySelector<HTMLButtonElement>("[data-bin-size]")!.addEventListener("click", async () => {
+          const amount = Number(amountInput.value);
+          if (!(amount > 0)) {
+            status.textContent = "Enter an amount greater than 0.";
+            status.dataset.tone = "error";
+            return;
+          }
+          status.textContent = "Pricing every leg…";
+          status.dataset.tone = "";
+          sizingEl.innerHTML = "";
+          try {
+            const data = await getHoodData();
+            const { sized, issues } = await sizeBinFor(bin, amount, data.tokens);
+            status.textContent = "";
+            if (sized.legs.length === 0) {
+              sizingEl.innerHTML = `<p class="warn-line">${issues.map((i) => i.detail).join(" · ") || "No legs could be sized."}</p>`;
+              return;
+            }
+            sizingEl.innerHTML =
+              sized.legs
+                .map((leg) => `<div class="leg-row"><span>${leg.leg.symbol}</span><span>${usd(leg.usdgIn)}</span></div>`)
+                .join("") +
+              (issues.length > 0 ? `<p class="warn-line">${issues.map((i) => i.detail).join(" · ")}</p>` : "") +
+              `<button type="button" class="btn btn--primary" data-bin-confirm style="margin-top:12px">Open bin with my passkey</button>`;
+            sizingEl.querySelector<HTMLButtonElement>("[data-bin-confirm]")!.addEventListener("click", async () => {
+              if (!trader) return;
+              const button = sizingEl.querySelector<HTMLButtonElement>("[data-bin-confirm]")!;
+              button.disabled = true;
+              status.dataset.tone = "";
+              try {
+                status.textContent = "Waiting for your passkey…";
+                await openBin(trader, sized, (step) => (status.textContent = stepLabels[step]));
+                status.textContent = `Opened ${bin.name}.`;
+                await getPositions(true);
+                void initHome();
+                void initBins();
+              } catch (error) {
+                status.dataset.tone = "error";
+                status.textContent = error instanceof Error ? error.message : String(error);
+                button.disabled = false;
+              }
+            });
+          } catch (error) {
+            status.dataset.tone = "error";
+            status.textContent = error instanceof Error ? error.message : String(error);
+          }
+        });
+      }
+
+      // ---- Trade ----
+      let tradeAssets: TradeAsset[] | null = null;
+      let tradeQuery = "";
+      let tradeCategory: "all" | "held" = "all";
+
+      async function initTrade() {
+        const listEl = document.querySelector<HTMLElement>("[data-trade-list]")!;
+        const detailEl = document.querySelector<HTMLElement>("[data-trade-detail]")!;
+        const searchInput = document.querySelector<HTMLInputElement>("[data-trade-search]")!;
+        const categoryRow = document.querySelector<HTMLElement>("[data-trade-category]")!;
+
+        searchInput.addEventListener("input", () => {
+          tradeQuery = searchInput.value.trim().toLowerCase();
+          renderTradeList(listEl, detailEl);
+        });
+        categoryRow.querySelectorAll<HTMLButtonElement>("[data-category]").forEach((button) => {
+          button.addEventListener("click", () => {
+            tradeCategory = button.dataset.category as "all" | "held";
+            categoryRow.querySelectorAll("[data-category]").forEach((b) => b.classList.toggle("chip--active", b === button));
+            renderTradeList(listEl, detailEl);
+          });
+        });
+
+        try {
+          const data = await getHoodData();
+          tradeAssets = await loadTradeAssets(data.tokens);
+          renderTradeList(listEl, detailEl);
+        } catch (error) {
+          listEl.className = "error-text";
+          listEl.textContent = error instanceof Error ? error.message : String(error);
+        }
+      }
+
+      function renderTradeList(listEl: HTMLElement, detailEl: HTMLElement) {
+        if (!tradeAssets) return;
+        const heldSymbols = new Set(
+          (positionsCache ?? []).flatMap((position) => position.legs.map((leg) => leg.symbol)),
+        );
+        const filtered = tradeAssets.filter((asset) => {
+          if (tradeCategory === "held" && !heldSymbols.has(asset.token.symbol)) return false;
+          if (tradeQuery === "") return true;
+          return (
+            asset.token.symbol.toLowerCase().includes(tradeQuery) ||
+            asset.token.name.toLowerCase().includes(tradeQuery)
+          );
+        });
+        if (filtered.length === 0) {
+          listEl.className = "empty";
+          listEl.textContent = tradeCategory === "held" ? "No direct holdings from a bin yet." : "No tokens match that search.";
+          return;
+        }
+        listEl.className = "list";
+        listEl.innerHTML = "";
+        for (const asset of filtered) {
+          const row = document.createElement("div");
+          row.className = "row";
+          row.innerHTML = `
+            <span class="row__mark">${initial(asset.token.symbol)}</span>
+            <span class="row__identity">
+              <span class="row__title">${asset.token.symbol}</span>
+              <span class="row__subtitle">${asset.token.name}</span>
+            </span>
+            <span class="row__value">${asset.price === null ? "—" : asset.halted ? "Halted" : usd(asset.price)}</span>
+          `;
+          row.addEventListener("click", () => openTradeDetail(asset, detailEl));
+          listEl.appendChild(row);
+        }
+      }
+
+      const buyPresets = [10, 25, 50, 100];
+      const sellPresetFractions = [0.25, 0.5, 0.75, 1];
+
+      async function openTradeDetail(asset: TradeAsset, detail: HTMLElement) {
+        detail.hidden = false;
+        detail.innerHTML = `
+          <div class="drawer__head">
+            <span class="drawer__title">${asset.token.symbol}</span>
+            <button type="button" class="drawer__close" data-close>×</button>
+          </div>
+          <p class="quote-line" data-holding-line></p>
+          <div class="mode-row">
+            <button type="button" class="chip chip--active" data-mode="buy">Buy</button>
+            <button type="button" class="chip" data-mode="sell">Sell</button>
+          </div>
+          <div data-mode-body></div>
+          <p class="status-line" data-trade-status></p>
+        `;
+        detail.querySelector<HTMLButtonElement>("[data-close]")!.addEventListener("click", () => {
+          detail.hidden = true;
+        });
+
+        if (!trader) return;
+        const holdingLine = detail.querySelector<HTMLElement>("[data-holding-line]")!;
+        const status = detail.querySelector<HTMLElement>("[data-trade-status]")!;
+        const modeBody = detail.querySelector<HTMLElement>("[data-mode-body]")!;
+
+        let mode: "buy" | "sell" = "buy";
+        let pool: unknown = "checking";
+        let holding = { raw: 0n, shares: 0 };
+
+        checkTradable(asset.token)
+          .then((found) => (pool = found))
+          .catch(() => (pool = null));
+        loadTokenHolding(trader.address, asset.token)
+          .then((next) => {
+            holding = next;
+            if (holding.shares > 0) {
+              holdingLine.textContent = `You hold ${holding.shares.toLocaleString(undefined, { maximumFractionDigits: 6 })} ${asset.token.symbol}`;
+            }
+          })
+          .catch(() => {});
+
+        function renderMode() {
+          if (mode === "buy") {
+            modeBody.innerHTML = `
+              <div class="amount-row"><span>$</span><input type="number" min="0" step="any" placeholder="0" data-amount /></div>
+              <div class="chip-row">${buyPresets.map((p) => `<button type="button" class="chip" data-preset="${p}">$${p}</button>`).join("")}</div>
+              <button type="button" class="btn btn--primary" style="margin-top:12px" data-submit>Buy ${asset.token.symbol}</button>
+            `;
+          } else {
+            modeBody.innerHTML = `
+              <div class="amount-row"><input type="number" min="0" step="any" placeholder="0" data-amount /><span>${asset.token.symbol}</span></div>
+              <div class="chip-row">${sellPresetFractions.map((f) => `<button type="button" class="chip" data-preset-fraction="${f}">${f === 1 ? "Max" : `${f * 100}%`}</button>`).join("")}</div>
+              <button type="button" class="btn btn--primary" style="margin-top:12px" data-submit>Sell ${asset.token.symbol}</button>
+            `;
+          }
+          wireMode();
+        }
+
+        function wireMode() {
+          const amountInput = modeBody.querySelector<HTMLInputElement>("[data-amount]")!;
+          modeBody.querySelectorAll<HTMLButtonElement>("[data-preset]").forEach((button) =>
+            button.addEventListener("click", () => (amountInput.value = button.dataset.preset!)),
+          );
+          modeBody.querySelectorAll<HTMLButtonElement>("[data-preset-fraction]").forEach((button) =>
+            button.addEventListener("click", () => {
+              const fraction = Number(button.dataset.presetFraction);
+              amountInput.value = String(holding.shares * fraction);
+            }),
+          );
+          modeBody.querySelector<HTMLButtonElement>("[data-submit]")!.addEventListener("click", async () => {
+            const amount = Number(amountInput.value);
+            if (!(amount > 0)) {
+              status.dataset.tone = "error";
+              status.textContent = "Enter an amount greater than 0.";
+              return;
+            }
+            if (pool === null) {
+              status.dataset.tone = "error";
+              status.textContent = "No onchain market for this token yet.";
+              return;
+            }
+            const button = modeBody.querySelector<HTMLButtonElement>("[data-submit]")!;
+            button.disabled = true;
+            status.dataset.tone = "";
+            try {
+              if (mode === "buy") {
+                status.textContent = "Pricing…";
+                const quote = await quoteTrade(asset.token, amount);
+                if (!quote) throw new Error("No quote available.");
+                status.textContent = "Waiting for your passkey…";
+                await buyToken(trader!, asset.token, amount, quote, (step) => (status.textContent = stepLabels[step]));
+                status.textContent = `Bought ${asset.token.symbol}.`;
+              } else {
+                if (amount > holding.shares) throw new Error("More than you hold.");
+                status.textContent = "Pricing…";
+                const quote = await quoteSell(asset.token, amount);
+                if (!quote) throw new Error("No quote available.");
+                const amountInRaw =
+                  holding.shares > 0
+                    ? (holding.raw * BigInt(Math.round((amount / holding.shares) * 1_000_000))) / 1_000_000n
+                    : 0n;
+                status.textContent = "Waiting for your passkey…";
+                await sellToken(trader!, asset.token, amountInRaw, quote, (step) => (status.textContent = stepLabels[step]));
+                status.textContent = `Sold ${asset.token.symbol}.`;
+              }
+              holding = await loadTokenHolding(trader!.address, asset.token);
+              await getPositions(true);
+              void initHome();
+            } catch (error) {
+              status.dataset.tone = "error";
+              status.textContent = error instanceof Error ? error.message : String(error);
+            } finally {
+              button.disabled = false;
+            }
+          });
+        }
+
+        detail.querySelectorAll<HTMLButtonElement>("[data-mode]").forEach((button) =>
+          button.addEventListener("click", () => {
+            mode = button.dataset.mode as "buy" | "sell";
+            detail.querySelectorAll("[data-mode]").forEach((b) => b.classList.toggle("chip--active", b === button));
+            status.textContent = "";
+            renderMode();
+          }),
+        );
+        renderMode();
+      }
+
+      // ---- Bots ----
+      async function initBots() {
+        if (!trader) return;
+        const bindRow = document.querySelector<HTMLElement>("[data-mandate-bins]")!;
+        const form = document.querySelector<HTMLFormElement>("[data-mandate-form]")!;
+        const toggleButton = document.querySelector<HTMLButtonElement>("[data-toggle-mandate-form]")!;
+        const errorEl = document.querySelector<HTMLElement>("[data-mandate-error]")!;
+        const listEl = document.querySelector<HTMLElement>("[data-mandate-list]")!;
+        const detailEl = document.querySelector<HTMLElement>("[data-mandate-detail]")!;
+
+        let selectedBinId = bins[0].id;
+        bindRow.innerHTML = bins
+          .map((bin, i) => `<button type="button" class="chip${i === 0 ? " chip--active" : ""}" data-bin-choice="${bin.id}">${bin.name}</button>`)
+          .join("");
+        bindRow.querySelectorAll<HTMLButtonElement>("[data-bin-choice]").forEach((button) =>
+          button.addEventListener("click", () => {
+            selectedBinId = button.dataset.binChoice!;
+            bindRow.querySelectorAll("[data-bin-choice]").forEach((b) => b.classList.toggle("chip--active", b === button));
+          }),
+        );
+
+        toggleButton.addEventListener("click", () => {
+          form.hidden = !form.hidden;
+        });
+
+        form.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const data = new FormData(form);
+          const policyText = String(data.get("policyText") ?? "").trim();
+          const usdgBudget = Number(data.get("usdgBudget"));
+          if (policyText === "") {
+            errorEl.textContent = "Describe the policy this mandate should follow.";
+            return;
+          }
+          if (!(usdgBudget > 0)) {
+            errorEl.textContent = "Enter a lifetime USDG budget greater than 0.";
+            return;
+          }
+          errorEl.textContent = "";
+          try {
+            await createMandate({ owner: trader!.address, binId: selectedBinId, policyText, usdgBudget });
+            form.reset();
+            form.hidden = true;
+            void reloadMandates();
+          } catch (error) {
+            errorEl.textContent = error instanceof Error ? error.message : String(error);
+          }
+        });
+
+        async function reloadMandates() {
+          try {
+            const mandates = await listMandates(trader!.address);
+            if (mandates.length === 0) {
+              listEl.className = "empty";
+              listEl.textContent = "No mandates yet.";
+              return;
+            }
+            listEl.className = "list";
+            listEl.innerHTML = "";
+            for (const mandate of mandates) {
+              const bin = bins.find((b) => b.id === mandate.binId);
+              const row = document.createElement("div");
+              row.className = "mandate-row";
+              row.innerHTML = `
+                <div class="mandate-row__bin">${bin?.name ?? mandate.binId}</div>
+                <div class="mandate-row__policy">${mandate.policyText}</div>
+                <div class="mandate-row__budget">Budget $${mandate.usdgBudget}</div>
+              `;
+              row.addEventListener("click", () => openMandateDetail(mandate, detailEl));
+              listEl.appendChild(row);
+            }
+          } catch (error) {
+            listEl.className = "error-text";
+            listEl.textContent = error instanceof Error ? error.message : String(error);
+          }
+        }
+
+        void reloadMandates();
+      }
+
+      async function openMandateDetail(mandate: Mandate, detail: HTMLElement) {
+        const bin = bins.find((b) => b.id === mandate.binId);
+        detail.hidden = false;
+        detail.innerHTML = `
+          <div class="drawer__head">
+            <span class="drawer__title">${bin?.name ?? mandate.binId}</span>
+            <button type="button" class="drawer__close" data-close>×</button>
+          </div>
+          <p class="quote-line">${mandate.policyText}</p>
+          <p class="quote-line">Lifetime budget $${mandate.usdgBudget}</p>
+          <button type="button" class="btn btn--primary" data-get-proposal>Get SERV's proposal</button>
+          <div data-proposal-body></div>
+          <p class="status-line" data-mandate-status></p>
+          <p class="panel__label" style="margin-top:18px">History</p>
+          <div data-receipt-list class="list list--loading">Loading…</div>
+        `;
+        detail.querySelector<HTMLButtonElement>("[data-close]")!.addEventListener("click", () => {
+          detail.hidden = true;
+        });
+
+        const status = detail.querySelector<HTMLElement>("[data-mandate-status]")!;
+        const proposalBody = detail.querySelector<HTMLElement>("[data-proposal-body]")!;
+        const receiptList = detail.querySelector<HTMLElement>("[data-receipt-list]")!;
+
+        async function reloadReceipts() {
+          try {
+            const receipts = await fetchReceipts(mandate.id);
+            if (receipts.length === 0) {
+              receiptList.className = "empty";
+              receiptList.textContent = "No proposals yet.";
+              return;
+            }
+            receiptList.className = "list";
+            receiptList.innerHTML = receipts
+              .map(
+                (receipt) =>
+                  `<div class="receipt-row"><div class="receipt-row__status">${receipt.status}</div><div class="receipt-row__detail">${receipt.detail}</div></div>`,
+              )
+              .join("");
+          } catch {
+            receiptList.className = "empty";
+            receiptList.textContent = "Could not load history.";
+          }
+        }
+        void reloadReceipts();
+
+        detail.querySelector<HTMLButtonElement>("[data-get-proposal]")!.addEventListener("click", async () => {
+          const button = detail.querySelector<HTMLButtonElement>("[data-get-proposal]")!;
+          button.disabled = true;
+          status.dataset.tone = "";
+          status.textContent = "Reasoning over your mandate…";
+          proposalBody.innerHTML = "";
+          try {
+            const proposal = await proposeAction(mandate.id);
+            status.textContent = "";
+            let sizedResult: Awaited<ReturnType<typeof sizeProposal>> = null;
+            if (proposal.usdgAmount > 0) {
+              const data = await getHoodData();
+              sizedResult = await sizeProposal(proposal.binId, proposal.usdgAmount, data.tokens);
+            }
+            const legsHtml =
+              sizedResult && sizedResult.sized.legs.length > 0
+                ? sizedResult.sized.legs
+                    .map((leg) => `<div class="leg-row"><span>${leg.leg.symbol}</span><span>${usd(leg.usdgIn)}</span></div>`)
+                    .join("")
+                : "";
+            const issuesHtml =
+              sizedResult && sizedResult.issues.length > 0
+                ? `<p class="warn-line">${sizedResult.issues.map((i) => i.detail).join(" · ")}</p>`
+                : "";
+            const canExecute = sizedResult !== null && sizedResult.sized.legs.length > 0;
+            proposalBody.innerHTML = `
+              <p class="card__value" style="margin-top:14px">${usd(proposal.usdgAmount)}</p>
+              <p class="quote-line">${proposal.reasoning}</p>
+              ${legsHtml}
+              ${issuesHtml}
+              <button type="button" class="btn btn--primary" style="margin-top:12px" data-execute ${canExecute ? "" : "disabled"}>
+                ${proposal.usdgAmount <= 0 ? "Nothing to execute" : "Execute with my passkey"}
+              </button>
+            `;
+            if (canExecute) {
+              proposalBody.querySelector<HTMLButtonElement>("[data-execute]")!.addEventListener("click", async () => {
+                const execButton = proposalBody.querySelector<HTMLButtonElement>("[data-execute]")!;
+                execButton.disabled = true;
+                try {
+                  status.dataset.tone = "";
+                  status.textContent = "Waiting for your passkey…";
+                  await openBin(trader!, sizedResult!.sized, (step) => (status.textContent = stepLabels[step]));
+                  status.textContent = "Executed.";
+                  proposalBody.innerHTML = "";
+                  await getPositions(true);
+                  void initHome();
+                  void reloadReceipts();
+                } catch (error) {
+                  status.dataset.tone = "error";
+                  status.textContent = error instanceof Error ? error.message : String(error);
+                  execButton.disabled = false;
+                }
+              });
+            }
+            void reloadReceipts();
+          } catch (error) {
+            status.dataset.tone = "error";
+            status.textContent = error instanceof Error ? error.message : String(error);
+          } finally {
+            button.disabled = false;
+          }
+        });
+      }
+
+      // ---- Account ----
+      function initAccount() {
+        if (!trader) return;
+        const nameInput = document.querySelector<HTMLInputElement>("[data-profile-name]")!;
+        const emailInput = document.querySelector<HTMLInputElement>("[data-profile-email]")!;
+        const saveButton = document.querySelector<HTMLButtonElement>("[data-save-profile]")!;
+        const shuffleButton = document.querySelector<HTMLButtonElement>("[data-shuffle]")!;
+        const signOutButton = document.querySelector<HTMLButtonElement>("[data-sign-out]")!;
+        const status = document.querySelector<HTMLElement>("[data-account-status]")!;
+
+        const profileKey = "opencash.profile";
+        type Profile = { name: string; email: string; variant?: number };
+        let variant = 0;
+
+        function loadProfile(): Profile | null {
+          const raw = localStorage.getItem(profileKey);
+          if (raw === null) return null;
+          try {
+            return JSON.parse(trader!.openProfile(JSON.parse(raw)));
+          } catch {
+            return null;
+          }
+        }
+        function saveProfile(value: Profile) {
+          localStorage.setItem(profileKey, JSON.stringify(trader!.sealProfile(JSON.stringify(value))));
+        }
+
+        async function paint() {
+          const { avatarDataUri, avatarSeed, shortenAddress } = await avatars();
+          const nameEl = document.querySelector<HTMLElement>("[data-account-name]");
+          const emailEl = document.querySelector<HTMLElement>("[data-account-email]");
+          const avatarEl = document.querySelector<HTMLImageElement>("[data-account-avatar]");
+          const profile = loadProfile();
+          variant = profile?.variant ?? 0;
+          nameInput.value = profile?.name ?? "";
+          emailInput.value = profile?.email ?? "";
+          if (nameEl) nameEl.textContent = profile?.name || "Trader";
+          if (emailEl) emailEl.textContent = profile?.email ?? "";
+          if (avatarEl) {
+            avatarEl.src = avatarDataUri(avatarSeed(trader!.address, variant));
+            avatarEl.alt = `Avatar for ${shortenAddress(trader!.address)}`;
+          }
+        }
+        void paint();
+
+        saveButton.addEventListener("click", () => {
+          saveProfile({ name: nameInput.value.trim(), email: emailInput.value.trim(), variant });
+          status.textContent = "Saved on this device, encrypted with a key only your passkey derives.";
+          void paint();
+        });
+        shuffleButton.addEventListener("click", () => {
+          variant = (variant + 1) % 12;
+          const profile = loadProfile();
+          saveProfile({ name: profile?.name ?? "", email: profile?.email ?? "", variant });
+          void paint();
+        });
+        signOutButton.addEventListener("click", () => {
+          trader?.end();
+          trader = null;
+          dash.hidden = true;
+          gate.hidden = false;
+          sayGate("Signed out. The derived key was zeroed.");
+        });
+
+        document.querySelector<HTMLButtonElement>("[data-copy]")?.addEventListener("click", async () => {
+          if (!trader) return;
+          await navigator.clipboard.writeText(trader.address);
+          const hint = document.querySelector<HTMLElement>("[data-copy-hint]");
+          if (hint) {
+            hint.textContent = "Copied";
+            setTimeout(() => (hint.textContent = "Copy"), 1400);
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

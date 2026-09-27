@@ -18,6 +18,16 @@ export type HoodQuote = {
   price: number;
 };
 
+export type HoodSellQuote = {
+  token: Address;
+  fee: number;
+  pool: Address;
+  tokensIn: number;
+  amountOut: bigint;
+  usdgOut: number;
+  price: number;
+};
+
 export async function findDeepestPool(
   client: PublicClient,
   token: Address,
@@ -58,21 +68,32 @@ export async function quoteUsdgToToken(
   if (!found) return null;
 
   const amountIn = toScaled(usdgIn, hoodMainnet.usdgDecimals);
-  const { result } = await client.simulateContract({
-    address: hoodMainnet.quoterV2,
-    abi: quoterV2Abi,
-    functionName: "quoteExactInputSingle",
-    args: [
-      {
-        tokenIn: hoodMainnet.usdg,
-        tokenOut: token,
-        amountIn,
-        fee: found.fee,
-        sqrtPriceLimitX96: 0n,
-      },
-    ],
-  });
-  const [amountOut] = result;
+
+  // A deployed-but-empty pool (real on Robinhood Chain — several Stock
+  // Tokens have pool contracts with zero liquidity) makes the quoter revert
+  // rather than return 0. Callers treat "no usable quote" as null, not a
+  // crash, the same way "no pool at all" already is.
+  let amountOut: bigint;
+  try {
+    const { result } = await client.simulateContract({
+      address: hoodMainnet.quoterV2,
+      abi: quoterV2Abi,
+      functionName: "quoteExactInputSingle",
+      args: [
+        {
+          tokenIn: hoodMainnet.usdg,
+          tokenOut: token,
+          amountIn,
+          fee: found.fee,
+          sqrtPriceLimitX96: 0n,
+        },
+      ],
+    });
+    amountOut = result[0];
+  } catch {
+    return null;
+  }
+
   const tokensOut = fromScaled(amountOut, tokenDecimals);
 
   return {
@@ -83,5 +104,51 @@ export async function quoteUsdgToToken(
     amountOut,
     tokensOut,
     price: tokensOut > 0 ? usdgIn / tokensOut : 0,
+  };
+}
+
+export async function quoteTokenToUsdg(
+  client: PublicClient,
+  token: Address,
+  tokensIn: number,
+  tokenDecimals: number,
+  pool?: HoodPool,
+): Promise<HoodSellQuote | null> {
+  const found = pool ?? (await findDeepestPool(client, token));
+  if (!found) return null;
+
+  const amountIn = toScaled(tokensIn, tokenDecimals);
+
+  let amountOut: bigint;
+  try {
+    const { result } = await client.simulateContract({
+      address: hoodMainnet.quoterV2,
+      abi: quoterV2Abi,
+      functionName: "quoteExactInputSingle",
+      args: [
+        {
+          tokenIn: token,
+          tokenOut: hoodMainnet.usdg,
+          amountIn,
+          fee: found.fee,
+          sqrtPriceLimitX96: 0n,
+        },
+      ],
+    });
+    amountOut = result[0];
+  } catch {
+    return null;
+  }
+
+  const usdgOut = fromScaled(amountOut, hoodMainnet.usdgDecimals);
+
+  return {
+    token,
+    fee: found.fee,
+    pool: found.pool,
+    tokensIn,
+    amountOut,
+    usdgOut,
+    price: tokensIn > 0 ? usdgOut / tokensIn : 0,
   };
 }

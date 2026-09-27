@@ -315,6 +315,9 @@ import "../styles/landing.css";
             ? "Signed in. This device has no profile yet — save one below. Your address is already correct."
             : "Signed in. Your profile was decrypted locally; the key came from your passkey.",
         );
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 700);
       }
 
       function signOut() {

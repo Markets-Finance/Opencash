@@ -11,8 +11,6 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { isAddress, type Address } from "viem";
 import { delegateAddress, type TradingAccount } from "shared";
-import { DashedRule } from "../components/DashedRule";
-import { SectionLabel } from "../components/SectionLabel";
 import {
   authorizeAgent,
   isDelegated,
@@ -21,7 +19,7 @@ import {
   scopeSummary,
   type AgentSession,
 } from "../lib/agent";
-import { color, family, radius, space, track } from "../theme";
+import { family, space, track } from "../theme";
 
 type AuthorizeAgentProps = {
   trader: TradingAccount;
@@ -110,217 +108,237 @@ export function AuthorizeAgent({ trader, onBack }: AuthorizeAgentProps) {
   }
 
   return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={[
-        styles.content,
-        { paddingTop: insets.top + space.xl, paddingBottom: insets.bottom + space.section },
-      ]}
-      keyboardShouldPersistTaps="handled"
-    >
-      <Pressable onPress={onBack} hitSlop={12}>
-        <Text style={styles.back}>← Account</Text>
-      </Pressable>
+    <View style={styles.screen}>
+      <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
+        <Pressable onPress={onBack} hitSlop={12} style={styles.iconButton}>
+          <Text style={styles.back}>←</Text>
+        </Pressable>
+        <Text style={styles.heading}>Agent access</Text>
+        <View style={styles.iconButton} />
+      </View>
 
-      <SectionLabel>AGENT ACCESS</SectionLabel>
-      <Text style={styles.title}>Let a SERV agent act for you.</Text>
-      <Text style={styles.subtitle}>
-        This grants a session key the right to spend USDG on your behalf,
-        scoped to exactly two calls, until it expires or you revoke it. Your
-        passkey signs the grant; the agent never sees it.
-      </Text>
-
-      {!delegateAddress ? (
-        <Text style={styles.issue}>
-          The OpenCashDelegate contract has not been deployed to Robinhood
-          Chain yet, so this screen cannot do anything yet.
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + space.section }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.subtitle}>
+          This grants a session key the right to spend USDG on your behalf,
+          scoped to exactly two calls, until it expires or you revoke it. Your
+          passkey signs the grant; the agent never sees it.
         </Text>
-      ) : (
-        <>
-          <DashedRule />
 
-          <Text style={styles.fieldLabel}>Agent address</Text>
-          <TextInput
-            value={agentAddress}
-            onChangeText={setAgentAddress}
-            placeholder="0x…"
-            placeholderTextColor="#b6b4b0"
-            autoCapitalize="none"
-            autoCorrect={false}
-            style={styles.input}
-          />
-
-          <Text style={styles.fieldLabel}>Expires in</Text>
-          <View style={styles.presets}>
-            {durationPresets.map((preset) => (
-              <Pressable
-                key={preset.label}
-                onPress={() => setDuration(preset.seconds)}
-                style={({ pressed }) => [
-                  styles.chip,
-                  duration === preset.seconds && styles.chipActive,
-                  pressed && styles.chipPressed,
-                ]}
-              >
-                <Text style={styles.chipLabel}>{preset.label}</Text>
-              </Pressable>
-            ))}
+        {!delegateAddress ? (
+          <View style={styles.warnCard}>
+            <Text style={styles.warnText}>
+              The OpenCashDelegate contract has not been deployed to Robinhood
+              Chain yet, so this screen cannot do anything yet.
+            </Text>
           </View>
+        ) : (
+          <>
+            <View style={styles.card}>
+              <Text style={styles.fieldLabel}>Agent address</Text>
+              <TextInput
+                value={agentAddress}
+                onChangeText={setAgentAddress}
+                placeholder="0x…"
+                placeholderTextColor="#b3b3b6"
+                autoCapitalize="none"
+                autoCorrect={false}
+                style={styles.input}
+              />
 
-          <DashedRule />
+              <Text style={styles.fieldLabel}>Expires in</Text>
+              <View style={styles.presets}>
+                {durationPresets.map((preset) => (
+                  <Pressable
+                    key={preset.label}
+                    onPress={() => setDuration(preset.seconds)}
+                    style={({ pressed }) => [
+                      styles.chip,
+                      duration === preset.seconds && styles.chipActive,
+                      pressed && styles.chipPressed,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.chipLabel,
+                        duration === preset.seconds && styles.chipLabelActive,
+                      ]}
+                    >
+                      {preset.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
 
-          <Text style={styles.fieldLabel}>This grant allows</Text>
-          {scopeSummary().map((line) => (
-            <Text key={line} style={styles.scopeLine}>
-              · {line}
-            </Text>
-          ))}
+            <View style={styles.card}>
+              <Text style={styles.fieldLabel}>This grant allows</Text>
+              {scopeSummary().map((line) => (
+                <Text key={line} style={styles.scopeLine}>
+                  · {line}
+                </Text>
+              ))}
 
-          {session !== null && (
-            <Text style={styles.sessionState}>
-              {session.active
-                ? `Currently authorized until ${formatExpiry(session.expiry)}.`
-                : session.revoked
-                  ? "Currently revoked."
-                  : "No active grant for this address yet."}
-            </Text>
-          )}
-          {delegated === false && (
-            <Text style={styles.sessionState}>
-              Your account has not enabled agent delegation yet — authorizing
-              will do that in the same transaction.
-            </Text>
-          )}
+              {session !== null && (
+                <Text style={styles.sessionState}>
+                  {session.active
+                    ? `Currently authorized until ${formatExpiry(session.expiry)}.`
+                    : session.revoked
+                      ? "Currently revoked."
+                      : "No active grant for this address yet."}
+                </Text>
+              )}
+              {delegated === false && (
+                <Text style={styles.sessionState}>
+                  Your account has not enabled agent delegation yet — authorizing
+                  will do that in the same transaction.
+                </Text>
+              )}
+            </View>
 
-          <DashedRule />
-
-          <Pressable
-            disabled={!validAddress || busy}
-            onPress={() => void submitAuthorize()}
-            style={({ pressed }) => [
-              styles.cta,
-              (!validAddress || busy) && styles.ctaDisabled,
-              pressed && styles.ctaPressed,
-            ]}
-          >
-            {busy ? (
-              <ActivityIndicator color={color.paper} />
-            ) : (
-              <Text style={styles.ctaLabel}>
-                {validAddress ? "Authorize agent" : "Enter a valid address"}
-              </Text>
-            )}
-          </Pressable>
-
-          {session?.active && (
             <Pressable
-              disabled={busy}
-              onPress={() => void submitRevoke()}
-              style={({ pressed }) => [styles.revoke, pressed && styles.revokePressed]}
+              disabled={!validAddress || busy}
+              onPress={() => void submitAuthorize()}
+              style={({ pressed }) => [
+                styles.primaryButton,
+                (!validAddress || busy) && styles.primaryButtonDisabled,
+                pressed && styles.primaryButtonPressed,
+              ]}
             >
-              <Text style={styles.revokeLabel}>Revoke access</Text>
+              {busy ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text
+                  style={[
+                    styles.primaryLabel,
+                    !validAddress && styles.primaryLabelDisabled,
+                  ]}
+                >
+                  {validAddress ? "Authorize agent" : "Enter a valid address"}
+                </Text>
+              )}
             </Pressable>
-          )}
 
-          {status !== null && (
-            <Text style={[styles.status, failed && styles.statusFailed]}>{status}</Text>
-          )}
-        </>
-      )}
-    </ScrollView>
+            {session?.active && (
+              <Pressable
+                disabled={busy}
+                onPress={() => void submitRevoke()}
+                style={({ pressed }) => [styles.revoke, pressed && styles.revokePressed]}
+              >
+                <Text style={styles.revokeLabel}>Revoke access</Text>
+              </Pressable>
+            )}
+
+            {status !== null && (
+              <Text style={[styles.status, failed && styles.statusFailed]}>{status}</Text>
+            )}
+          </>
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: color.paper },
-  content: { paddingHorizontal: space.xl, gap: space.lg },
-  back: {
-    fontFamily: family.regular,
-    fontSize: 13,
-    color: color.purpleLabel,
-    marginBottom: space.md,
+  screen: { flex: 1, backgroundColor: "#ededed" },
+  header: {
+    paddingHorizontal: space.lg,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
-  title: {
-    fontFamily: family.light,
-    fontSize: 28,
-    lineHeight: 28 * 1.2,
-    letterSpacing: track(28, -0.04),
-    color: color.ink,
+  heading: {
+    fontFamily: family.semibold,
+    fontSize: 19,
+    letterSpacing: track(19, -0.03),
+    color: "#0c0c0c",
   },
+  iconButton: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: "#f8f8f8",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  back: { fontFamily: family.regular, fontSize: 22, color: "#55555a" },
+  content: { padding: space.lg, gap: space.lg },
   subtitle: {
-    fontFamily: family.light,
+    fontFamily: family.regular,
     fontSize: 14,
     lineHeight: 14 * 1.6,
-    color: "#6f6d6a",
+    color: "#77777a",
   },
+  card: { padding: space.lg, borderRadius: 18, backgroundColor: "#fafafa", gap: space.sm },
   fieldLabel: {
     fontFamily: family.medium,
     fontSize: 11,
     letterSpacing: track(11, 0.12),
-    color: "#8a8884",
+    color: "#858589",
   },
   input: {
     paddingVertical: space.md,
     paddingHorizontal: space.lg,
-    borderRadius: radius,
-    borderWidth: 1,
-    borderColor: color.line,
+    borderRadius: 14,
+    backgroundColor: "#f0f0f0",
     fontFamily: family.regular,
     fontSize: 15,
-    color: color.ink,
+    color: "#131315",
   },
   presets: { flexDirection: "row", gap: space.sm },
   chip: {
-    borderWidth: 1,
-    borderColor: color.line,
-    borderRadius: radius,
+    borderRadius: 999,
     paddingVertical: space.sm,
     paddingHorizontal: space.md,
+    backgroundColor: "#f0f0f0",
   },
-  chipActive: { borderColor: color.purple },
+  chipActive: { backgroundColor: "#090909" },
   chipPressed: { opacity: 0.8 },
-  chipLabel: { fontFamily: family.regular, fontSize: 13, color: color.ink },
+  chipLabel: { fontFamily: family.medium, fontSize: 13, color: "#131315" },
+  chipLabelActive: { color: "#fff" },
   scopeLine: {
-    fontFamily: family.light,
+    fontFamily: family.regular,
     fontSize: 12,
     lineHeight: 12 * 1.6,
-    color: "#6f6d6a",
+    color: "#4e4e51",
   },
   sessionState: {
-    fontFamily: family.light,
+    fontFamily: family.regular,
     fontSize: 12,
     lineHeight: 12 * 1.6,
-    color: color.purpleLabel,
+    color: "#858589",
   },
-  issue: {
-    fontFamily: family.light,
+  warnCard: { padding: space.lg, borderRadius: 18, backgroundColor: "#fdeceb" },
+  warnText: {
+    fontFamily: family.regular,
     fontSize: 13,
     lineHeight: 13 * 1.6,
     color: "#a5382a",
   },
-  cta: {
-    backgroundColor: color.purple,
-    borderRadius: radius,
-    paddingVertical: space.lg,
+  primaryButton: {
+    minHeight: 60,
+    borderRadius: 30,
+    backgroundColor: "#050505",
     alignItems: "center",
+    justifyContent: "center",
   },
-  ctaDisabled: { backgroundColor: "#e6e4e0" },
-  ctaPressed: { opacity: 0.9 },
-  ctaLabel: { fontFamily: family.medium, fontSize: 15, color: color.paper },
+  primaryButtonDisabled: { backgroundColor: "#dcdcdc" },
+  primaryButtonPressed: { opacity: 0.85 },
+  primaryLabel: { fontFamily: family.medium, fontSize: 15, color: "#fff" },
+  primaryLabelDisabled: { color: "#8a8a8d" },
   revoke: {
-    borderRadius: radius,
+    minHeight: 52,
+    borderRadius: 26,
     borderWidth: 1,
-    borderColor: color.line,
-    paddingVertical: space.md,
+    borderColor: "#d7d5d1",
     alignItems: "center",
+    justifyContent: "center",
   },
   revokePressed: { borderColor: "#a5382a" },
-  revokeLabel: { fontFamily: family.regular, fontSize: 14, color: "#a5382a" },
-  status: {
-    fontFamily: family.light,
-    fontSize: 12,
-    lineHeight: 12 * 1.6,
-    color: color.purpleLabel,
-  },
+  revokeLabel: { fontFamily: family.medium, fontSize: 14, color: "#a5382a" },
+  status: { fontFamily: family.regular, fontSize: 13, color: "#4e4e51" },
   statusFailed: { color: "#a5382a" },
 });

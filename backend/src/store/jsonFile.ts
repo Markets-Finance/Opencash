@@ -41,4 +41,10 @@ export class JsonFileStore<T> {
     map.set(id, value);
     await this.persist();
   }
+
+  async delete(id: string): Promise<void> {
+    const map = await this.load();
+    map.delete(id);
+    await this.persist();
+  }
 }

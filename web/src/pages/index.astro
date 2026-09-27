@@ -3,15 +3,15 @@ import "../styles/landing.css";
 import Mark from "../components/Mark.astro";
 const stages = [
   {
-    name: "Collateral",
+    name: "Fund",
     description:
-      "Supply gAUSD, vUSD or PT-AUSD. It keeps earning while it backs the position.",
+      "Hold USDG on Robinhood Chain. It's the balance every swap starts from.",
     position: "issue",
   },
   {
-    name: "Notional",
+    name: "Swap",
     description:
-      "Size is margin × leverage. Nothing is lent and no interest accrues.",
+      "Every trade is a spot swap through Uniswap V3. You own the shares outright — nothing is borrowed.",
     position: "verify",
   },
   {
@@ -29,31 +29,31 @@ const stages = [
 ];
 const applications = [
   {
-    id: "notional",
-    tab: "Notional trading",
-    audience: "FOR LEVERAGE",
-    title: "Size without borrowing.",
-    text: "Notional is margin × leverage — accounting, not a loan. Nothing is lent, no interest accrues, and there is no lending pool on the critical path.",
+    id: "spot",
+    tab: "Stock tokens",
+    audience: "FOR DIRECT TRADES",
+    title: "Own the share outright.",
+    text: "Every symbol is a real ERC-20 tracking its equity or ETF, swapped against USDG through Uniswap V3. No margin, no borrowing, no lending pool.",
     image: "skyline",
-    label: "NOTIONAL / MARGIN × LEVERAGE",
+    label: "STOCK TOKENS / SPOT SWAPS",
     facts: [
-      ["Size", "margin × leverage"],
+      ["Settlement", "Onchain, spot"],
       ["Borrowed", "Nothing"],
-      ["Liquidation", "Euler's engine, not ours"],
+      ["Custody", "Your own passkey key"],
     ],
   },
   {
-    id: "collateral",
-    tab: "Idle collateral",
-    audience: "FOR gAUSD & vUSD HOLDERS",
-    title: "Margin that never stops earning.",
-    text: "Collateral stays in the Euler vault it already sits in, under your own sub-account. The yield keeps running for as long as the position is open.",
+    id: "usdg",
+    tab: "USDG balance",
+    audience: "FOR EVERY TRADE",
+    title: "One balance funds every swap.",
+    text: "Hold USDG on Robinhood Chain and it's ready to swap into any bin or any single stock token — no separate collateral step, nothing locked up first.",
     image: "skyline",
-    label: "COLLATERAL / EULER VAULTS",
+    label: "USDG / TRADING BALANCE",
     facts: [
-      ["Accepted", "gAUSD · vUSD · PT-AUSD"],
-      ["Held in", "Euler vaults, your sub-account"],
-      ["Yield", "Runs while the position is open"],
+      ["Asset", "USDG"],
+      ["Used for", "Every swap"],
+      ["Idle yield", "None — plain balance"],
     ],
   },
   {
@@ -61,13 +61,13 @@ const applications = [
     tab: "Bins",
     audience: "FOR ANYONE WITH A VIEW",
     title: "The framing is the instrument.",
-    text: "A bin pools assets around one theme — AI capex, a name in the headlines, gold against the dollar — with analytics on every pool. Institutions size into a framing, or out of it, in a single call.",
+    text: "A bin pools stock tokens around one theme — AI capex, a name in the headlines, a sector call — with a swap sized per leg. Take a whole framing, or size out of it, in a single call.",
     image: "skyline-bins",
     label: "THEMATIC BINS / POOLED FRAMING",
     facts: [
       ["Composition", "Pooled around one theme"],
-      ["Pricing", "Each leg on its own venue"],
-      ["Feeds", "Official markets only"],
+      ["Pricing", "Each leg quoted live off Uniswap V3"],
+      ["Feeds", "Official Robinhood markets"],
     ],
   },
 ];
@@ -80,18 +80,18 @@ const applications = [
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="OpenCash is a mobile trading terminal on Monad. Collateral keeps earning in Euler vaults, notional is accounting rather than debt, and bins turn a narrative into one position."
+      content="OpenCash is a mobile trading terminal on Robinhood Chain. Every trade is a spot swap against USDG — nothing is borrowed — and bins turn a narrative into one position."
     />
     <meta name="author" content="Daiwik Maheshwari" />
     <meta name="creator" content="Daiwik Maheshwari" />
     <meta name="publisher" content="OpenCash" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="OpenCash" />
-    <meta property="og:title" content="OpenCash — Mobile trading on Monad" />
-    <meta property="og:description" content="Collateral that keeps earning, notional that borrows nothing, and thematic bins — in one mobile terminal on Monad." />
+    <meta property="og:title" content="OpenCash — Mobile trading on Robinhood Chain" />
+    <meta property="og:description" content="Spot stock-token swaps that borrow nothing, and thematic bins — in one mobile terminal on Robinhood Chain." />
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="OpenCash — Mobile trading on Monad" />
-    <meta name="twitter:description" content="Collateral that keeps earning, notional that borrows nothing, and thematic bins — in one mobile terminal on Monad." />
+    <meta name="twitter:title" content="OpenCash — Mobile trading on Robinhood Chain" />
+    <meta name="twitter:description" content="Spot stock-token swaps that borrow nothing, and thematic bins — in one mobile terminal on Robinhood Chain." />
     <meta name="theme-color" content="#191a1c" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link
@@ -102,7 +102,7 @@ const applications = [
       crossorigin
     />
     <link rel="preload" href="/images/skyline.webp" as="image" />
-    <title>OpenCash — Mobile trading on Monad</title>
+    <title>OpenCash — Mobile trading on Robinhood Chain</title>
   </head>
   <body>
     <!-- THESIS: Reveal the market beneath the real world through an interactive photographic canvas.
@@ -125,12 +125,13 @@ const applications = [
         >
         <div class="nav-links" id="nav-links">
           <a href="#home" class="active">Home</a><a href="#assets">Bins</a
-          ><a href="#platform">Platform</a><a href="#about">About</a>
+          ><a href="#platform">Platform</a><a href="#about">About</a
+          ><a href="/account">Sign in</a>
         </div>
-        <a class="nav-cta" href="#waitlist"
+        <a class="nav-cta" href="/account"
           ><svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"
             ><path d="M4 12h15m-6-6 6 6-6 6"></path></svg
-          > Join waitlist</a
+          > Launch app</a
         >
       </nav>
     </header>
@@ -152,7 +153,7 @@ const applications = [
         <canvas class="scan-canvas" aria-hidden="true"></canvas>
         <div class="hero-heading">
           <h1>Trade everything.<br class="mobile-break" /> Borrow nothing.</h1><p>
-            A full mobile trading terminal on Monad. Size is notional, not debt — and your margin comes from gAUSD and vUSD already earning in Euler.
+            A full mobile trading terminal on Robinhood Chain. Every trade is a spot swap — you own the shares outright, and nothing is ever borrowed.
           </p>
         </div>
         <div class="scan-controls">
@@ -179,8 +180,8 @@ const applications = [
         </h2>
         <div class="intro-bottom">
           <span class="section-name"><i></i> WHY OPENCASH</span><p>
-            A full trading interface on Monad, where notional is accounting rather
-            than debt, margin comes from assets already earning, and a bin takes a whole framing in one call.
+            A full trading interface on Robinhood Chain, where every trade is a
+            spot swap against USDG, nothing is ever borrowed, and a bin takes a whole framing in one call.
           </p>
         </div>
         <span class="frame-node left"></span><span class="frame-node right"
@@ -239,15 +240,15 @@ const applications = [
       >
         <div class="section-heading">
           <h2 id="connection-title">
-            From idle collateral<br />to an open position.
+            From a USDG balance<br />to an open position.
           </h2><p>
-            OpenCash sits between Euler's vaults and Monad's venues. Notional is
-            accounting rather than debt, margin keeps earning while it backs you, and every call is signed by your own passkey.
+            OpenCash sits between your USDG balance and Robinhood Chain's
+            Uniswap venues. Every swap is spot — nothing is lent, nothing accrues interest — and every call is signed by your own passkey.
           </p>
         </div>
         <div
           class="connection-graphic"
-          aria-label="Collateral connects to notional sizing, thematic bins, and passkey-signed settlement"
+          aria-label="USDG balance connects to spot stock swaps, thematic bins, and passkey-signed settlement"
         >
           <svg
             class="connection-lines"
@@ -264,9 +265,9 @@ const applications = [
               <i></i><i></i><i></i>
             </div><Mark class="center-mark" /><strong>open</strong><span>CASH</span>
           </div>
-          <span class="connection-label top-left">Yield-bearing collateral</span
+          <span class="connection-label top-left">USDG balance</span
           ><span class="connection-label bottom-left"
-            >Unbacked notional</span
+            >Spot stock swaps</span
           ><span class="connection-label top-right">Thematic bins</span
           ><span class="connection-label bottom-right"
             >Passkey-signed calls</span
@@ -274,8 +275,8 @@ const applications = [
         </div>
         <div class="tech-strip">
           <span>BUILT ON</span><span class="chain-mark"
-            ><b>Monad</b></span
-          ><span>Euler vaults</span><span
+            ><b>Robinhood Chain</b></span
+          ><span>Uniswap V3</span><span
             >Passkey signing ↗</span>
         </div>
       </section>
@@ -288,8 +289,8 @@ const applications = [
           <h2 id="applications-title">
             Trade a market.<br />Or a whole framing.
           </h2><p>
-            Notional sizing that borrows nothing, margin drawn from assets already
-            earning, and bins that pool a theme into one position.
+            Spot swaps that borrow nothing, a single USDG balance that funds
+            every trade, and bins that pool a theme into one position.
           </p>
         </div>
         <div
@@ -373,7 +374,7 @@ const applications = [
           <h2 id="demo-title">See a position form.<br />Make the next move.</h2><p
           >
             A small, interactive look at the terminal we’re building. Walk a
-            sample bin from idle collateral to a signed call.
+            sample bin from a USDG balance to a signed call.
           </p>
         </div>
         <div class="demo-workspace">
@@ -394,9 +395,9 @@ const applications = [
             <ol class="workflow-steps">
               {
                 [
-                  "Supply idle collateral",
+                  "Fund with USDG",
                   "Pick a bin",
-                  "Set the notional",
+                  "Set the size",
                   "Sign with your passkey",
                 ].map((step, i) => (
                   <li data-demo-step={i} class={i === 0 ? "current" : ""}>
@@ -412,7 +413,7 @@ const applications = [
               }
             </ol><div class="demo-next">
               <p id="demo-description" aria-live="polite">
-                Start with gAUSD already earning in an Euler vault.
+                Start with USDG on Robinhood Chain.
               </p><button class="dark-button" id="demo-advance"
                 ><span>Pick a bin</span><svg
                   class="arrow"
@@ -429,7 +430,7 @@ const applications = [
         <div class="section-heading">
           <h2>One terminal.<br />Every leg connected.</h2><p>
             For traders, bin builders, and developers composing positions across
-            Monad's venues.
+            Robinhood Chain's venues.
           </p>
         </div>
         <div class="access-columns">
@@ -445,7 +446,7 @@ const applications = [
             <span class="small-label">DEVELOPER INFRASTRUCTURE</span><h3>
               Compose the legs.<br />Keep your own keys.
             </h3><p>
-              Build against an EIP-7702 delegate on Monad. A passkey authorises a
+              Build against an EIP-7702 delegate on Robinhood Chain. A passkey authorises a
               session key scoped to named targets and selectors; OpenCash never receives a private key.
             </p><details>
               <summary
@@ -453,8 +454,8 @@ const applications = [
                 ></summary
               ><div class="integration-details">
                 <p>
-                  <code>OpenCashDelegate</code> verifies a WebAuthn assertion on
-                  the P-256 precompile, then executes a batch of calls. Anything outside an
+                  <code>OpenCashDelegate</code> verifies a WebAuthn assertion in
+                  pure Solidity (Robinhood Chain has no P-256 precompile yet), then executes a batch of calls. Anything outside an
                   authorised scope is unreachable.
                 </p><code
                   >authorizeSession(key, expiry, targets[], selectors[])<br
@@ -489,8 +490,16 @@ const applications = [
           <h2 id="closing-title">
             Every market.<br />One call.
           </h2><p class="closing-lede">
-            OpenCash is not open yet. Leave an email and you will be told the day it is.
-          </p><form class="waitlist" id="waitlist-form" method="post" action="/waitlist">
+            OpenCash is in early access. Sign in with a passkey to start
+            trading, or leave an email and you'll be told when more opens up.
+          </p><a class="light-button" href="/account"
+            >Sign in with passkey <svg
+              class="arrow"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              ><path d="M4 12h15m-6-6 6 6-6 6"></path></svg
+            ></a
+          ><form class="waitlist" id="waitlist-form" method="post" action="/waitlist">
             <label class="visually-hidden" for="waitlist-email"
               >Email address</label
             ><input
@@ -515,7 +524,7 @@ const applications = [
     <footer class="site-footer">
       <div class="footer-top">
         <a class="wordmark" href="#home"><Mark />open<span>cash</span></a><p>
-          A full mobile trading terminal on Monad. Notional sizing, never debt.
+          A full mobile trading terminal on Robinhood Chain. Spot swaps, never debt.
         </p><div>
           <a href="#assets">Bins</a><a href="#platform">Platform</a><a
             href="#network">Developers</a
@@ -525,7 +534,7 @@ const applications = [
         Trade everything.<br /><span>Borrow nothing.</span>
       </div><div class="footer-bottom">
         <span>© {new Date().getFullYear()} OpenCash</span><span
-          >In development · Monad Testnet</span
+          >Early access · Robinhood Chain</span
         ><a href="#home">Back to top ↑</a>
       </div>
     </footer>
