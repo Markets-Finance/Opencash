@@ -7,16 +7,13 @@ import {
   bins,
   fetchBinPosition,
   fetchDisplayedBalance,
-  fetchOfficialPrices,
   findDeepestPool,
   fromScaled,
   hoodMainnet,
-  loadStockTokens,
   quoteTokenToUsdg,
   quoteUsdgToToken,
   sizeBin,
   swapRouter02Abi,
-  tokensBySymbol,
   toScaled,
   type Bin,
   type BinSizingIssue,
@@ -28,6 +25,8 @@ import {
   type TradingAccount,
 } from "shared";
 import { encodeFunctionData, type Address, type Hash, type PublicClient } from "viem";
+import { loadAssetRegistry } from "./assets";
+import { fetchReferencePrices } from "./backend";
 import { publicClient, walletClientFor } from "./chain";
 
 const client = publicClient() as unknown as PublicClient;
@@ -38,8 +37,7 @@ export type HoodData = {
 };
 
 export async function loadTokens(): Promise<HoodData> {
-  const list = await loadStockTokens();
-  const tokens = tokensBySymbol(list);
+  const tokens = await loadAssetRegistry();
 
   const symbols = new Set(bins.flatMap((bin) => bin.legs.map((leg) => leg.symbol)));
   const price = new Map<string, number>();
@@ -81,7 +79,7 @@ export async function loadTradeAssets(
   tokens: Map<string, StockTokenEntry>,
 ): Promise<TradeAsset[]> {
   const symbols = [...tokens.keys()];
-  const prices = await fetchOfficialPrices(symbols);
+  const prices = await fetchReferencePrices(symbols);
 
   return symbols
     .map((symbol) => {
@@ -229,7 +227,7 @@ export function sizeBinFor(
   usdgAmount: number,
   tokens: Map<string, StockTokenEntry>,
 ): Promise<{ sized: SizedBin; issues: BinSizingIssue[] }> {
-  return sizeBin(client, bin, usdgAmount, tokens);
+  return sizeBin(client, bin, usdgAmount, tokens, fetchReferencePrices);
 }
 
 export async function openBin(
@@ -277,7 +275,7 @@ export async function sizeProposal(
 ): Promise<{ sized: SizedBin; issues: BinSizingIssue[] } | null> {
   const bin = binById(binId);
   if (!bin) return null;
-  return sizeBin(client, bin, usdgAmount, tokens);
+  return sizeBin(client, bin, usdgAmount, tokens, fetchReferencePrices);
 }
 
 export { bins };

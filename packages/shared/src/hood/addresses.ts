@@ -21,8 +21,8 @@ export const hoodMainnet: HoodDeployment = {
   usdgDecimals: 6,
   weth: "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
   uniswapV3Factory: "0x1f7d7550B1b028f7571E69A784071F0205FD2EfA",
-  quoterV2: "0x33E885ED0EC9BF04ECfB19341582AAdCB4C8A9E7",
-  swapRouter02: "0xCaf681a66D020601342297493863E78c959E5cB2",
+  quoterV2: "0x33e885eD0Ec9bF04EcfB19341582aADCb4c8A9E7",
+  swapRouter02: "0xCaf681a66D020601342297493863E78C959E5cb2",
 };
 
 // Robinhood Chain testnet (46630) has no USDG, stock tokens, or Uniswap

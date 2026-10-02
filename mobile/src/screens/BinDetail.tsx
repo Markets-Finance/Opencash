@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Bin, BinSizingIssue, SizedBin, TradingAccount } from "shared";
+import { AssetMark, LegStack } from "../components/AssetMark";
 import { openBin, sizeBinFor, type EntryStep, type HoodData } from "../lib/hood";
 import { family, space, track } from "../theme";
 
@@ -27,10 +28,6 @@ const stepLabels: Record<EntryStep, string> = {
 };
 
 const presets = [10, 25, 50, 100];
-
-function initial(text: string): string {
-  return text.slice(0, 1).toUpperCase();
-}
 
 export function BinDetail({ bin, data, balance, trader, onBack }: BinDetailProps) {
   const insets = useSafeAreaInsets();
@@ -103,9 +100,7 @@ export function BinDetail({ bin, data, balance, trader, onBack }: BinDetailProps
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.identityRow}>
-          <View style={styles.mark}>
-            <Text style={styles.markText}>{initial(bin.name)}</Text>
-          </View>
+          <LegStack symbols={bin.legs.map((leg) => leg.symbol)} size={44} />
           <Text style={styles.thesis}>{bin.thesis}</Text>
         </View>
 
@@ -145,9 +140,7 @@ export function BinDetail({ bin, data, balance, trader, onBack }: BinDetailProps
             <Text style={styles.fieldLabel}>Legs</Text>
             {(result?.sized.legs ?? []).map((leg) => (
               <View key={leg.leg.symbol} style={styles.legRow}>
-                <View style={styles.legMark}>
-                  <Text style={styles.legMarkText}>{initial(leg.leg.symbol)}</Text>
-                </View>
+                <AssetMark symbol={leg.leg.symbol} size={34} />
                 <View style={styles.legIdentity}>
                   <Text style={styles.legSymbol}>{leg.leg.symbol}</Text>
                   <Text style={styles.legStat}>
@@ -233,15 +226,6 @@ const styles = StyleSheet.create({
   back: { fontFamily: family.regular, fontSize: 22, color: "#55555a" },
   content: { padding: space.lg, gap: space.lg },
   identityRow: { flexDirection: "row", alignItems: "center", gap: space.md },
-  mark: {
-    width: 48,
-    height: 48,
-    borderRadius: 15,
-    backgroundColor: "#090909",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  markText: { fontFamily: family.semibold, fontSize: 22, color: "#fff" },
   thesis: {
     flex: 1,
     fontFamily: family.regular,
@@ -288,15 +272,6 @@ const styles = StyleSheet.create({
     gap: space.md,
   },
   legRow: { flexDirection: "row", alignItems: "center", gap: space.md },
-  legMark: {
-    width: 34,
-    height: 34,
-    borderRadius: 11,
-    backgroundColor: "#e8e8e8",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  legMarkText: { fontFamily: family.semibold, fontSize: 14, color: "#1b1b1d" },
   legIdentity: { flex: 1, minWidth: 0 },
   legSymbol: { fontFamily: family.semibold, fontSize: 14, color: "#131315" },
   legStat: { fontFamily: family.regular, fontSize: 11, color: "#858589" },

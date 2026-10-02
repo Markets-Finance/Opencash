@@ -1,39 +1,17 @@
 import type { Address } from "viem";
+import type { MarketChart } from "shared";
 
 // Dev-only: the backend isn't deployed anywhere yet. On the Android
 // emulator this needs `adb reverse tcp:8787 tcp:8787` (same trick already
 // used for Metro on 8081) so "localhost" here resolves to the host machine.
 const API_BASE = "http://localhost:8787";
 
-export type Mandate = {
+export type PortfolioSnapshot = {
   id: string;
   owner: Address;
-  binId: string;
-  policyText: string;
-  usdgBudget: number;
-  autoExecute: boolean;
-  createdAt: string;
-};
-
-export type Proposal = {
-  id: string;
-  mandateId: string;
-  binId: string;
-  usdgAmount: number;
-  reasoning: string;
-  servFinishReason: string;
-  createdAt: string;
-};
-
-export type Receipt = {
-  id: string;
-  mandateId: string;
-  proposalId: string;
-  usdgAmount: number;
-  txHash: string | null;
-  status: "proposed" | "executed" | "failed";
-  detail: string;
-  hash: string;
+  usdgBalance: number;
+  positionsValue: number;
+  totalValue: number;
   createdAt: string;
 };
 
@@ -52,23 +30,31 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body as T;
 }
 
-export function createMandate(input: {
+export function fetchMarketCharts(symbols: string[]): Promise<Record<string, MarketChart>> {
+  return request(`/market/charts?symbols=${symbols.join(",")}`);
+}
+
+export function snapshotPortfolio(input: {
   owner: Address;
-  binId: string;
-  policyText: string;
-  usdgBudget: number;
-}): Promise<Mandate> {
-  return request("/mandates", { method: "POST", body: JSON.stringify(input) });
+  usdgBalance: number;
+  positionsValue: number;
+}): Promise<PortfolioSnapshot> {
+  return request("/portfolio/snapshot", { method: "POST", body: JSON.stringify(input) });
 }
 
-export function listMandates(owner: Address): Promise<Mandate[]> {
-  return request(`/mandates?owner=${owner}`);
+export function fetchPortfolioHistory(owner: Address): Promise<PortfolioSnapshot[]> {
+  return request(`/portfolio/history?owner=${owner}`);
 }
 
-export function proposeAction(mandateId: string): Promise<Proposal> {
-  return request(`/mandates/${mandateId}/propose`, { method: "POST" });
-}
+export type TradableEntry = {
+  symbol: string;
+  price: number;
+  premiumBps: number | null;
+  safe: boolean;
+};
 
-export function fetchReceipts(mandateId: string): Promise<Receipt[]> {
-  return request(`/mandates/${mandateId}/receipts`);
+// Every Stock Token whose Uniswap pool quotes within a safe distance of the
+// reference price — see backend/src/market/tradable.ts.
+export function fetchTradableSymbols(): Promise<TradableEntry[]> {
+  return request("/market/tradable");
 }

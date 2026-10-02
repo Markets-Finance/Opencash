@@ -11,16 +11,13 @@ import { View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import type { Bin, TradingAccount } from "shared";
 import { Account, type Profile } from "./src/screens/Account";
-import { AuthorizeAgent } from "./src/screens/AuthorizeAgent";
 import { BinDetail } from "./src/screens/BinDetail";
 import { Bins } from "./src/screens/Bins";
 import { Trade } from "./src/screens/Trade";
 import { TradeDetail } from "./src/screens/TradeDetail";
 import type { TabKey } from "./src/components/TabBar";
-import { BotHome } from "./src/screens/BotHome";
+import { Home } from "./src/screens/Home";
 import { Landing } from "./src/screens/Landing";
-import { MandateDetail } from "./src/screens/MandateDetail";
-import type { Mandate } from "./src/lib/backend";
 import {
   loadPositions,
   loadTokens,
@@ -35,18 +32,14 @@ type Screen =
   | "account"
   | "bins"
   | "bin"
-  | "agent"
   | "home"
   | "trade"
-  | "tradeAsset"
-  | "mandate";
+  | "tradeAsset";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("landing");
-  const [agentBackTo, setAgentBackTo] = useState<"account" | "home">("home");
   const [bin, setBin] = useState<Bin | null>(null);
   const [tradeAsset, setTradeAsset] = useState<TradeAsset | null>(null);
-  const [mandate, setMandate] = useState<Mandate | null>(null);
   const [markets, setMarkets] = useState<HoodData | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
   const [trader, setTrader] = useState<TradingAccount | null>(null);
@@ -112,10 +105,6 @@ export default function App() {
           onInitialised={() => setScreen("home")}
           onSelectTab={goTab}
         />
-      ) : screen === "agent" ? (
-        trader !== null ? (
-          <AuthorizeAgent trader={trader} onBack={() => setScreen(agentBackTo)} />
-        ) : null
       ) : screen === "bins" ? (
         <Bins
           onSelectTab={goTab}
@@ -147,24 +136,7 @@ export default function App() {
           />
         ) : null
       ) : screen === "home" ? (
-        trader !== null ? (
-          <BotHome
-            trader={trader}
-            onSelectTab={goTab}
-            onAuthorize={() => {
-              setAgentBackTo("home");
-              setScreen("agent");
-            }}
-            onOpenMandate={(selected) => {
-              setMandate(selected);
-              setScreen("mandate");
-            }}
-          />
-        ) : null
-      ) : screen === "mandate" ? (
-        mandate !== null && trader !== null ? (
-          <MandateDetail mandate={mandate} trader={trader} onBack={() => setScreen("home")} />
-        ) : null
+        trader !== null ? <Home trader={trader} onSelectTab={goTab} /> : null
       ) : bin !== null && markets !== null && trader !== null ? (
         <BinDetail
           bin={bin}

@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { HoodPool, HoodQuote, HoodSellQuote, TradingAccount } from "shared";
+import { AssetMark } from "../components/AssetMark";
 import {
   buyToken,
   checkTradable,
@@ -42,10 +43,6 @@ const sellPresetFractions = [0.25, 0.5, 0.75, 1];
 
 function usd(value: number): string {
   return `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-}
-
-function initial(text: string): string {
-  return text.slice(0, 1).toUpperCase();
 }
 
 export function TradeDetail({ asset, balance, trader, onBack }: TradeDetailProps) {
@@ -228,9 +225,7 @@ export function TradeDetail({ asset, balance, trader, onBack }: TradeDetailProps
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.identityRow}>
-          <View style={styles.mark}>
-            <Text style={styles.markText}>{initial(asset.token.symbol)}</Text>
-          </View>
+          <AssetMark symbol={asset.token.symbol} size={48} />
           <View style={styles.identityText}>
             <Text style={styles.name}>{asset.token.name}</Text>
             {asset.price !== null && (
@@ -442,15 +437,6 @@ const styles = StyleSheet.create({
   back: { fontFamily: family.regular, fontSize: 22, color: "#55555a" },
   content: { padding: space.lg, gap: space.lg },
   identityRow: { flexDirection: "row", alignItems: "center", gap: space.md },
-  mark: {
-    width: 48,
-    height: 48,
-    borderRadius: 15,
-    backgroundColor: "#090909",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  markText: { fontFamily: family.semibold, fontSize: 22, color: "#fff" },
   identityText: { flex: 1, minWidth: 0 },
   name: { fontFamily: family.medium, fontSize: 15, color: "#131315" },
   reference: { fontFamily: family.regular, fontSize: 12, color: "#858589", marginTop: 2 },

@@ -50,143 +50,193 @@ import "../styles/landing.css";
         <nav class="dash__tabs" data-tabs role="tablist" aria-label="Dashboard sections">
           <button data-tab="home" role="tab" aria-selected="true">Home</button>
           <button data-tab="bins" role="tab" aria-selected="false">Bins</button>
-          <button data-tab="bots" role="tab" aria-selected="false">Bots</button>
           <button data-tab="trade" role="tab" aria-selected="false">Trade</button>
           <button data-tab="account" role="tab" aria-selected="false">Account</button>
         </nav>
+        <div class="dash__topbar-spacer"></div>
+        <div class="dash__topbar-utility">
+          <input
+            type="search"
+            class="dash__search"
+            placeholder="Search a symbol…"
+            data-global-search
+            autocomplete="off"
+          />
+          <button type="button" class="dash__address-chip" data-topbar-address>
+            <span data-topbar-address-text>—</span>
+          </button>
+        </div>
       </header>
 
-      <div class="dash__body">
-        <aside class="dash__card">
-          <div data-card-slot><AccountCard tier="Trader" /></div>
-        </aside>
+      <main class="dash__content">
+        <section class="panel" data-panel="home">
+          <div class="home-grid">
+            <div class="home-left">
+              <div class="card card--balance">
+                <div class="balance-head">
+                  <span class="card__label">My Balance</span>
+                  <span class="chain-badge">Robinhood Chain</span>
+                </div>
+                <span class="stat-card__value stat-card__value--lg" data-home-balance>—</span>
+                <div class="balance-meta">
+                  <span data-home-updated>—</span>
+                  <button type="button" class="link-btn" data-home-refresh>⟳ Refresh</button>
+                </div>
+                <div class="action-grid">
+                  <button type="button" class="action-btn" data-goto="trade">Trade</button>
+                  <button type="button" class="action-btn" data-goto="bins">Bins</button>
+                </div>
+              </div>
 
-        <main class="dash__content">
-          <section data-panel="home">
-            <h2 class="panel__title">Home</h2>
-            <div class="card card--stat">
-              <span class="card__label">USDG balance</span>
-              <span class="card__value" data-home-balance>—</span>
-            </div>
-            <div class="quick-grid">
-              <button type="button" class="quick-card" data-goto="bins">
-                <span class="quick-card__title">Open a bin</span>
-                <span class="quick-card__body">Take a whole framing in one swap.</span>
-              </button>
-              <button type="button" class="quick-card" data-goto="trade">
-                <span class="quick-card__title">Trade a stock token</span>
-                <span class="quick-card__body">Search, buy or sell a single symbol.</span>
-              </button>
-              <button type="button" class="quick-card" data-goto="bots">
-                <span class="quick-card__title">Set up a mandate</span>
-                <span class="quick-card__body">Let SERV propose an allocation you approve.</span>
-              </button>
-            </div>
-            <h3 class="panel__subtitle">Open positions</h3>
-            <div data-home-positions class="list list--loading">Loading…</div>
-          </section>
-
-          <section data-panel="bins" hidden>
-            <h2 class="panel__title">Bins</h2>
-            <p class="panel__lede">
-              A bin pools stock tokens around one theme. Fund it once — every
-              leg swaps from USDG in a single passkey signature.
-            </p>
-            <div data-bins-grid class="grid grid--loading">Loading…</div>
-            <div data-bin-detail class="drawer" hidden></div>
-          </section>
-
-          <section data-panel="bots" hidden>
-            <h2 class="panel__title">Bots</h2>
-            <p class="panel__lede">
-              SERV reasons over a mandate you write and proposes an
-              allocation. Every proposal needs your tap to execute — it signs
-              with your own passkey key, the same as any manual trade.
-            </p>
-            <div class="section-row">
-              <span class="panel__label">Mandates</span>
-              <button type="button" class="link-btn" data-toggle-mandate-form>New mandate</button>
-            </div>
-            <form class="card card--form" data-mandate-form hidden>
-              <span class="field__label">Bin</span>
-              <div class="chip-row" data-mandate-bins></div>
-              <label class="field">
-                <span>Policy</span>
-                <textarea name="policyText" rows="3" placeholder="e.g. Allocate in $25 steps only while under budget"></textarea>
-              </label>
-              <label class="field">
-                <span>Lifetime USDG budget</span>
-                <input name="usdgBudget" type="number" min="0" step="any" placeholder="0" />
-              </label>
-              <button type="submit" class="btn btn--primary">Create mandate</button>
-              <p class="form-error" data-mandate-error></p>
-            </form>
-            <div data-mandate-list class="list list--loading">Loading…</div>
-            <div data-mandate-detail class="drawer" hidden></div>
-            <div class="card card--muted">
-              <div class="mark-badge"><Mark /></div>
-              <h3 class="card__title card__title--center">Autonomous mode — not available yet</h3>
-              <p class="card__body card__body--center">
-                Unattended execution (SERV trades without a tap) needs a
-                scoped session key granted through the OpenCashDelegate
-                contract, which isn't deployed to mainnet. Mandates above work
-                today without it — you approve every trade.
-              </p>
-            </div>
-          </section>
-
-          <section data-panel="trade" hidden>
-            <h2 class="panel__title">Trade</h2>
-            <input
-              type="search"
-              class="search-input"
-              placeholder="Search symbol or name"
-              data-trade-search
-              autocomplete="off"
-            />
-            <div class="chip-row" data-trade-category>
-              <button type="button" class="chip chip--active" data-category="all">All</button>
-              <button type="button" class="chip" data-category="held">Held</button>
-            </div>
-            <div data-trade-list class="list list--loading">Loading…</div>
-            <div data-trade-detail class="drawer" hidden></div>
-          </section>
-
-          <section data-panel="account" hidden>
-            <h2 class="panel__title">Account</h2>
-            <div class="card">
-              <label class="field">
-                <span>Name</span>
-                <input type="text" data-profile-name placeholder="Trader" />
-              </label>
-              <label class="field">
-                <span>Email</span>
-                <input type="email" data-profile-email placeholder="you@domain.com" />
-              </label>
-              <div class="btn-row">
-                <button type="button" class="btn btn--primary" data-save-profile>Save profile</button>
-                <button type="button" class="btn" data-shuffle>Shuffle avatar</button>
+              <div class="card">
+                <div class="section-row"><span class="panel__label">Top Assets</span></div>
+                <div data-top-assets class="asset-list asset-list--loading">Loading…</div>
               </div>
             </div>
-            <button type="button" class="btn btn--quiet" data-sign-out>Sign out</button>
-            <p class="account-status" data-account-status role="status"></p>
-          </section>
-        </main>
-      </div>
+
+            <div class="home-right">
+              <div class="ticker-row ticker-row--loading" data-ticker-row>Loading…</div>
+
+              <div class="card card--chart">
+                <div class="section-row">
+                  <div>
+                    <span class="card__label">Portfolio Value</span>
+                    <div class="chart-value-row">
+                      <span class="stat-card__value" data-portfolio-value>—</span>
+                      <span class="chart-change" data-portfolio-change></span>
+                    </div>
+                  </div>
+                  <div class="chip-row" data-portfolio-range>
+                    <button type="button" class="chip chip--active" data-range="1d">1D</button>
+                    <button type="button" class="chip" data-range="7d">7D</button>
+                    <button type="button" class="chip" data-range="30d">1M</button>
+                    <button type="button" class="chip" data-range="all">All</button>
+                  </div>
+                </div>
+                <div data-portfolio-chart class="chart-area"></div>
+              </div>
+
+              <div>
+                <h3 class="panel__subtitle">Positions</h3>
+                <div data-home-positions-table class="table-wrap table-wrap--loading">Loading…</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="bins" hidden>
+          <div data-bins-carousel class="carousel carousel--loading">Loading…</div>
+        </section>
+
+        <section class="panel" data-panel="trade" hidden>
+          <div data-trade-list-view>
+            <div class="toolbar">
+              <input
+                type="search"
+                class="search-input"
+                placeholder="Search symbol or name"
+                data-trade-search
+                autocomplete="off"
+              />
+              <div class="chip-row" data-trade-category>
+                <button type="button" class="chip chip--active" data-category="all">All</button>
+                <button type="button" class="chip" data-category="held">Held</button>
+              </div>
+            </div>
+            <div data-trade-list class="table-wrap table-wrap--loading">Loading…</div>
+          </div>
+
+          <div data-asset-view hidden>
+            <button type="button" class="link-btn" data-asset-back>← Back to search</button>
+            <div class="asset-layout">
+              <div class="asset-main">
+                <div class="asset-header" data-asset-header></div>
+                <div class="asset-price-row">
+                  <span class="asset-price-value" data-asset-price>—</span>
+                  <span class="asset-price-change" data-asset-change></span>
+                </div>
+                <div class="chip-row" data-asset-range>
+                  <button type="button" class="chip chip--active" data-range="5d">5D</button>
+                  <button type="button" class="chip" data-range="1mo">1M</button>
+                  <button type="button" class="chip" data-range="3mo">3M</button>
+                  <button type="button" class="chip" data-range="1y">1Y</button>
+                </div>
+                <div class="chart-area" data-asset-chart></div>
+                <div class="asset-stats-row" data-asset-stats></div>
+              </div>
+              <div class="asset-side">
+                <div class="card card--trade-panel">
+                  <p class="quote-line" data-asset-holding></p>
+                  <div class="mode-row">
+                    <button type="button" class="chip chip--active" data-mode="buy">Buy</button>
+                    <button type="button" class="chip" data-mode="sell">Sell</button>
+                  </div>
+                  <div data-asset-mode-body></div>
+                  <p class="status-line" data-asset-status></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="account" hidden>
+          <div class="account-layout">
+            <div class="account-layout__card" data-card-slot><AccountCard tier="Trader" /></div>
+            <div class="account-layout__actions">
+              <div class="card">
+                <label class="field">
+                  <span>Name</span>
+                  <input type="text" data-profile-name placeholder="Trader" />
+                </label>
+                <label class="field">
+                  <span>Email</span>
+                  <input type="email" data-profile-email placeholder="you@domain.com" />
+                </label>
+                <div class="btn-row">
+                  <button type="button" class="btn btn--primary" data-save-profile>Save profile</button>
+                  <button type="button" class="btn" data-shuffle>Shuffle avatar</button>
+                </div>
+              </div>
+              <button type="button" class="btn btn--quiet" data-sign-out>Sign out</button>
+              <p class="account-status" data-account-status role="status"></p>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
 
-    <style>
+    <div class="modal-overlay" data-modal hidden>
+      <div class="modal" data-modal-panel></div>
+    </div>
+
+    <style is:global>
+      :root {
+        --sp-xs: 6px;
+        --sp-sm: 10px;
+        --sp-md: 16px;
+        --sp-lg: 24px;
+        --sp-xl: 32px;
+        --sp-2xl: 48px;
+        --radius-sm: 12px;
+        --radius-md: 16px;
+        --radius-lg: 20px;
+        --content-max: 1320px;
+        --surface: #f0efe9;
+        --surface-hover: #e8e6df;
+        --surface-line: #e2e0d9;
+      }
+
       .gate {
         min-height: 100vh;
         display: grid;
         justify-items: center;
         align-content: center;
-        gap: 18px;
-        padding: 64px var(--gutter);
+        gap: var(--sp-md);
+        padding: var(--sp-2xl) var(--gutter);
         text-align: center;
       }
       .gate__dev {
-        padding: 12px 16px;
+        padding: var(--sp-sm) var(--sp-md);
         border-radius: 4px;
         background: var(--purple);
         color: #fff;
@@ -204,7 +254,7 @@ import "../styles/landing.css";
         margin-right: 4px;
       }
       .gate__title {
-        margin-top: 8px;
+        margin-top: var(--sp-xs);
         font-size: clamp(28px, 4vw, 40px);
         font-weight: 300;
         letter-spacing: -0.04em;
@@ -217,17 +267,17 @@ import "../styles/landing.css";
       .gate__actions {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: var(--sp-sm);
         width: min(360px, 100%);
-        margin-top: 12px;
+        margin-top: var(--sp-sm);
       }
       .gate__form {
         display: flex;
         flex-direction: column;
-        gap: 10px;
-        padding: 16px;
+        gap: var(--sp-sm);
+        padding: var(--sp-md);
         border: 1px dashed var(--line);
-        border-radius: 18px;
+        border-radius: var(--radius-md);
         text-align: left;
       }
       .gate__status {
@@ -269,19 +319,12 @@ import "../styles/landing.css";
       .btn--quiet {
         border-style: dashed;
         font-weight: 400;
+        align-self: flex-start;
       }
       .btn-row {
         display: flex;
-        gap: 10px;
+        gap: var(--sp-sm);
         flex-wrap: wrap;
-      }
-      .link-btn {
-        background: none;
-        border: 0;
-        font: inherit;
-        font-size: 13px;
-        color: #4a45c9;
-        cursor: pointer;
       }
       .field {
         display: flex;
@@ -305,23 +348,15 @@ import "../styles/landing.css";
         font-size: 14px;
         color: var(--ink);
         resize: vertical;
+        width: 100%;
       }
       .field input:focus-visible,
       .field textarea:focus-visible {
         outline: 2px solid var(--purple);
         outline-offset: 2px;
       }
-      .search-input {
-        width: 100%;
-        padding: 12px 16px;
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        background: var(--paper);
-        font: inherit;
-        font-size: 14px;
-        margin-bottom: 14px;
-      }
 
+      /* ---- Shell ---- */
       .dash {
         min-height: 100vh;
       }
@@ -331,9 +366,8 @@ import "../styles/landing.css";
         z-index: 5;
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 24px;
-        padding: 18px var(--gutter);
+        gap: var(--sp-xl);
+        padding: var(--sp-md) var(--gutter);
         background: rgba(247, 246, 242, 0.92);
         backdrop-filter: blur(10px);
         border-bottom: 1px solid var(--line);
@@ -345,6 +379,7 @@ import "../styles/landing.css";
         font-size: 20px;
         font-weight: 650;
         letter-spacing: -0.04em;
+        flex-shrink: 0;
       }
       .dash__topbar .wordmark svg {
         width: 18px;
@@ -353,62 +388,71 @@ import "../styles/landing.css";
       }
       .dash__tabs {
         display: flex;
-        gap: 6px;
-        background: #ece9e3;
-        border-radius: 999px;
-        padding: 4px;
+        align-items: center;
+        gap: var(--sp-lg);
       }
       .dash__tabs button {
         border: 0;
         background: transparent;
         font: inherit;
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 500;
         color: #5c5c5f;
-        padding: 9px 16px;
-        border-radius: 999px;
+        padding: 6px 2px;
+        border-bottom: 2px solid transparent;
         cursor: pointer;
+        white-space: nowrap;
+      }
+      .dash__tabs button:hover {
+        color: var(--ink);
       }
       .dash__tabs button[aria-selected="true"] {
-        background: var(--ink);
-        color: var(--paper);
+        color: var(--ink);
+        border-bottom-color: var(--purple);
       }
-      .dash__body {
+      .dash__topbar-spacer {
+        flex: 1;
+      }
+      .dash__topbar-utility {
         display: flex;
-        gap: 48px;
-        padding: 40px var(--gutter) 100px;
-        align-items: flex-start;
-        max-width: 1280px;
-        margin: 0 auto;
+        align-items: center;
+        gap: var(--sp-sm);
+        flex-shrink: 0;
       }
-      .dash__card {
-        flex: 0 0 300px;
-        position: sticky;
-        top: 100px;
+      .dash__search {
+        width: 200px;
+        padding: 9px 14px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--paper);
+        font: inherit;
+        font-size: 13px;
+      }
+      .dash__address-chip {
+        border: 0;
+        background: #ece9e3;
+        color: var(--ink);
+        font-size: 12px;
+        font-weight: 500;
+        padding: 9px 14px;
+        border-radius: 999px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .dash__address-chip:hover {
+        background: #e0ddd5;
       }
       .dash__content {
-        flex: 1;
-        min-width: 0;
-      }
-      .panel__title {
-        font-size: clamp(26px, 3vw, 36px);
-        font-weight: 300;
-        letter-spacing: -0.04em;
-        margin-bottom: 6px;
+        max-width: var(--content-max);
+        margin: 0 auto;
+        padding: var(--sp-2xl) var(--gutter) 120px;
       }
       .panel__subtitle {
         font-size: 11px;
         letter-spacing: 0.12em;
         text-transform: uppercase;
         color: #858589;
-        margin: 24px 0 10px;
-      }
-      .panel__lede {
-        font-size: 14px;
-        line-height: 1.6;
-        color: #5c5c5f;
-        max-width: 60ch;
-        margin-bottom: 20px;
+        margin: var(--sp-2xl) 0 var(--sp-md);
       }
       .panel__label {
         font-size: 11px;
@@ -420,230 +464,455 @@ import "../styles/landing.css";
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 12px;
+        margin-bottom: var(--sp-md);
       }
 
-      .card {
-        border-radius: 18px;
-        background: #f0efe9;
-        padding: 20px;
-        margin-bottom: 16px;
+      /* ---- Home ---- */
+      .home-grid {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: var(--sp-lg);
+        align-items: start;
       }
-      .card--stat {
+      .home-left,
+      .home-right {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: var(--sp-lg);
       }
-      .card--muted {
+      .card--balance {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-xs);
+      }
+      .balance-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .chain-badge {
+        font-size: 11px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #ece9e3;
+        color: #5c5c5f;
+      }
+      .stat-card__value--lg {
+        font-size: 38px;
+        font-weight: 500;
+        letter-spacing: -0.03em;
+      }
+      .balance-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 12px;
+        color: #858589;
+        margin-bottom: var(--sp-xs);
+      }
+      .action-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--sp-sm);
+        margin-top: var(--sp-sm);
+      }
+      .action-btn {
+        padding: 12px 8px;
+        border-radius: var(--radius-sm);
+        background: #ece9e3;
+        border: 0;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--ink);
+        cursor: pointer;
         text-align: center;
       }
-      .card--form {
+      .action-btn:hover {
+        background: #e0ddd5;
+      }
+
+      .asset-list {
         display: flex;
         flex-direction: column;
-        gap: 12px;
       }
-      .card__label {
+      .asset-list--loading {
+        font-size: 13px;
+        color: #858589;
+      }
+      .asset-row {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-sm);
+        padding: var(--sp-sm) 0;
+        border-top: 1px solid var(--line);
+      }
+      .asset-row:first-child {
+        border-top: 0;
+      }
+      .asset-row__identity {
+        flex: 1;
+        min-width: 0;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .asset-row__price {
+        font-size: 13px;
+        font-weight: 500;
+        text-align: right;
+      }
+      .asset-row__change {
+        font-size: 11px;
+        text-align: right;
+        min-width: 56px;
+      }
+      .change-up {
+        color: #1f8a4c;
+      }
+      .change-down {
+        color: #c0392b;
+      }
+
+      .ticker-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--sp-md);
+      }
+      .ticker-row--loading {
+        display: block;
+        padding: var(--sp-lg);
+        font-size: 13px;
+        color: #858589;
+        background: var(--surface);
+        border-radius: var(--radius-md);
+      }
+      .ticker-card {
+        background: var(--surface);
+        border-radius: var(--radius-md);
+        padding: var(--sp-md);
+      }
+      .ticker-card__head {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-xs);
+      }
+      .ticker-card__head .row-mark {
+        width: 22px;
+        height: 22px;
+        border-radius: 7px;
+        font-size: 10px;
+      }
+      .ticker-card__symbol {
+        font-size: 12px;
+        color: #858589;
+      }
+      .ticker-card__price {
+        font-size: 20px;
+        font-weight: 600;
+        margin-top: 4px;
+      }
+      .ticker-card__change {
+        font-size: 12px;
+        margin-top: 2px;
+      }
+
+      .chart-value-row {
+        display: flex;
+        align-items: baseline;
+        gap: var(--sp-sm);
+        margin-top: 4px;
+      }
+      .chart-change {
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .chart-area {
+        margin-top: var(--sp-md);
+        height: 220px;
+      }
+      .chart-area svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .chart-empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 220px;
+        color: #858589;
+        font-size: 13px;
+        text-align: center;
+        padding: 0 var(--sp-xl);
+      }
+
+      /* ---- Single-asset trading view (Trade tab) ---- */
+      .asset-layout {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: var(--sp-xl);
+        align-items: start;
+        margin-top: var(--sp-md);
+      }
+      .asset-header {
+        margin-bottom: var(--sp-md);
+      }
+      .asset-header .modal__identity .row-mark {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        font-size: 16px;
+      }
+      .asset-price-row {
+        display: flex;
+        align-items: baseline;
+        gap: var(--sp-sm);
+        margin-bottom: var(--sp-md);
+      }
+      .asset-price-value {
+        font-size: 38px;
+        font-weight: 500;
+        letter-spacing: -0.03em;
+      }
+      .asset-price-change {
+        font-size: 15px;
+        font-weight: 500;
+      }
+      .asset-stats-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--sp-md);
+        margin-top: var(--sp-lg);
+      }
+      .asset-side {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-md);
+      }
+      .card--trade-panel {
+        position: sticky;
+        top: 100px;
+      }
+
+      .stat-card {
+        border-radius: var(--radius-md);
+        background: var(--surface);
+        padding: var(--sp-lg);
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-xs);
+      }
+      .stat-card__label {
         font-size: 11px;
         letter-spacing: 0.1em;
         text-transform: uppercase;
         color: #858589;
       }
-      .card__value {
+      .stat-card__value {
         font-size: 32px;
         font-weight: 500;
         letter-spacing: -0.03em;
       }
-      .card__title {
-        font-size: 15px;
-        font-weight: 600;
-        margin-top: 10px;
+
+      /* ---- Generic cards ---- */
+      .card {
+        border-radius: var(--radius-md);
+        background: var(--surface);
+        padding: var(--sp-lg);
       }
-      .card__title--center {
-        text-align: center;
+      .card + .card {
+        margin-top: var(--sp-md);
+      }
+      .card__title {
+        font-size: 16px;
+        font-weight: 600;
+        margin-top: var(--sp-sm);
       }
       .card__body {
         font-size: 13px;
         line-height: 1.6;
         color: #6a686b;
-        margin-top: 6px;
-      }
-      .card__body--center {
-        text-align: center;
-      }
-      .mark-badge {
-        width: 48px;
-        height: 48px;
-        border-radius: 16px;
-        background: var(--ink);
-        color: var(--paper);
-        display: grid;
-        place-items: center;
-        margin: 0 auto;
-      }
-      .mark-badge svg {
-        width: 24px;
-        height: 24px;
+        margin-top: var(--sp-xs);
       }
 
-      .quick-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 14px;
-        margin: 20px 0;
-      }
-      .quick-card {
-        text-align: left;
-        border: 1px solid var(--line);
-        border-radius: 16px;
-        padding: 16px;
-        background: transparent;
-        cursor: pointer;
+      /* ---- Carousels (Bins) ---- */
+      .carousel {
         display: flex;
-        flex-direction: column;
-        gap: 6px;
+        gap: var(--sp-md);
+        overflow-x: auto;
+        scroll-snap-type: x proximity;
+        padding-bottom: var(--sp-sm);
+        scrollbar-width: thin;
       }
-      .quick-card:hover {
-        border-color: var(--purple);
+      .carousel--loading,
+      .table-wrap--loading {
+        padding: var(--sp-xl);
+        font-size: 13px;
+        color: #858589;
+        background: var(--surface);
+        border-radius: var(--radius-md);
       }
-      .quick-card__title {
-        font-size: 14px;
-        font-weight: 600;
-      }
-      .quick-card__body {
-        font-size: 12px;
-        color: #6a686b;
-      }
-
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 14px;
-      }
-      .bin-card {
+      .tile-card {
+        scroll-snap-align: start;
+        flex: 0 0 280px;
         text-align: left;
-        border-radius: 18px;
-        background: #f0efe9;
-        padding: 18px;
+        border-radius: var(--radius-md);
+        background: var(--surface);
+        padding: var(--sp-lg);
         border: 0;
         cursor: pointer;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: var(--sp-sm);
       }
-      .bin-card:hover {
+      .tile-card:hover {
         outline: 2px solid var(--purple);
+        outline-offset: -2px;
       }
-      .bin-card__name {
-        font-size: 15px;
+      .tile-card__name {
+        font-size: 16px;
         font-weight: 600;
       }
-      .bin-card__thesis {
+      .tile-card__value {
+        font-size: 22px;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+      }
+      .tile-card__thesis {
         font-size: 12px;
         color: #6a686b;
+        line-height: 1.5;
       }
-      .bin-card__legs {
-        font-size: 11px;
-        color: #858589;
+      .tile-card__legs {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        margin-top: var(--sp-xs);
+      }
+      .tile-leg {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: #79797d;
       }
 
-      .list {
-        border-radius: 18px;
-        background: #f0efe9;
-        overflow: hidden;
-      }
-      .list--loading,
-      .grid--loading {
-        padding: 20px;
-        font-size: 13px;
-        color: #858589;
-      }
-      .row {
+      /* ---- Table (Trade) ---- */
+      .toolbar {
         display: flex;
         align-items: center;
-        gap: 14px;
-        padding: 14px 16px;
-        cursor: pointer;
-        border-bottom: 1px solid #e2e0d9;
+        gap: var(--sp-md);
+        margin-bottom: var(--sp-lg);
       }
-      .row:last-child {
+      .search-input {
+        flex: 1;
+        padding: 12px var(--sp-md);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--paper);
+        font: inherit;
+        font-size: 14px;
+      }
+      .table-wrap {
+        border-radius: var(--radius-md);
+        background: var(--surface);
+        overflow: hidden;
+      }
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .data-table thead th {
+        text-align: left;
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #858589;
+        padding: var(--sp-md) var(--sp-lg);
+        border-bottom: 1px solid var(--line);
+      }
+      .data-table tbody tr {
+        cursor: pointer;
+        border-bottom: 1px solid var(--surface-line);
+      }
+      .data-table tbody tr:last-child {
         border-bottom: 0;
       }
-      .row:hover {
-        background: #e8e6df;
+      .data-table tbody tr:hover {
+        background: var(--surface-hover);
       }
-      .row__mark {
-        width: 34px;
-        height: 34px;
-        border-radius: 11px;
+      .data-table tbody td {
+        padding: var(--sp-md) var(--sp-lg);
+        font-size: 14px;
+      }
+      .cell-identity {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-sm);
+        font-weight: 600;
+      }
+      .cell-muted {
+        color: #858589;
+      }
+      .cell-value {
+        text-align: right;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+
+      .row-mark {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
         background: #dedbd2;
         display: grid;
         place-items: center;
         font-size: 13px;
         font-weight: 600;
         flex-shrink: 0;
-      }
-      .row__identity {
-        flex: 1;
-        min-width: 0;
-      }
-      .row__title {
-        font-size: 14px;
-        font-weight: 600;
-        white-space: nowrap;
         overflow: hidden;
-        text-overflow: ellipsis;
       }
-      .row__subtitle {
-        font-size: 12px;
-        color: #858589;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+      .row-mark--logo {
+        background: #fff;
+        border: 1px solid var(--surface-line);
       }
-      .row__value {
-        font-size: 13px;
-        font-weight: 500;
-        flex-shrink: 0;
+      .row-mark img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
       }
-      .empty {
-        padding: 20px;
-        font-size: 13px;
-        color: #858589;
-      }
-      .error-text {
-        font-size: 13px;
-        color: #a5382a;
-      }
-
-      .drawer {
-        margin-top: 16px;
-        border-radius: 18px;
-        background: #f7f6f2;
-        border: 1px solid var(--line);
-        padding: 20px;
-      }
-      .drawer__head {
+      .leg-stack {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        margin-bottom: 14px;
       }
-      .drawer__title {
-        font-size: 17px;
-        font-weight: 600;
+      .leg-stack .row-mark {
+        width: 26px;
+        height: 26px;
+        border-radius: 999px;
+        border: 2px solid var(--paper);
+        margin-left: -8px;
+        font-size: 10px;
       }
-      .drawer__close {
-        background: none;
-        border: 0;
-        font-size: 18px;
-        color: #858589;
-        cursor: pointer;
+      .leg-stack .row-mark:first-child {
+        margin-left: 0;
+      }
+
+      .empty,
+      .error-text {
+        padding: var(--sp-xl);
+        font-size: 13px;
+        text-align: center;
+        background: var(--surface);
+        border-radius: var(--radius-md);
+      }
+      .error-text {
+        color: #a5382a;
       }
 
       .chip-row {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: var(--sp-xs);
       }
       .chip {
         border-radius: 999px;
@@ -655,6 +924,7 @@ import "../styles/landing.css";
         font-weight: 500;
         color: var(--ink);
         cursor: pointer;
+        white-space: nowrap;
       }
       .chip--active {
         background: var(--ink);
@@ -662,19 +932,68 @@ import "../styles/landing.css";
       }
       .mode-row {
         display: flex;
-        gap: 8px;
-        margin-bottom: 14px;
+        gap: var(--sp-xs);
+        margin-bottom: var(--sp-md);
       }
       .mode-row .chip {
         flex: 1;
         text-align: center;
       }
 
+      /* ---- Modal (Bin / Trade / Mandate detail + New mandate) ---- */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: var(--sp-lg);
+        background: rgba(20, 19, 24, 0.45);
+        backdrop-filter: blur(2px);
+      }
+      .modal-overlay[hidden] {
+        display: none;
+      }
+      .modal {
+        width: min(520px, 100%);
+        max-height: 86vh;
+        overflow-y: auto;
+        background: var(--paper);
+        border-radius: var(--radius-lg);
+        padding: var(--sp-xl);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+      }
+      .modal__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--sp-md);
+      }
+      .modal__identity {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-sm);
+      }
+      .modal__title {
+        font-size: 19px;
+        font-weight: 600;
+      }
+      .modal__close {
+        background: none;
+        border: 0;
+        font-size: 20px;
+        color: #858589;
+        cursor: pointer;
+        line-height: 1;
+        padding: var(--sp-xs);
+      }
+
       .amount-row {
         display: flex;
         align-items: baseline;
-        gap: 8px;
-        margin: 10px 0;
+        gap: var(--sp-xs);
+        margin: var(--sp-sm) 0;
       }
       .amount-row input {
         flex: 1;
@@ -692,17 +1011,17 @@ import "../styles/landing.css";
       .quote-line {
         font-size: 13px;
         color: #6a686b;
-        margin: 4px 0;
+        margin: var(--sp-xs) 0;
       }
       .warn-line {
         font-size: 12px;
         color: #a5382a;
-        margin: 8px 0;
+        margin: var(--sp-sm) 0;
       }
       .status-line {
         font-size: 13px;
         color: #6a686b;
-        margin-top: 10px;
+        margin-top: var(--sp-sm);
       }
       .status-line[data-tone="error"] {
         color: #a5382a;
@@ -717,40 +1036,15 @@ import "../styles/landing.css";
         display: flex;
         justify-content: space-between;
         font-size: 13px;
-        padding: 6px 0;
+        padding: var(--sp-xs) 0;
         border-top: 1px solid var(--line);
       }
       .leg-row:first-child {
         border-top: 0;
       }
 
-      .mandate-row {
-        padding: 16px;
-        border-bottom: 1px solid #e2e0d9;
-        cursor: pointer;
-      }
-      .mandate-row:last-child {
-        border-bottom: 0;
-      }
-      .mandate-row:hover {
-        background: #e8e6df;
-      }
-      .mandate-row__bin {
-        font-size: 14px;
-        font-weight: 600;
-      }
-      .mandate-row__policy {
-        font-size: 12px;
-        color: #6a686b;
-        margin-top: 2px;
-      }
-      .mandate-row__budget {
-        font-size: 12px;
-        color: #858589;
-        margin-top: 4px;
-      }
       .receipt-row {
-        padding: 10px 0;
+        padding: var(--sp-sm) 0;
         border-top: 1px solid var(--line);
         font-size: 12px;
       }
@@ -766,43 +1060,75 @@ import "../styles/landing.css";
         margin-top: 2px;
       }
 
+      /* ---- Account tab ---- */
+      .account-layout {
+        display: flex;
+        gap: var(--sp-2xl);
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+      .account-layout__card {
+        flex: 0 0 340px;
+        max-width: 100%;
+      }
+      .account-layout__actions {
+        flex: 1 1 320px;
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-md);
+        max-width: 420px;
+      }
       .account-status {
         min-height: 20px;
         font-size: 13px;
         color: #5c5c5f;
-        margin-top: 12px;
       }
 
-      @media (max-width: 900px) {
+      @media (max-width: 960px) {
         .dash__topbar {
           flex-wrap: wrap;
-          gap: 12px;
+          gap: var(--sp-sm);
         }
         .dash__tabs {
           order: 3;
           width: 100%;
           overflow-x: auto;
         }
-        .dash__body {
-          flex-direction: column;
-          padding-inline: 20px;
+        .dash__topbar-spacer {
+          display: none;
         }
-        .dash__card {
-          position: static;
-          width: 100%;
-          max-width: 320px;
+        .dash__search {
+          width: 140px;
         }
-        .quick-grid,
-        .grid {
+        .home-grid,
+        .ticker-row,
+        .action-grid,
+        .asset-layout,
+        .asset-stats-row {
           grid-template-columns: 1fr;
+        }
+        .card--trade-panel {
+          position: static;
+        }
+        .ticker-row {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .toolbar {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .account-layout__card {
+          flex-basis: 100%;
+          max-width: 340px;
         }
       }
     </style>
 
     <script>
       import { isMeraError } from "@category-labs/mera";
-      import type { BinPosition, TradingAccount } from "shared";
+      import { stockLogoUrl, type BinPosition, type TradingAccount } from "shared";
       import { createAccount, signIn } from "../scripts/mera";
+      import { loadAssetRegistry } from "../scripts/assets";
       import {
         bins,
         buyToken,
@@ -824,11 +1150,13 @@ import "../styles/landing.css";
         type TradeAsset,
       } from "../scripts/hood";
       import {
-        createMandate,
-        fetchReceipts,
-        listMandates,
-        proposeAction,
-        type Mandate,
+        fetchMarketChart,
+        fetchMarketCharts,
+        fetchPortfolioHistory,
+        fetchTradableSymbols,
+        snapshotPortfolio,
+        type ChartRange,
+        type PortfolioSnapshot,
       } from "../scripts/backend";
 
       type AvatarModule = typeof import("../lib/avatar");
@@ -849,6 +1177,48 @@ import "../styles/landing.css";
       function initial(text: string): string {
         return text.slice(0, 1).toUpperCase();
       }
+
+      // Real logo when the registry has one (Robinhood's own CDN, no CORS
+      // issue for <img>), falling back to the letter mark on a missing URL
+      // or a broken image load. The fallback is a hidden sibling toggled by
+      // onerror rather than a reconstructed HTML string — simpler, and it
+      // can't be broken by quote/entity escaping.
+      function markHtml(logoUrl: string | undefined, label: string): string {
+        const letter = initial(label);
+        if (!logoUrl) return `<span class="row-mark">${letter}</span>`;
+        return `<span class="row-mark row-mark--logo"><img src="${logoUrl}" alt="" loading="lazy" onerror="this.remove();this.nextElementSibling.hidden=false" /><span hidden>${letter}</span></span>`;
+      }
+
+      // Looks the logo up in the centralized registry (assets.ts) by
+      // symbol — callers never need to fetch or thread a token map just to
+      // render a mark.
+      function markForSymbol(symbol: string): string {
+        return markHtml(stockLogoUrl(symbol), symbol);
+      }
+
+      function legStackHtml(symbols: string[]): string {
+        return `<div class="leg-stack">${symbols.slice(0, 4).map(markForSymbol).join("")}</div>`;
+      }
+
+      // ---- Modal ----
+      const modalOverlay = document.querySelector<HTMLElement>("[data-modal]")!;
+      const modalPanel = document.querySelector<HTMLElement>("[data-modal-panel]")!;
+      function openModal(html: string): HTMLElement {
+        modalPanel.innerHTML = html;
+        modalOverlay.hidden = false;
+        modalPanel.querySelector<HTMLButtonElement>("[data-close]")?.addEventListener("click", closeModal);
+        return modalPanel;
+      }
+      function closeModal() {
+        modalOverlay.hidden = true;
+        modalPanel.innerHTML = "";
+      }
+      modalOverlay.addEventListener("click", (event) => {
+        if (event.target === modalOverlay) closeModal();
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !modalOverlay.hidden) closeModal();
+      });
 
       // ---- Gate (sign-in) ----
       const gate = document.querySelector<HTMLElement>("[data-gate]")!;
@@ -882,13 +1252,16 @@ import "../styles/landing.css";
         trader = account;
         gate.hidden = true;
         dash.hidden = false;
+        void loadAssetRegistry();
 
         const { avatarDataUri, avatarSeed, shortenAddress } = await avatars();
         const nameEl = document.querySelector<HTMLElement>("[data-account-name]");
         const addressEl = document.querySelector<HTMLElement>("[data-address-text]");
         const avatarEl = document.querySelector<HTMLImageElement>("[data-account-avatar]");
+        const topbarAddressEl = document.querySelector<HTMLElement>("[data-topbar-address-text]");
         if (nameEl) nameEl.textContent = "Trader";
         if (addressEl) addressEl.textContent = shortenAddress(account.address);
+        if (topbarAddressEl) topbarAddressEl.textContent = shortenAddress(account.address);
         if (avatarEl) {
           avatarEl.src = avatarDataUri(avatarSeed(account.address, 0));
           avatarEl.alt = `Avatar for ${shortenAddress(account.address)}`;
@@ -941,7 +1314,6 @@ import "../styles/landing.css";
           loadedPanels.add(key);
           if (key === "bins") void initBins();
           if (key === "trade") void initTrade();
-          if (key === "bots") void initBots();
           if (key === "account") void initAccount();
         }
       }
@@ -951,6 +1323,20 @@ import "../styles/landing.css";
       document.querySelectorAll<HTMLButtonElement>("[data-goto]").forEach((button) =>
         button.addEventListener("click", () => activateTab(button.dataset.goto!)),
       );
+      document
+        .querySelector<HTMLButtonElement>("[data-topbar-address]")!
+        .addEventListener("click", () => activateTab("account"));
+
+      const globalSearchInput = document.querySelector<HTMLInputElement>("[data-global-search]")!;
+      globalSearchInput.addEventListener("input", () => {
+        const value = globalSearchInput.value;
+        activateTab("trade");
+        closeAssetView();
+        const tradeSearchInput = document.querySelector<HTMLInputElement>("[data-trade-search]")!;
+        tradeSearchInput.value = value;
+        tradeQuery = value.trim().toLowerCase();
+        if (tradeAssets) renderTradeList(document.querySelector<HTMLElement>("[data-trade-list]")!);
+      });
 
       // ---- Shared market data ----
       let hoodData: HoodData | null = null;
@@ -970,69 +1356,244 @@ import "../styles/landing.css";
       }
 
       // ---- Home ----
+      // Featured symbols for Top Assets / the ticker row: every symbol used
+      // across the bin catalog, deduped, in catalog order.
+      const featuredSymbols = [...new Set(bins.flatMap((bin) => bin.legs.map((leg) => leg.symbol)))];
+
+      function pct(value: number): string {
+        return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+      }
+      function changeClass(value: number): string {
+        return value >= 0 ? "change-up" : "change-down";
+      }
+
+      function renderPositionsTable(container: HTMLElement, positions: BinPosition[]) {
+        if (positions.length === 0) {
+          container.className = "empty";
+          container.textContent = "No open positions yet. Open a bin to take a framing.";
+          return;
+        }
+        container.className = "table-wrap";
+        const rows = positions
+          .map(
+            (position) => `
+              <tr>
+                <td><div class="cell-identity">${legStackHtml(position.legs.map((leg) => leg.symbol))}${position.bin.name}</div></td>
+                <td class="cell-muted">${position.legs.map((leg) => leg.symbol).join(", ")}</td>
+                <td class="cell-value">${usd(position.valueUsdg)}</td>
+              </tr>
+            `,
+          )
+          .join("");
+        container.innerHTML = `
+          <table class="data-table">
+            <thead><tr><th>Bin</th><th>Legs</th><th style="text-align:right">Value</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
+      }
+
+      function renderTopAssets(
+        container: HTMLElement,
+        symbols: string[],
+        charts: Record<string, { price: number; changePercent: number }>,
+      ) {
+        container.className = "asset-list";
+        container.innerHTML = symbols
+          .map((symbol) => {
+            const chart = charts[symbol];
+            return `
+              <div class="asset-row">
+                ${markForSymbol(symbol)}
+                <span class="asset-row__identity">${symbol}</span>
+                <span class="asset-row__price">${chart ? usd(chart.price) : "—"}</span>
+                <span class="asset-row__change ${chart ? changeClass(chart.changePercent) : ""}">${chart ? pct(chart.changePercent) : "—"}</span>
+              </div>
+            `;
+          })
+          .join("");
+      }
+
+      function renderTicker(
+        container: HTMLElement,
+        symbols: string[],
+        charts: Record<string, { price: number; changePercent: number }>,
+      ) {
+        container.className = "ticker-row";
+        container.innerHTML = symbols
+          .map((symbol) => {
+            const chart = charts[symbol];
+            return `
+              <div class="ticker-card">
+                <div class="ticker-card__head">
+                  ${markForSymbol(symbol)}
+                  <span class="ticker-card__symbol">${symbol}</span>
+                </div>
+                <span class="ticker-card__price">${chart ? usd(chart.price) : "—"}</span>
+                <span class="ticker-card__change ${chart ? changeClass(chart.changePercent) : ""}">${chart ? `${pct(chart.changePercent)} today` : "—"}</span>
+              </div>
+            `;
+          })
+          .join("");
+      }
+
+      function filterHistoryByRange(
+        history: PortfolioSnapshot[],
+        range: "1d" | "7d" | "30d" | "all",
+      ): PortfolioSnapshot[] {
+        if (range === "all") return history;
+        const days = range === "1d" ? 1 : range === "7d" ? 7 : 30;
+        const cutoff = Date.now() - days * 86_400_000;
+        return history.filter((snapshot) => Date.parse(snapshot.createdAt) >= cutoff);
+      }
+
+      function renderLineChart(container: HTMLElement, values: number[], emptyMessage: string) {
+        if (values.length < 2) {
+          container.innerHTML = `<div class="chart-empty">${emptyMessage}</div>`;
+          return;
+        }
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        const range = max - min || 1;
+        const w = 600;
+        const h = 200;
+        const pad = 8;
+        const points = values
+          .map((value, i) => {
+            const x = pad + (i / (values.length - 1)) * (w - pad * 2);
+            const y = h - pad - ((value - min) / range) * (h - pad * 2);
+            return `${x.toFixed(1)},${y.toFixed(1)}`;
+          })
+          .join(" ");
+        container.innerHTML = `
+          <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+            <polyline points="${points}" fill="none" stroke="#7165ed" stroke-width="2" />
+          </svg>
+        `;
+      }
+
+      function renderPortfolioChart(container: HTMLElement, snapshots: PortfolioSnapshot[]) {
+        renderLineChart(
+          container,
+          snapshots.map((s) => s.totalValue),
+          "Portfolio history builds up as you use the app — each visit adds a real data point. Check back soon.",
+        );
+      }
+
       async function initHome() {
         if (!trader) return;
         const balanceEl = document.querySelector<HTMLElement>("[data-home-balance]")!;
-        const positionsEl = document.querySelector<HTMLElement>("[data-home-positions]")!;
-        loadUsdgBalance(trader.address)
-          .then((balance) => (balanceEl.textContent = usd(balance)))
-          .catch(() => (balanceEl.textContent = "—"));
+        const updatedEl = document.querySelector<HTMLElement>("[data-home-updated]")!;
+        const refreshButton = document.querySelector<HTMLButtonElement>("[data-home-refresh]")!;
+        const topAssetsEl = document.querySelector<HTMLElement>("[data-top-assets]")!;
+        const tickerEl = document.querySelector<HTMLElement>("[data-ticker-row]")!;
+        const portfolioValueEl = document.querySelector<HTMLElement>("[data-portfolio-value]")!;
+        const portfolioChangeEl = document.querySelector<HTMLElement>("[data-portfolio-change]")!;
+        const chartEl = document.querySelector<HTMLElement>("[data-portfolio-chart]")!;
+        const positionsTableEl = document.querySelector<HTMLElement>("[data-home-positions-table]")!;
+        const rangeButtons = Array.from(
+          document.querySelectorAll<HTMLButtonElement>("[data-portfolio-range] [data-range]"),
+        );
+
+        let currentBalance = 0;
+        await loadAssetRegistry().catch(() => {});
+
+        async function refreshBalance() {
+          currentBalance = await loadUsdgBalance(trader!.address);
+          balanceEl.textContent = usd(currentBalance);
+          updatedEl.textContent = new Date().toLocaleTimeString();
+        }
+        refreshButton.addEventListener("click", () => void refreshBalance().catch(() => {}));
+        await refreshBalance().catch(() => {
+          balanceEl.textContent = "—";
+        });
+
+        const positions = await getPositions().catch(() => [] as BinPosition[]);
+        const positionsValue = positions.reduce((sum, p) => sum + p.valueUsdg, 0);
+        renderPositionsTable(positionsTableEl, positions);
+        portfolioValueEl.textContent = usd(currentBalance + positionsValue);
+
+        void snapshotPortfolio({
+          owner: trader.address,
+          usdgBalance: currentBalance,
+          positionsValue,
+        }).catch(() => {});
+
+        let history: PortfolioSnapshot[] = [];
+        try {
+          history = await fetchPortfolioHistory(trader.address);
+        } catch {
+          // No history yet — the chart renders its own empty state.
+        }
+
+        let currentRange: "1d" | "7d" | "30d" | "all" = "1d";
+        function renderChart() {
+          const filtered = filterHistoryByRange(history, currentRange);
+          renderPortfolioChart(chartEl, filtered);
+          if (filtered.length >= 2) {
+            const change =
+              ((filtered[filtered.length - 1].totalValue - filtered[0].totalValue) /
+                (filtered[0].totalValue || 1)) *
+              100;
+            portfolioChangeEl.textContent = `${pct(change)} this range`;
+            portfolioChangeEl.className = `chart-change ${changeClass(change)}`;
+          } else {
+            portfolioChangeEl.textContent = "";
+            portfolioChangeEl.className = "chart-change";
+          }
+        }
+        rangeButtons.forEach((button) =>
+          button.addEventListener("click", () => {
+            currentRange = button.dataset.range as "1d" | "7d" | "30d" | "all";
+            rangeButtons.forEach((b) => b.classList.toggle("chip--active", b === button));
+            renderChart();
+          }),
+        );
+        renderChart();
 
         try {
-          const positions = await getPositions();
-          if (positions.length === 0) {
-            positionsEl.className = "empty";
-            positionsEl.textContent = "No open positions yet. Open a bin to take a framing.";
-            return;
-          }
-          positionsEl.className = "list";
-          positionsEl.innerHTML = "";
-          for (const position of positions) {
-            const row = document.createElement("div");
-            row.className = "row";
-            row.innerHTML = `
-              <span class="row__mark">${initial(position.bin.name)}</span>
-              <span class="row__identity">
-                <span class="row__title">${position.bin.name}</span>
-                <span class="row__subtitle">${position.legs.map((leg) => leg.symbol).join(" · ")}</span>
-              </span>
-              <span class="row__value">${usd(position.valueUsdg)}</span>
-            `;
-            positionsEl.appendChild(row);
-          }
+          const charts = await fetchMarketCharts(featuredSymbols);
+          renderTopAssets(topAssetsEl, featuredSymbols, charts);
+          renderTicker(tickerEl, featuredSymbols.slice(0, 4), charts);
         } catch (error) {
-          positionsEl.className = "error-text";
-          positionsEl.textContent = error instanceof Error ? error.message : String(error);
+          const message = error instanceof Error ? error.message : String(error);
+          topAssetsEl.className = "error-text";
+          topAssetsEl.textContent = message;
+          tickerEl.className = "error-text";
+          tickerEl.textContent = message;
         }
       }
 
       // ---- Bins ----
       async function initBins() {
-        const grid = document.querySelector<HTMLElement>("[data-bins-grid]")!;
-        const detail = document.querySelector<HTMLElement>("[data-bin-detail]")!;
-        grid.className = "grid";
-        grid.innerHTML = "";
+        const carousel = document.querySelector<HTMLElement>("[data-bins-carousel]")!;
+        carousel.className = "carousel";
+        carousel.innerHTML = "";
+        await loadAssetRegistry().catch(() => {});
         for (const bin of bins) {
           const card = document.createElement("button");
           card.type = "button";
-          card.className = "bin-card";
+          card.className = "tile-card";
           card.innerHTML = `
-            <span class="bin-card__name">${bin.name}</span>
-            <span class="bin-card__thesis">${bin.thesis}</span>
-            <span class="bin-card__legs">${bin.legs.map((leg) => `${leg.symbol} ${(leg.weightBps / 100).toFixed(0)}%`).join(" · ")}</span>
+            ${legStackHtml(bin.legs.map((leg) => leg.symbol))}
+            <span class="tile-card__name">${bin.name}</span>
+            <span class="tile-card__thesis">${bin.thesis}</span>
+            <div class="tile-card__legs">
+              ${bin.legs.map((leg) => `<div class="tile-leg"><span>${leg.symbol}</span><span>${(leg.weightBps / 100).toFixed(0)}%</span></div>`).join("")}
+            </div>
           `;
-          card.addEventListener("click", () => openBinDetail(bin, detail));
-          grid.appendChild(card);
+          card.addEventListener("click", () => openBinModal(bin));
+          carousel.appendChild(card);
         }
       }
 
-      function openBinDetail(bin: Bin, detail: HTMLElement) {
-        detail.hidden = false;
-        detail.innerHTML = `
-          <div class="drawer__head">
-            <span class="drawer__title">${bin.name}</span>
-            <button type="button" class="drawer__close" data-close>×</button>
+      function openBinModal(bin: Bin) {
+        const detail = openModal(`
+          <div class="modal__head">
+            <div class="modal__identity">${legStackHtml(bin.legs.map((leg) => leg.symbol))}<span class="modal__title">${bin.name}</span></div>
+            <button type="button" class="modal__close" data-close>×</button>
           </div>
+          <p class="quote-line">${bin.thesis}</p>
           <div class="amount-row">
             <span>$</span>
             <input type="number" min="0" step="any" placeholder="0" data-bin-amount />
@@ -1040,10 +1601,7 @@ import "../styles/landing.css";
           <button type="button" class="btn btn--primary" data-bin-size>Size this bin</button>
           <div data-bin-sizing></div>
           <p class="status-line" data-bin-status></p>
-        `;
-        detail.querySelector<HTMLButtonElement>("[data-close]")!.addEventListener("click", () => {
-          detail.hidden = true;
-        });
+        `);
         const status = detail.querySelector<HTMLElement>("[data-bin-status]")!;
         const sizingEl = detail.querySelector<HTMLElement>("[data-bin-sizing]")!;
         const amountInput = detail.querySelector<HTMLInputElement>("[data-bin-amount]")!;
@@ -1083,7 +1641,6 @@ import "../styles/landing.css";
                 status.textContent = `Opened ${bin.name}.`;
                 await getPositions(true);
                 void initHome();
-                void initBins();
               } catch (error) {
                 status.dataset.tone = "error";
                 status.textContent = error instanceof Error ? error.message : String(error);
@@ -1104,33 +1661,38 @@ import "../styles/landing.css";
 
       async function initTrade() {
         const listEl = document.querySelector<HTMLElement>("[data-trade-list]")!;
-        const detailEl = document.querySelector<HTMLElement>("[data-trade-detail]")!;
         const searchInput = document.querySelector<HTMLInputElement>("[data-trade-search]")!;
         const categoryRow = document.querySelector<HTMLElement>("[data-trade-category]")!;
 
         searchInput.addEventListener("input", () => {
           tradeQuery = searchInput.value.trim().toLowerCase();
-          renderTradeList(listEl, detailEl);
+          renderTradeList(listEl);
         });
         categoryRow.querySelectorAll<HTMLButtonElement>("[data-category]").forEach((button) => {
           button.addEventListener("click", () => {
             tradeCategory = button.dataset.category as "all" | "held";
             categoryRow.querySelectorAll("[data-category]").forEach((b) => b.classList.toggle("chip--active", b === button));
-            renderTradeList(listEl, detailEl);
+            renderTradeList(listEl);
           });
         });
 
         try {
-          const data = await getHoodData();
-          tradeAssets = await loadTradeAssets(data.tokens);
-          renderTradeList(listEl, detailEl);
+          const [data, safeEntries] = await Promise.all([getHoodData(), fetchTradableSymbols()]);
+          const safeSymbols = new Set(safeEntries.map((entry) => entry.symbol));
+          const allAssets = await loadTradeAssets(data.tokens);
+          // Some Robinhood Chain Stock Tokens have a pool with almost no
+          // liquidity — the quote succeeds but the price is nowhere near
+          // real. Only list symbols the backend has verified price against
+          // its own reference feed, not just "a pool exists".
+          tradeAssets = allAssets.filter((asset) => safeSymbols.has(asset.token.symbol));
+          renderTradeList(listEl);
         } catch (error) {
           listEl.className = "error-text";
           listEl.textContent = error instanceof Error ? error.message : String(error);
         }
       }
 
-      function renderTradeList(listEl: HTMLElement, detailEl: HTMLElement) {
+      function renderTradeList(listEl: HTMLElement) {
         if (!tradeAssets) return;
         const heldSymbols = new Set(
           (positionsCache ?? []).flatMap((position) => position.legs.map((leg) => leg.symbol)),
@@ -1148,54 +1710,77 @@ import "../styles/landing.css";
           listEl.textContent = tradeCategory === "held" ? "No direct holdings from a bin yet." : "No tokens match that search.";
           return;
         }
-        listEl.className = "list";
-        listEl.innerHTML = "";
-        for (const asset of filtered) {
-          const row = document.createElement("div");
-          row.className = "row";
-          row.innerHTML = `
-            <span class="row__mark">${initial(asset.token.symbol)}</span>
-            <span class="row__identity">
-              <span class="row__title">${asset.token.symbol}</span>
-              <span class="row__subtitle">${asset.token.name}</span>
-            </span>
-            <span class="row__value">${asset.price === null ? "—" : asset.halted ? "Halted" : usd(asset.price)}</span>
-          `;
-          row.addEventListener("click", () => openTradeDetail(asset, detailEl));
-          listEl.appendChild(row);
-        }
+        listEl.className = "table-wrap";
+        const rows = filtered
+          .map(
+            (asset) => `
+              <tr data-symbol="${asset.token.symbol}">
+                <td><div class="cell-identity">${markHtml(stockLogoUrl(asset.token.symbol), asset.token.symbol)}${asset.token.symbol}</div></td>
+                <td class="cell-muted">${asset.token.name}</td>
+                <td class="cell-value">${asset.price === null ? "—" : asset.halted ? "Halted" : usd(asset.price)}</td>
+              </tr>
+            `,
+          )
+          .join("");
+        listEl.innerHTML = `
+          <table class="data-table">
+            <thead><tr><th>Symbol</th><th>Name</th><th style="text-align:right">Price</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
+        listEl.querySelectorAll<HTMLTableRowElement>("tbody tr").forEach((row) => {
+          const asset = filtered.find((a) => a.token.symbol === row.dataset.symbol);
+          if (asset) row.addEventListener("click", () => openAssetView(asset));
+        });
       }
 
       const buyPresets = [10, 25, 50, 100];
       const sellPresetFractions = [0.25, 0.5, 0.75, 1];
 
-      async function openTradeDetail(asset: TradeAsset, detail: HTMLElement) {
-        detail.hidden = false;
-        detail.innerHTML = `
-          <div class="drawer__head">
-            <span class="drawer__title">${asset.token.symbol}</span>
-            <button type="button" class="drawer__close" data-close>×</button>
-          </div>
-          <p class="quote-line" data-holding-line></p>
-          <div class="mode-row">
-            <button type="button" class="chip chip--active" data-mode="buy">Buy</button>
-            <button type="button" class="chip" data-mode="sell">Sell</button>
-          </div>
-          <div data-mode-body></div>
-          <p class="status-line" data-trade-status></p>
-        `;
-        detail.querySelector<HTMLButtonElement>("[data-close]")!.addEventListener("click", () => {
-          detail.hidden = true;
-        });
+      const assetBackButton = document.querySelector<HTMLButtonElement>("[data-asset-back]")!;
+      const tradeListView = document.querySelector<HTMLElement>("[data-trade-list-view]")!;
+      const assetView = document.querySelector<HTMLElement>("[data-asset-view]")!;
+      assetBackButton.addEventListener("click", closeAssetView);
 
-        if (!trader) return;
-        const holdingLine = detail.querySelector<HTMLElement>("[data-holding-line]")!;
-        const status = detail.querySelector<HTMLElement>("[data-trade-status]")!;
-        const modeBody = detail.querySelector<HTMLElement>("[data-mode-body]")!;
+      function closeAssetView() {
+        assetView.hidden = true;
+        tradeListView.hidden = false;
+      }
+
+      async function openAssetView(asset: TradeAsset) {
+        tradeListView.hidden = true;
+        assetView.hidden = false;
+
+        const headerEl = document.querySelector<HTMLElement>("[data-asset-header]")!;
+        const priceEl = document.querySelector<HTMLElement>("[data-asset-price]")!;
+        const changeEl = document.querySelector<HTMLElement>("[data-asset-change]")!;
+        const chartEl = document.querySelector<HTMLElement>("[data-asset-chart]")!;
+        const statsEl = document.querySelector<HTMLElement>("[data-asset-stats]")!;
+        const rangeButtons = Array.from(
+          document.querySelectorAll<HTMLButtonElement>("[data-asset-range] [data-range]"),
+        );
+        const holdingLine = document.querySelector<HTMLElement>("[data-asset-holding]")!;
+        const status = document.querySelector<HTMLElement>("[data-asset-status]")!;
+        const modeBody = document.querySelector<HTMLElement>("[data-asset-mode-body]")!;
+        const modeButtons = Array.from(
+          document.querySelectorAll<HTMLButtonElement>(".card--trade-panel [data-mode]"),
+        );
+
+        headerEl.innerHTML = `<div class="modal__identity">${markHtml(stockLogoUrl(asset.token.symbol), asset.token.symbol)}<span class="modal__title">${asset.token.symbol} · ${asset.token.name}</span></div>`;
+        priceEl.textContent = asset.price === null ? "—" : usd(asset.price);
+        changeEl.textContent = "";
+        statsEl.innerHTML = "";
+        chartEl.innerHTML = "";
+        holdingLine.textContent = "";
+        status.textContent = "";
+        status.className = "status-line";
 
         let mode: "buy" | "sell" = "buy";
         let pool: unknown = "checking";
         let holding = { raw: 0n, shares: 0 };
+        let currentRange: ChartRange = "5d";
+
+        if (!trader) return;
 
         checkTradable(asset.token)
           .then((found) => (pool = found))
@@ -1208,6 +1793,35 @@ import "../styles/landing.css";
             }
           })
           .catch(() => {});
+
+        async function loadChart(range: ChartRange) {
+          chartEl.innerHTML = `<div class="chart-empty">Loading…</div>`;
+          try {
+            const chart = await fetchMarketChart(asset.token.symbol, range);
+            renderLineChart(
+              chartEl,
+              chart.points.map((p) => p.close),
+              "No chart history for this range.",
+            );
+            changeEl.textContent = `${pct(chart.changePercent)} today`;
+            changeEl.className = `asset-price-change ${changeClass(chart.changePercent)}`;
+            statsEl.innerHTML = `
+              <div class="stat-card"><span class="stat-card__label">Volume</span><span class="stat-card__value" style="font-size:18px">${chart.volume.toLocaleString()}</span></div>
+              <div class="stat-card"><span class="stat-card__label">Previous close</span><span class="stat-card__value" style="font-size:18px">${usd(chart.previousClose)}</span></div>
+              <div class="stat-card"><span class="stat-card__label">You hold</span><span class="stat-card__value" style="font-size:18px">${holding.shares > 0 ? holding.shares.toLocaleString(undefined, { maximumFractionDigits: 4 }) : "—"}</span></div>
+            `;
+          } catch {
+            chartEl.innerHTML = `<div class="chart-empty">Chart unavailable right now.</div>`;
+          }
+        }
+        rangeButtons.forEach((button) =>
+          button.addEventListener("click", () => {
+            currentRange = button.dataset.range as ChartRange;
+            rangeButtons.forEach((b) => b.classList.toggle("chip--active", b === button));
+            void loadChart(currentRange);
+          }),
+        );
+        void loadChart(currentRange);
 
         function renderMode() {
           if (mode === "buy") {
@@ -1274,6 +1888,9 @@ import "../styles/landing.css";
                 status.textContent = `Sold ${asset.token.symbol}.`;
               }
               holding = await loadTokenHolding(trader!.address, asset.token);
+              if (holding.shares > 0) {
+                holdingLine.textContent = `You hold ${holding.shares.toLocaleString(undefined, { maximumFractionDigits: 6 })} ${asset.token.symbol}`;
+              }
               await getPositions(true);
               void initHome();
             } catch (error) {
@@ -1285,205 +1902,15 @@ import "../styles/landing.css";
           });
         }
 
-        detail.querySelectorAll<HTMLButtonElement>("[data-mode]").forEach((button) =>
+        modeButtons.forEach((button) =>
           button.addEventListener("click", () => {
             mode = button.dataset.mode as "buy" | "sell";
-            detail.querySelectorAll("[data-mode]").forEach((b) => b.classList.toggle("chip--active", b === button));
+            modeButtons.forEach((b) => b.classList.toggle("chip--active", b === button));
             status.textContent = "";
             renderMode();
           }),
         );
         renderMode();
-      }
-
-      // ---- Bots ----
-      async function initBots() {
-        if (!trader) return;
-        const bindRow = document.querySelector<HTMLElement>("[data-mandate-bins]")!;
-        const form = document.querySelector<HTMLFormElement>("[data-mandate-form]")!;
-        const toggleButton = document.querySelector<HTMLButtonElement>("[data-toggle-mandate-form]")!;
-        const errorEl = document.querySelector<HTMLElement>("[data-mandate-error]")!;
-        const listEl = document.querySelector<HTMLElement>("[data-mandate-list]")!;
-        const detailEl = document.querySelector<HTMLElement>("[data-mandate-detail]")!;
-
-        let selectedBinId = bins[0].id;
-        bindRow.innerHTML = bins
-          .map((bin, i) => `<button type="button" class="chip${i === 0 ? " chip--active" : ""}" data-bin-choice="${bin.id}">${bin.name}</button>`)
-          .join("");
-        bindRow.querySelectorAll<HTMLButtonElement>("[data-bin-choice]").forEach((button) =>
-          button.addEventListener("click", () => {
-            selectedBinId = button.dataset.binChoice!;
-            bindRow.querySelectorAll("[data-bin-choice]").forEach((b) => b.classList.toggle("chip--active", b === button));
-          }),
-        );
-
-        toggleButton.addEventListener("click", () => {
-          form.hidden = !form.hidden;
-        });
-
-        form.addEventListener("submit", async (event) => {
-          event.preventDefault();
-          const data = new FormData(form);
-          const policyText = String(data.get("policyText") ?? "").trim();
-          const usdgBudget = Number(data.get("usdgBudget"));
-          if (policyText === "") {
-            errorEl.textContent = "Describe the policy this mandate should follow.";
-            return;
-          }
-          if (!(usdgBudget > 0)) {
-            errorEl.textContent = "Enter a lifetime USDG budget greater than 0.";
-            return;
-          }
-          errorEl.textContent = "";
-          try {
-            await createMandate({ owner: trader!.address, binId: selectedBinId, policyText, usdgBudget });
-            form.reset();
-            form.hidden = true;
-            void reloadMandates();
-          } catch (error) {
-            errorEl.textContent = error instanceof Error ? error.message : String(error);
-          }
-        });
-
-        async function reloadMandates() {
-          try {
-            const mandates = await listMandates(trader!.address);
-            if (mandates.length === 0) {
-              listEl.className = "empty";
-              listEl.textContent = "No mandates yet.";
-              return;
-            }
-            listEl.className = "list";
-            listEl.innerHTML = "";
-            for (const mandate of mandates) {
-              const bin = bins.find((b) => b.id === mandate.binId);
-              const row = document.createElement("div");
-              row.className = "mandate-row";
-              row.innerHTML = `
-                <div class="mandate-row__bin">${bin?.name ?? mandate.binId}</div>
-                <div class="mandate-row__policy">${mandate.policyText}</div>
-                <div class="mandate-row__budget">Budget $${mandate.usdgBudget}</div>
-              `;
-              row.addEventListener("click", () => openMandateDetail(mandate, detailEl));
-              listEl.appendChild(row);
-            }
-          } catch (error) {
-            listEl.className = "error-text";
-            listEl.textContent = error instanceof Error ? error.message : String(error);
-          }
-        }
-
-        void reloadMandates();
-      }
-
-      async function openMandateDetail(mandate: Mandate, detail: HTMLElement) {
-        const bin = bins.find((b) => b.id === mandate.binId);
-        detail.hidden = false;
-        detail.innerHTML = `
-          <div class="drawer__head">
-            <span class="drawer__title">${bin?.name ?? mandate.binId}</span>
-            <button type="button" class="drawer__close" data-close>×</button>
-          </div>
-          <p class="quote-line">${mandate.policyText}</p>
-          <p class="quote-line">Lifetime budget $${mandate.usdgBudget}</p>
-          <button type="button" class="btn btn--primary" data-get-proposal>Get SERV's proposal</button>
-          <div data-proposal-body></div>
-          <p class="status-line" data-mandate-status></p>
-          <p class="panel__label" style="margin-top:18px">History</p>
-          <div data-receipt-list class="list list--loading">Loading…</div>
-        `;
-        detail.querySelector<HTMLButtonElement>("[data-close]")!.addEventListener("click", () => {
-          detail.hidden = true;
-        });
-
-        const status = detail.querySelector<HTMLElement>("[data-mandate-status]")!;
-        const proposalBody = detail.querySelector<HTMLElement>("[data-proposal-body]")!;
-        const receiptList = detail.querySelector<HTMLElement>("[data-receipt-list]")!;
-
-        async function reloadReceipts() {
-          try {
-            const receipts = await fetchReceipts(mandate.id);
-            if (receipts.length === 0) {
-              receiptList.className = "empty";
-              receiptList.textContent = "No proposals yet.";
-              return;
-            }
-            receiptList.className = "list";
-            receiptList.innerHTML = receipts
-              .map(
-                (receipt) =>
-                  `<div class="receipt-row"><div class="receipt-row__status">${receipt.status}</div><div class="receipt-row__detail">${receipt.detail}</div></div>`,
-              )
-              .join("");
-          } catch {
-            receiptList.className = "empty";
-            receiptList.textContent = "Could not load history.";
-          }
-        }
-        void reloadReceipts();
-
-        detail.querySelector<HTMLButtonElement>("[data-get-proposal]")!.addEventListener("click", async () => {
-          const button = detail.querySelector<HTMLButtonElement>("[data-get-proposal]")!;
-          button.disabled = true;
-          status.dataset.tone = "";
-          status.textContent = "Reasoning over your mandate…";
-          proposalBody.innerHTML = "";
-          try {
-            const proposal = await proposeAction(mandate.id);
-            status.textContent = "";
-            let sizedResult: Awaited<ReturnType<typeof sizeProposal>> = null;
-            if (proposal.usdgAmount > 0) {
-              const data = await getHoodData();
-              sizedResult = await sizeProposal(proposal.binId, proposal.usdgAmount, data.tokens);
-            }
-            const legsHtml =
-              sizedResult && sizedResult.sized.legs.length > 0
-                ? sizedResult.sized.legs
-                    .map((leg) => `<div class="leg-row"><span>${leg.leg.symbol}</span><span>${usd(leg.usdgIn)}</span></div>`)
-                    .join("")
-                : "";
-            const issuesHtml =
-              sizedResult && sizedResult.issues.length > 0
-                ? `<p class="warn-line">${sizedResult.issues.map((i) => i.detail).join(" · ")}</p>`
-                : "";
-            const canExecute = sizedResult !== null && sizedResult.sized.legs.length > 0;
-            proposalBody.innerHTML = `
-              <p class="card__value" style="margin-top:14px">${usd(proposal.usdgAmount)}</p>
-              <p class="quote-line">${proposal.reasoning}</p>
-              ${legsHtml}
-              ${issuesHtml}
-              <button type="button" class="btn btn--primary" style="margin-top:12px" data-execute ${canExecute ? "" : "disabled"}>
-                ${proposal.usdgAmount <= 0 ? "Nothing to execute" : "Execute with my passkey"}
-              </button>
-            `;
-            if (canExecute) {
-              proposalBody.querySelector<HTMLButtonElement>("[data-execute]")!.addEventListener("click", async () => {
-                const execButton = proposalBody.querySelector<HTMLButtonElement>("[data-execute]")!;
-                execButton.disabled = true;
-                try {
-                  status.dataset.tone = "";
-                  status.textContent = "Waiting for your passkey…";
-                  await openBin(trader!, sizedResult!.sized, (step) => (status.textContent = stepLabels[step]));
-                  status.textContent = "Executed.";
-                  proposalBody.innerHTML = "";
-                  await getPositions(true);
-                  void initHome();
-                  void reloadReceipts();
-                } catch (error) {
-                  status.dataset.tone = "error";
-                  status.textContent = error instanceof Error ? error.message : String(error);
-                  execButton.disabled = false;
-                }
-              });
-            }
-            void reloadReceipts();
-          } catch (error) {
-            status.dataset.tone = "error";
-            status.textContent = error instanceof Error ? error.message : String(error);
-          } finally {
-            button.disabled = false;
-          }
-        });
       }
 
       // ---- Account ----

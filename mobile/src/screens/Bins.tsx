@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { bins, type Bin } from "shared";
+import { AssetMark } from "../components/AssetMark";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { loadTokens, type HoodData } from "../lib/hood";
 import { color, family, space, track } from "../theme";
@@ -48,7 +49,7 @@ export function Bins({ onOpen, onComplete, onSelectTab }: BinsProps) {
             const lead = bin.legs[0];
             const price = data.price.get(lead.symbol);
             return <Pressable key={bin.id} onPress={() => toggle(bin)} onLongPress={() => onOpen(bin, data)} style={({ pressed }) => [styles.card, active && styles.cardActive, pressed && styles.cardPressed]}>
-              <View style={styles.assetMark}><Text style={styles.assetMarkText}>{lead.symbol.slice(0, 1)}</Text></View>
+              <View style={styles.assetMark}><AssetMark symbol={lead.symbol} size={48} /></View>
               <Text style={styles.symbol}>{lead.symbol}<Text style={styles.quote}> / USDG</Text></Text>
               <Text style={styles.marketName}>{bin.name}</Text>
               <Text style={styles.price}>{price === undefined ? 'Market price' : `$${price.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}</Text>
@@ -85,8 +86,7 @@ const styles = StyleSheet.create({
   card: { width: '48%', minHeight: 190, padding: space.md, borderRadius: 18, backgroundColor: '#fafafa', justifyContent: 'flex-end', overflow: 'hidden' },
   cardActive: { borderWidth: 1.5, borderColor: '#111' },
   cardPressed: { opacity: 0.7 },
-  assetMark: { position: 'absolute', top: space.md, left: space.md, width: 48, height: 48, borderRadius: 15, backgroundColor: '#090909', alignItems: 'center', justifyContent: 'center' },
-  assetMarkText: { fontFamily: family.semibold, fontSize: 24, color: '#fff' },
+  assetMark: { position: 'absolute', top: space.md, left: space.md },
   symbol: { fontFamily: family.semibold, fontSize: 19, letterSpacing: track(19, -0.04), color: '#131315' },
   quote: { fontFamily: family.regular, fontSize: 10, color: '#8a8a8d' },
   marketName: { fontFamily: family.regular, fontSize: 12, color: '#858589', marginTop: 3 },

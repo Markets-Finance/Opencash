@@ -24,6 +24,10 @@ export { findDeepestPool, quoteTokenToUsdg, quoteUsdgToToken } from "./quote.js"
 export type { HoodPool, HoodQuote, HoodSellQuote } from "./quote.js";
 export { fetchOfficialPrice, fetchOfficialPrices } from "./prices.js";
 export type { OfficialQuote } from "./prices.js";
+export { fetchMarketChart, fetchMarketCharts, rangeChangePercent } from "./marketData.js";
+export type { MarketChart, MarketHistoryPoint } from "./marketData.js";
+export { isSafePremium, maxSafePremiumBps, premiumBps, referenceMid } from "./liquidity.js";
+export { stockLogoUrl } from "./logos.js";
 export {
   allowanceRequest,
   approveRequest,

@@ -38,6 +38,35 @@ export const bins: Bin[] = [
     thesis: "A single leg, for a straight view on one Stock Token.",
     legs: [{ symbol: "NVDA", weightBps: 10000 }],
   },
+  {
+    id: "semiconductors",
+    name: "Semiconductors",
+    thesis: "Four chipmakers beyond the GPU leader — foundry, wireless, and legacy silicon all weighted in.",
+    legs: [
+      { symbol: "AVGO", weightBps: 3000 },
+      { symbol: "QCOM", weightBps: 2500 },
+      { symbol: "AMD", weightBps: 2500 },
+      { symbol: "INTC", weightBps: 2000 },
+    ],
+  },
+  {
+    id: "aerospace-defense",
+    name: "Aerospace & Defense",
+    thesis: "The two primes behind most Western military and commercial airframes.",
+    legs: [
+      { symbol: "LMT", weightBps: 5500 },
+      { symbol: "BA", weightBps: 4500 },
+    ],
+  },
+  {
+    id: "precious-metals",
+    name: "Precious Metals",
+    thesis: "Gold anchors it, silver adds the higher-beta swing — a hedge outside big tech.",
+    legs: [
+      { symbol: "GLD", weightBps: 6500 },
+      { symbol: "SLV", weightBps: 3500 },
+    ],
+  },
 ];
 
 export function binById(id: string): Bin | undefined {

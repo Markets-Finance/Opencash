@@ -10,7 +10,9 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { BinPosition, TradingAccount } from "shared";
+import { AssetMark, LegStack } from "../components/AssetMark";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
+import { fetchTradableSymbols } from "../lib/backend";
 import {
   loadPositions,
   loadTokens,
@@ -23,10 +25,6 @@ type Category = "all" | "held";
 
 function usd(value: number): string {
   return `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-}
-
-function initial(text: string): string {
-  return text.slice(0, 1).toUpperCase();
 }
 
 type TradeProps = {
@@ -48,13 +46,19 @@ export function Trade({ trader, onSelectTab, onOpenAsset }: TradeProps) {
     let live = true;
     loadTokens()
       .then(async (data) => {
-        const [held, tradeable] = await Promise.all([
+        const [held, tradeable, safeEntries] = await Promise.all([
           loadPositions(trader.address, data.tokens),
           loadTradeAssets(data.tokens),
+          fetchTradableSymbols(),
         ]);
         if (!live) return;
         setPositions(held);
-        setAssets(tradeable);
+        // Some Robinhood Chain Stock Tokens have a pool with almost no
+        // liquidity — the quote succeeds but the price is nowhere near
+        // real. Only list symbols the backend has verified against its own
+        // reference feed, not just "a pool exists".
+        const safeSymbols = new Set(safeEntries.map((entry) => entry.symbol));
+        setAssets(tradeable.filter((asset) => safeSymbols.has(asset.token.symbol)));
       })
       .catch((cause) => live && setError(String(cause)));
     return () => {
@@ -147,11 +151,7 @@ export function Trade({ trader, onSelectTab, onOpenAsset }: TradeProps) {
               <View style={styles.grid}>
                 {positions.map((position) => (
                   <View key={position.bin.id} style={styles.card}>
-                    <View style={styles.assetMark}>
-                      <Text style={styles.assetMarkText}>
-                        {initial(position.bin.name)}
-                      </Text>
-                    </View>
+                    <LegStack symbols={position.legs.map((leg) => leg.symbol)} size={30} />
                     <Text style={styles.binName}>{position.bin.name}</Text>
                     <Text style={styles.binValue}>{usd(position.valueUsdg)}</Text>
                     {position.legs.map((leg) => (
@@ -207,9 +207,7 @@ export function Trade({ trader, onSelectTab, onOpenAsset }: TradeProps) {
                     onPress={() => onOpenAsset(asset)}
                     style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
                   >
-                    <View style={styles.rowMark}>
-                      <Text style={styles.rowMarkText}>{initial(asset.token.symbol)}</Text>
-                    </View>
+                    <AssetMark symbol={asset.token.symbol} size={34} />
                     <View style={styles.rowIdentity}>
                       <Text style={styles.assetSymbol}>{asset.token.symbol}</Text>
                       <Text style={styles.assetName} numberOfLines={1}>
@@ -317,15 +315,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fafafa",
     gap: space.sm,
   },
-  assetMark: {
-    width: 40,
-    height: 40,
-    borderRadius: 13,
-    backgroundColor: "#090909",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  assetMarkText: { fontFamily: family.semibold, fontSize: 18, color: "#fff" },
   binName: {
     fontFamily: family.semibold,
     fontSize: 15,
@@ -352,15 +341,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.md,
   },
   rowPressed: { backgroundColor: "#f2f2f2" },
-  rowMark: {
-    width: 34,
-    height: 34,
-    borderRadius: 11,
-    backgroundColor: "#e8e8e8",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  rowMarkText: { fontFamily: family.semibold, fontSize: 14, color: "#1b1b1d" },
   rowIdentity: { flex: 1, minWidth: 0 },
   assetSymbol: { fontFamily: family.semibold, fontSize: 14, color: "#131315" },
   assetName: { fontFamily: family.regular, fontSize: 12, color: "#858589" },

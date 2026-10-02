@@ -28,6 +28,6 @@ export type SizedBin = {
 
 export type BinSizingIssue = {
   symbol: string;
-  reason: "unknown-token" | "no-liquidity" | "below-minimum";
+  reason: "unknown-token" | "no-liquidity" | "below-minimum" | "price-deviation";
   detail: string;
 };

@@ -11,12 +11,10 @@ import {
   findDeepestPool,
   fromScaled,
   hoodMainnet,
-  loadStockTokens,
   quoteTokenToUsdg,
   quoteUsdgToToken,
   sizeBin,
   swapRouter02Abi,
-  tokensBySymbol,
   toScaled,
   type Bin,
   type BinSizingIssue,
@@ -28,6 +26,7 @@ import {
   type TradingAccount,
 } from "shared";
 import { encodeFunctionData, type Address, type Hash, type PublicClient } from "viem";
+import { loadAssetRegistry } from "./assets";
 import { publicClient, walletClientFor } from "./mera";
 
 const client = publicClient as unknown as PublicClient;
@@ -38,8 +37,7 @@ export type HoodData = {
 };
 
 export async function loadTokens(): Promise<HoodData> {
-  const list = await loadStockTokens();
-  const tokens = tokensBySymbol(list);
+  const tokens = await loadAssetRegistry();
 
   const symbols = new Set(bins.flatMap((bin) => bin.legs.map((leg) => leg.symbol)));
   const price = new Map<string, number>();
