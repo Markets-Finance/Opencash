@@ -28,9 +28,9 @@ function statusDot(bot: Bot): string {
   return dark.muted;
 }
 
-type BotsProps = { name?: string; onSelectTab: (key: TabKey) => void };
+type BotsProps = { name?: string; labSymbol?: string | null; onSelectTab: (key: TabKey) => void; onOpenAsset: (symbol: string) => void };
 
-export function Bots({ name, onSelectTab }: BotsProps) {
+export function Bots({ name, labSymbol, onSelectTab, onOpenAsset }: BotsProps) {
   const insets = useSafeAreaInsets();
   const [bots, setBots] = useState<Bot[]>([]);
   const [prompt, setPrompt] = useState("");
@@ -80,8 +80,8 @@ export function Bots({ name, onSelectTab }: BotsProps) {
 
         {view === "strategies" && (
           <>
-            <StrategyLab />
-            <PaperBots />
+            <StrategyLab initialSymbol={labSymbol} onOpenAsset={onOpenAsset} />
+            <PaperBots onOpenAsset={onOpenAsset} />
           </>
         )}
 
@@ -152,7 +152,9 @@ export function Bots({ name, onSelectTab }: BotsProps) {
               </View>
               <View style={styles.tags}>
                 {bot.card.legs.map((leg) => (
-                  <Tag key={`${leg.symbol}-${leg.direction}`} label={`${leg.direction === "long" ? "Long" : "Short"} ${leg.symbol} ${leg.leverage}x`} dot={leg.direction === "long" ? dark.green : dark.red} />
+                  <Pressable key={`${leg.symbol}-${leg.direction}`} onPress={() => onOpenAsset(leg.symbol)} accessibilityLabel={`Trade ${leg.symbol}`}>
+                    <Tag label={`${leg.direction === "long" ? "Long" : "Short"} ${leg.symbol} ${leg.leverage}x ↗`} dot={leg.direction === "long" ? dark.green : dark.red} />
+                  </Pressable>
                 ))}
               </View>
               <View style={styles.stats}>

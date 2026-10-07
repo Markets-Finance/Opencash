@@ -5,6 +5,7 @@ import { loadCandles } from "../perplApi";
 import { changeClass, errorText, markForSymbol, px, query, say, usd } from "./dom";
 import { getMarketData } from "./market";
 import { requireTrader } from "./state";
+import { activateTab } from "./tabs";
 
 type Side = "long" | "short";
 
@@ -14,6 +15,13 @@ let side: Side = "long";
 let positions: OpenPosition[] = [];
 let range: CandleRangeKey = "1d";
 let rerender: () => void = () => {};
+
+export function openAsset(next: string) {
+  symbol = next;
+  searchTerm = "";
+  rerender();
+  activateTab("trade");
+}
 
 export function setTradeQuery(value: string) {
   searchTerm = value;

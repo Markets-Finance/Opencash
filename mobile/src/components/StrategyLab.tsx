@@ -94,7 +94,7 @@ function WeekBars({ result }: { result: templates.SimResult }) {
   );
 }
 
-export function StrategyLab() {
+export function StrategyLab({ onOpenAsset, initialSymbol }: { onOpenAsset: (symbol: string) => void; initialSymbol?: string | null }) {
   const [symbols, setSymbols] = useState<string[]>([]);
   const [symbol, setSymbol] = useState("");
   const [resolution, setResolution] = useState(3600);
@@ -113,7 +113,7 @@ export function StrategyLab() {
       .then((markets) => {
         const names = markets.map((m) => m.symbol);
         setSymbols(names);
-        setSymbol(names.includes("BTC") ? "BTC" : (names[0] ?? ""));
+        setSymbol(initialSymbol && names.includes(initialSymbol) ? initialSymbol : names.includes("BTC") ? "BTC" : (names[0] ?? ""));
       })
       .catch((e) => setError(e instanceof Error ? e.message : String(e)));
   }, []);
@@ -141,7 +141,9 @@ export function StrategyLab() {
   return (
     <View style={styles.wrap}>
       <View style={styles.head}>
-        <Text style={styles.muted}>Pick a market and candle size</Text>
+        <Pressable onPress={() => symbol && onOpenAsset(symbol)} accessibilityRole="button" style={styles.tradeLink}>
+          <Text style={styles.tradeLinkText}>Trade {symbol || "market"} ↗</Text>
+        </Pressable>
         <View style={styles.frames}>
           {frames.map((frame) => (
             <SelectPill key={frame.value} label={frame.label} active={resolution === frame.value} onPress={() => setResolution(frame.value)} />
@@ -276,6 +278,8 @@ const styles = StyleSheet.create({
   wrap: { gap: space.md },
   head: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   title: { fontFamily: family.semibold, fontSize: 22, letterSpacing: -0.8, color: dark.ink },
+  tradeLink: { minHeight: touch, paddingHorizontal: space.lg, borderRadius: 999, backgroundColor: tone.raised, justifyContent: "center" },
+  tradeLinkText: { fontFamily: family.semibold, fontSize: 13, color: dark.ink },
   frames: { flexDirection: "row", gap: space.xs },
   chips: { gap: space.sm },
   chip: { flexDirection: "row", alignItems: "center", gap: space.xs, paddingHorizontal: space.md, minHeight: touch, borderRadius: 999, backgroundColor: tone.card },

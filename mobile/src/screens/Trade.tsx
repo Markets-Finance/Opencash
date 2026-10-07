@@ -55,15 +55,18 @@ function errorText(error: unknown): string {
 
 type TradeProps = {
   trader: TradingAccount;
+  initialSymbol?: string | null;
+  initialDirection?: Direction;
+  onOpenAsset: (symbol: string) => void;
   onSelectTab: (key: TabKey) => void;
 };
 
-export function Trade({ trader, onSelectTab }: TradeProps) {
+export function Trade({ trader, initialSymbol, initialDirection, onOpenAsset, onSelectTab }: TradeProps) {
   const insets = useSafeAreaInsets();
   const [data, setData] = useState<MarketData | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [symbol, setSymbol] = useState("BTC");
-  const [direction, setDirection] = useState<Direction>("long");
+  const [symbol, setSymbol] = useState(initialSymbol ?? "BTC");
+  const [direction, setDirection] = useState<Direction>(initialDirection ?? "long");
   const [leverage, setLeverage] = useState(3);
   const [amount, setAmount] = useState("");
   const [range, setRange] = useState<CandleRangeKey>("1d");
@@ -71,6 +74,7 @@ export function Trade({ trader, onSelectTab }: TradeProps) {
   const [positions, setPositions] = useState<OpenPosition[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<Status>(null);
+  const [query, setQuery] = useState("");
 
   const refreshPositions = useCallback(
     (markets: MarketData) => {
@@ -89,13 +93,13 @@ export function Trade({ trader, onSelectTab }: TradeProps) {
         setData(next);
         refreshPositions(next);
         const live_ = [...next.markets.values()].filter((m) => m.numOrders > 0);
-        if (!next.markets.has("BTC") && live_.length > 0) setSymbol(live_[0].symbol);
+        if (!initialSymbol && !next.markets.has("BTC") && live_.length > 0) setSymbol(live_[0].symbol);
       })
       .catch((error) => live && setLoadError(errorText(error)));
     return () => {
       live = false;
     };
-  }, [refreshPositions]);
+  }, [refreshPositions, initialSymbol]);
 
   useEffect(() => {
     const target = data?.markets.get(symbol);
@@ -119,6 +123,10 @@ export function Trade({ trader, onSelectTab }: TradeProps) {
     () => [...(data?.markets.values() ?? [])].filter((m) => m.numOrders > 0),
     [data],
   );
+  const shown = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return needle === "" ? tradable : tradable.filter((m) => m.symbol.toLowerCase().includes(needle) || m.name.toLowerCase().includes(needle));
+  }, [tradable, query]);
   const market = data?.markets.get(symbol) ?? null;
   const cap = data?.maxLeverage.get(symbol) ?? leverage;
   const margin = Number(amount) || 0;
@@ -180,14 +188,34 @@ export function Trade({ trader, onSelectTab }: TradeProps) {
       >
         <ScreenTitle title="Trade" right={<Tag label="Monad Testnet" dot={dark.green} />} />
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-          {tradable.map((m) => (
-            <Pressable key={m.symbol} onPress={() => setSymbol(m.symbol)} style={[styles.chip, m.symbol === symbol && styles.chipActive]}>
-              <AssetMark symbol={m.symbol} size={22} />
-              <Text style={[styles.chipLabel, m.symbol === symbol && styles.chipLabelActive]}>{m.symbol}</Text>
+        <View style={styles.search}>
+          <Text style={styles.searchGlyph}>⌕</Text>
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search assets"
+            placeholderTextColor={dark.muted}
+            autoCapitalize="characters"
+            autoCorrect={false}
+            style={styles.searchInput}
+          />
+          {query !== "" && (
+            <Pressable onPress={() => setQuery("")} hitSlop={12} accessibilityLabel="Clear search">
+              <Text style={styles.searchClear}>×</Text>
+            </Pressable>
+          )}
+        </View>
+
+        <Text style={styles.muted}>Tap an asset to see its chart, funding and market details.</Text>
+        <View style={styles.grid}>
+          {shown.map((m) => (
+            <Pressable key={m.symbol} onPress={() => onOpenAsset(m.symbol)} accessibilityRole="button" accessibilityLabel={`Open ${m.symbol}`} style={[styles.assetCell, m.symbol === symbol && styles.assetCellActive]}>
+              <AssetMark symbol={m.symbol} size={28} />
+              <Text style={[styles.assetCellLabel, m.symbol === symbol && styles.chipLabelActive]}>{m.symbol}</Text>
             </Pressable>
           ))}
-        </ScrollView>
+          {shown.length === 0 && <Text style={styles.muted}>No asset matches “{query}”.</Text>}
+        </View>
 
         {loadError !== null && <Text style={styles.error}>{loadError}</Text>}
 
@@ -325,6 +353,14 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   row: { flexDirection: "row", gap: space.sm },
   tags: { flexDirection: "row", flexWrap: "wrap", gap: space.xs },
+  search: { flexDirection: "row", alignItems: "center", gap: space.sm, minHeight: touch + space.sm, paddingHorizontal: space.lg, borderRadius: 999, backgroundColor: tone.card },
+  searchGlyph: { fontFamily: family.medium, fontSize: 20, color: dark.muted },
+  searchInput: { flex: 1, fontFamily: family.regular, fontSize: 15, color: dark.ink, paddingVertical: 0 },
+  searchClear: { fontFamily: family.medium, fontSize: 24, color: dark.muted },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
+  assetCell: { width: "23%", flexGrow: 1, minWidth: 76, minHeight: 76, alignItems: "center", justifyContent: "center", gap: space.xs, borderRadius: 20, backgroundColor: tone.card },
+  assetCellActive: { backgroundColor: tone.paper },
+  assetCellLabel: { fontFamily: family.semibold, fontSize: 12, color: dark.ink },
   chips: { gap: space.sm },
   chip: { flexDirection: "row", alignItems: "center", gap: space.xs, paddingHorizontal: space.md, minHeight: touch, borderRadius: 999, backgroundColor: tone.card },
   chipActive: { backgroundColor: tone.paper },

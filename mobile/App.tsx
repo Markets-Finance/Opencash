@@ -16,6 +16,7 @@ import { BinDetail } from "./src/screens/BinDetail";
 import { Bins } from "./src/screens/Bins";
 import { Bots } from "./src/screens/Bots";
 import { startBots, stopBots } from "./src/lib/bots";
+import { Asset } from "./src/screens/Asset";
 import { Trade } from "./src/screens/Trade";
 import type { TabKey } from "./src/components/TabBar";
 import { Home } from "./src/screens/Home";
@@ -36,6 +37,7 @@ type Screen =
   | "bin"
   | "home"
   | "trade"
+  | "asset"
   | "bots";
 
 export default function App() {
@@ -46,6 +48,10 @@ export default function App() {
   const [trader, setTrader] = useState<TradingAccount | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [portfolio, setPortfolio] = useState<number | null>(null);
+  const [asset, setAsset] = useState<string | null>(null);
+  const [side, setSide] = useState<"long" | "short">("long");
+  const [cameFrom, setCameFrom] = useState<Screen>("home");
+  const [labSymbol, setLabSymbol] = useState<string | null>(null);
   const [loaded, error] = useFonts({
     DMSans_300Light,
     DMSans_400Regular,
@@ -84,6 +90,23 @@ export default function App() {
       .catch(() => setPortfolio(null));
   }
 
+  function openAsset(symbol: string) {
+    setCameFrom(screen === "asset" ? cameFrom : screen);
+    setAsset(symbol);
+    setScreen("asset");
+  }
+
+  function tradeAsset(symbol: string, direction: "long" | "short") {
+    setAsset(symbol);
+    setSide(direction);
+    setScreen("trade");
+  }
+
+  function strategiesFor(symbol: string) {
+    setLabSymbol(symbol);
+    setScreen("bots");
+  }
+
   function goTab(key: TabKey) {
     if (key === "home") setScreen("home");
     else if (key === "bins") setScreen("bins");
@@ -112,6 +135,7 @@ export default function App() {
       ) : screen === "bins" ? (
         <Bins
           onSelectTab={goTab}
+          onOpenAsset={openAsset}
           onComplete={() => setScreen("home")}
           onOpen={(selected, data) => {
             setBin(selected);
@@ -121,12 +145,23 @@ export default function App() {
         />
       ) : screen === "trade" ? (
         trader !== null ? (
-          <Trade trader={trader} onSelectTab={goTab} />
+          <Trade trader={trader} initialSymbol={asset} initialDirection={side} onOpenAsset={openAsset} onSelectTab={goTab} />
+        ) : null
+      ) : screen === "asset" ? (
+        trader !== null && asset !== null ? (
+          <Asset
+            symbol={asset}
+            trader={trader}
+            onBack={() => setScreen(cameFrom === "asset" ? "home" : cameFrom)}
+            onSelectTab={goTab}
+            onTrade={tradeAsset}
+            onStrategies={strategiesFor}
+          />
         ) : null
       ) : screen === "bots" ? (
-        <Bots name={profile?.name} onSelectTab={goTab} />
+        <Bots name={profile?.name} labSymbol={labSymbol} onSelectTab={goTab} onOpenAsset={openAsset} />
       ) : screen === "home" ? (
-        trader !== null ? <Home trader={trader} name={profile?.name} onSelectTab={goTab} /> : null
+        trader !== null ? <Home trader={trader} name={profile?.name} onSelectTab={goTab} onOpenAsset={openAsset} /> : null
       ) : bin !== null && markets !== null && trader !== null ? (
         <BinDetail
           bin={bin}

@@ -7,6 +7,9 @@ import { labState } from "./state";
 import { renderTiles } from "./tiles";
 
 function paintMarkets() {
+  const link = query<HTMLButtonElement>("[data-lab-trade]");
+  link.dataset.openAsset = labState.symbol;
+  link.textContent = `Trade ${labState.symbol} ↗`;
   query("[data-lab-markets]").innerHTML = labState.symbols
     .map(
       (symbol) =>

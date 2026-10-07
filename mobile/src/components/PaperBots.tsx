@@ -9,7 +9,7 @@ import { meta, money, pct, price, sample, tints } from "./labShared";
 
 type Row = { bot: templates.PaperBot; result: templates.SimResult | null; error: string | null };
 
-export function PaperBots() {
+export function PaperBots({ onOpenAsset }: { onOpenAsset: (symbol: string) => void }) {
   const [bots, setBots] = useState<templates.PaperBot[]>([]);
   const [views, setViews] = useState<Row[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -49,8 +49,10 @@ export function PaperBots() {
         return (
           <View key={bot.id} style={styles.card}>
             <View style={styles.row}>
-              <AssetMark symbol={bot.symbol} size={28} />
-              <Text style={styles.name}>{bot.name}</Text>
+              <Pressable onPress={() => onOpenAsset(bot.symbol)} accessibilityLabel={`Trade ${bot.symbol}`} style={styles.row}>
+                <AssetMark symbol={bot.symbol} size={28} />
+                <Text style={styles.name}>{bot.name} ↗</Text>
+              </Pressable>
               <Text style={styles.pill}>Paper</Text>
               <Text style={styles.cap}>Cap ${bot.allocationUsd}</Text>
             </View>

@@ -9,7 +9,7 @@ function short(address: string): string {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
 }
 
-export function Ranks() {
+export function Ranks({ onOpenAsset }: { onOpenAsset?: (symbol: string) => void }) {
   const [board, setBoard] = useState<Board | null>(null);
   const [strategies, setStrategies] = useState<StrategyRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -72,9 +72,16 @@ export function Ranks() {
               {row.medianRoiPct === null ? "needs 2 followers" : pct(row.medianRoiPct)}
             </Text>
           </View>
-          <Text style={styles.muted}>
-            {row.card.legs.map((leg) => `${leg.direction === "long" ? "L" : "S"} ${leg.symbol} ${leg.leverage}x`).join(" · ")} · stop {row.card.stopLossPct}%
-          </Text>
+          <View style={styles.legRow}>
+            {row.card.legs.map((leg) => (
+              <Pressable key={`${leg.symbol}-${leg.direction}`} disabled={!onOpenAsset} onPress={() => onOpenAsset?.(leg.symbol)} style={styles.legChip}>
+                <Text style={styles.legChipText}>
+                  {leg.direction === "long" ? "Long" : "Short"} {leg.symbol} {leg.leverage}x
+                </Text>
+              </Pressable>
+            ))}
+            <Text style={styles.muted}>stop {row.card.stopLossPct}%</Text>
+          </View>
           <Text style={styles.muted}>
             {row.authorHandle ? `@${row.authorHandle} ✓` : short(row.author)} · {row.followers} followers · follower PnL {money(row.totalFollowerPnlUsd)}
           </Text>
@@ -105,6 +112,9 @@ const styles = StyleSheet.create({
   down: { color: dark.red },
   card: { padding: space.lg, borderRadius: 18, backgroundColor: dark.surface, gap: space.sm },
   cardTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: space.sm },
+  legRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: space.xs },
+  legChip: { paddingVertical: 6, paddingHorizontal: space.md, borderRadius: 999, backgroundColor: "#29312e" },
+  legChipText: { fontFamily: family.medium, fontSize: 12, color: dark.ink },
   follow: { minHeight: touch, borderRadius: 999, backgroundColor: dark.accent, alignItems: "center", justifyContent: "center" },
   followLabel: { fontFamily: family.semibold, fontSize: 14, color: dark.onAccent },
 });

@@ -74,8 +74,7 @@ async function card(bot: templates.PaperBot): Promise<string> {
   }
   return `<div class="pbot tile tile--${info.tint}" data-paper="${esc(bot.id)}">
     <div class="pbot__head">
-      ${markForSymbol(bot.symbol)}
-      <span class="pbot__name">${esc(bot.name)}</span>
+      <span class="asset-row--link pbot__asset" data-open-asset="${esc(bot.symbol)}" tabindex="0" title="Trade ${esc(bot.symbol)}">${markForSymbol(bot.symbol)}<span class="pbot__name">${esc(bot.name)} ↗</span></span>
       <span class="pill">Paper</span>
       <span class="pbot__cap">Cap $${bot.allocationUsd}</span>
       <span class="bot__spacer"></span>

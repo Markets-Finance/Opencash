@@ -15,6 +15,7 @@ type HomeProps = {
   trader: TradingAccount;
   name?: string;
   onSelectTab: (key: TabKey) => void;
+  onOpenAsset: (symbol: string) => void;
 };
 
 function usd(value: number): string {
@@ -33,13 +34,12 @@ function money(value: number): { whole: string; cents: string } {
   return { whole: `${value < 0 ? "−" : ""}$${whole}`, cents: `.${cents}` };
 }
 
-export function Home({ trader, name, onSelectTab }: HomeProps) {
+export function Home({ trader, name, onSelectTab, onOpenAsset }: HomeProps) {
   const insets = useSafeAreaInsets();
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
   const [positions, setPositions] = useState<BinPosition[] | null>(null);
   const [data, setData] = useState<MarketData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [focus, setFocus] = useState<string | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -57,11 +57,9 @@ export function Home({ trader, name, onSelectTab }: HomeProps) {
   }, [trader.address]);
 
   const listed = data ? featuredSymbols.filter((symbol) => data.markets.has(symbol)) : featuredSymbols;
-  const selected = focus ?? listed[0] ?? null;
   const pnl = summary?.unrealizedPnl ?? 0;
   const total = money(summary?.total ?? 0);
   const change = money(Math.abs(pnl));
-  const selectedMark = selected ? data?.markets.get(selected)?.mark : undefined;
 
   return (
     <View style={styles.screen}>
@@ -122,43 +120,29 @@ export function Home({ trader, name, onSelectTab }: HomeProps) {
           <View style={styles.cardHead}>
             <View style={styles.headText}>
               <CardTitle onColor>Markets</CardTitle>
+              <Text style={styles.onColorMuted}>Tap a market to trade it</Text>
             </View>
-            <Tag label="Perpl" onColor />
+            <ArrowBadge dark label="Open Trade" onPress={() => onSelectTab("trade")} />
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.circles}>
-            {listed.map((symbol) => (
-              <Pressable
-                key={symbol}
-                onPress={() => setFocus(symbol)}
-                accessibilityLabel={symbol}
-                style={[styles.circle, symbol === selected && styles.circleActive]}
-              >
-                <AssetMark symbol={symbol} size={30} />
-              </Pressable>
-            ))}
-          </ScrollView>
-          {selected && (
-            <View style={styles.focusRow}>
-              <View>
-                <Text style={styles.focusSymbol}>{selected}</Text>
-                <Text style={styles.onColorMuted}>Mark price</Text>
-              </View>
-              <Text style={styles.focusPrice}>{selectedMark === undefined ? "—" : px(selectedMark)}</Text>
-            </View>
-          )}
           <View style={styles.marketList}>
             {listed.map((symbol) => {
               const mark = data?.markets.get(symbol)?.mark;
               const leverage = data?.maxLeverage.get(symbol);
               return (
-                <View key={symbol} style={styles.marketRow}>
+                <Pressable
+                  key={symbol}
+                  onPress={() => onOpenAsset(symbol)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Trade ${symbol}`}
+                  style={({ pressed }) => [styles.marketRow, pressed && styles.pressed]}
+                >
                   <AssetMark symbol={symbol} size={26} />
                   <Text style={styles.marketSymbol}>{symbol}</Text>
                   <Text style={styles.marketPrice}>{mark === undefined ? "—" : px(mark)}</Text>
                   <View style={styles.levTag}>
                     <Text style={styles.levText}>{leverage === undefined ? "—" : `${leverage}x`}</Text>
                   </View>
-                </View>
+                </Pressable>
               );
             })}
           </View>
@@ -191,7 +175,7 @@ export function Home({ trader, name, onSelectTab }: HomeProps) {
                   <Text style={styles.positionName}>{position.bin.name.toUpperCase()}</Text>
                   <Text style={styles.muted}>{position.legs.map((leg) => leg.symbol).join(", ")}</Text>
                 </View>
-                <ArrowBadge label="Open in Trade" onPress={() => onSelectTab("trade")} />
+                <ArrowBadge label="Open in Trade" onPress={() => onOpenAsset(position.legs[0]?.symbol ?? "BTC")} />
               </View>
               <View style={styles.tagRow}>
                 <Tag label={`Value ${usd(position.deposit + position.pnl)}`} />

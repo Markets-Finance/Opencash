@@ -27,9 +27,12 @@ export function initBins() {
       <span class="tile-card__name">${bin.name}</span>
       <span class="tile-card__thesis">${bin.thesis}</span>
       <div class="tile-card__legs">
-        ${bin.legs.map((leg) => `<div class="tile-leg"><span>${leg.direction === "long" ? "Long" : "Short"} ${leg.symbol}</span><span>${(leg.weightBps / 100).toFixed(0)}%</span></div>`).join("")}
+        ${bin.legs.map((leg) => `<div class="tile-leg asset-row--link" data-open-asset="${leg.symbol}" title="Trade ${leg.symbol}"><span>${leg.direction === "long" ? "Long" : "Short"} ${leg.symbol}</span><span>${(leg.weightBps / 100).toFixed(0)}%</span></div>`).join("")}
       </div>`;
-    card.addEventListener("click", () => openBinModal(bin));
+    card.addEventListener("click", (event) => {
+      if ((event.target as HTMLElement).closest("[data-open-asset]")) return;
+      openBinModal(bin);
+    });
     carousel.appendChild(card);
   }
 }

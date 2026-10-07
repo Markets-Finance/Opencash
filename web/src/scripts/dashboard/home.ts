@@ -22,7 +22,7 @@ function renderPositionsTable(container: HTMLElement, positions: BinPosition[]) 
   const rows = positions
     .map(
       (position) => `
-        <tr>
+        <tr class="asset-row--link" data-open-asset="${position.legs[0]?.symbol ?? "BTC"}" tabindex="0">
           <td><div class="cell-identity">${legStackHtml(position.legs.map((leg) => leg.symbol))}${position.bin.name}</div></td>
           <td class="cell-muted">${position.legs.map((leg) => leg.symbol).join(", ")}</td>
           <td class="cell-value">${usd(position.deposit + position.pnl)}</td>
@@ -42,7 +42,7 @@ function renderMarkets(container: HTMLElement, data: MarketData) {
     .map((symbol) => {
       const market = data.markets.get(symbol);
       return `
-        <div class="asset-row">
+        <div class="asset-row asset-row--link" data-open-asset="${symbol}" role="button" tabindex="0" aria-label="Trade ${symbol}">
           ${markForSymbol(symbol)}
           <span class="asset-row__identity">${symbol}</span>
           <span class="asset-row__price">${market ? px(market.mark) : "—"}</span>
@@ -59,7 +59,7 @@ function renderTicker(container: HTMLElement, data: MarketData) {
     .map((symbol) => {
       const market = data.markets.get(symbol);
       return `
-        <div class="ticker-card">
+        <div class="ticker-card asset-row--link" data-open-asset="${symbol}" role="button" tabindex="0" aria-label="Trade ${symbol}">
           <div class="ticker-card__head">${markForSymbol(symbol)}<span class="ticker-card__symbol">${symbol}</span></div>
           <span class="ticker-card__price">${market ? px(market.mark) : "—"}</span>
         </div>`;

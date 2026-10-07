@@ -34,7 +34,9 @@ function strategyWho(row: StrategyRow): string {
 }
 
 function legsText(row: StrategyRow): string {
-  return row.card.legs.map((l) => `${l.direction === "long" ? "L" : "S"} ${l.symbol} ${l.leverage}x`).join(" · ");
+  return row.card.legs
+    .map((l) => `<span class="asset-row--link" data-open-asset="${esc(l.symbol)}" tabindex="0">${l.direction === "long" ? "L" : "S"} ${esc(l.symbol)} ${l.leverage}x ↗</span>`)
+    .join(" · ");
 }
 
 async function renderStrategies() {
@@ -55,7 +57,7 @@ async function renderStrategies() {
         .map(
           (r) => `<tr>
             <td class="cell-muted">${r.rank ?? "–"}</td>
-            <td><b>${esc(r.name)}</b><div class="cell-muted">${esc(legsText(r))} · stop ${r.card.stopLossPct}%</div></td>
+            <td><b>${esc(r.name)}</b><div class="cell-muted">${legsText(r)} · stop ${r.card.stopLossPct}%</div></td>
             <td class="cell-muted">${strategyWho(r)}</td>
             <td class="cell-muted">${r.activeFollowers} active, ${r.qualifyingFollowers} with trades</td>
             <td class="cell-value ${r.medianRoiPct === null ? "" : changeClass(r.medianRoiPct)}">${r.medianRoiPct === null ? "needs 2 followers" : `${r.medianRoiPct.toFixed(1)}%`}</td>

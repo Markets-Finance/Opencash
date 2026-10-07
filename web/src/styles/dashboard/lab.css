@@ -416,3 +416,19 @@ button.tile[aria-pressed="true"] {
   max-height: 260px;
   overflow: auto;
 }
+
+.asset-row--link {
+  cursor: pointer;
+}
+.asset-row--link:hover {
+  background: var(--surface-hover);
+}
+.pbot__asset {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  border-radius: 999px;
+}
+.lab__trade {
+  margin-left: auto;
+}
