@@ -1,0 +1,27 @@
+---
+import AccountCard from "../AccountCard.astro";
+---
+
+<section class="panel" data-panel="account" hidden>
+  <div class="account-layout">
+    <div class="account-layout__card" data-card-slot><AccountCard tier="Trader" /></div>
+    <div class="account-layout__actions">
+      <div class="card">
+        <label class="field">
+          <span>Name</span>
+          <input type="text" data-profile-name placeholder="Trader" />
+        </label>
+        <label class="field">
+          <span>Email</span>
+          <input type="email" data-profile-email placeholder="you@domain.com" />
+        </label>
+        <div class="btn-row">
+          <button type="button" class="btn btn--primary" data-save-profile>Save profile</button>
+          <button type="button" class="btn" data-shuffle>Shuffle avatar</button>
+        </div>
+      </div>
+      <button type="button" class="btn btn--quiet" data-sign-out>Sign out</button>
+      <p class="account-status" data-account-status role="status"></p>
+    </div>
+  </div>
+</section>

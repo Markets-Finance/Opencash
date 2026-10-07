@@ -1,0 +1,36 @@
+---
+import { isDevAuth } from "shared";
+import Mark from "../Mark.astro";
+---
+
+<div class="gate" data-gate>
+  {isDevAuth && (
+    <p class="gate__dev">
+      DEV MODE — no passkey. This is a shared test account, not yours.
+    </p>
+  )}
+  <a class="wordmark gate__wordmark" href="/"><Mark />open<span>cash</span></a>
+  <h1 class="gate__title">Sign in to trade</h1>
+  <p class="gate__lede">
+    One passkey derives your address. No seed phrase, no password, nothing
+    stored on this device.
+  </p>
+  <div class="gate__actions">
+    <button type="button" data-sign-in class="btn btn--primary">
+      Sign in with passkey
+    </button>
+    <button type="button" data-create class="btn">Create a new account</button>
+    <form class="gate__form" data-create-form hidden>
+      <label class="field">
+        <span>Name</span>
+        <input name="name" type="text" required autocomplete="name" placeholder="Ada Lovelace" />
+      </label>
+      <label class="field">
+        <span>Email</span>
+        <input name="email" type="email" required autocomplete="email" placeholder="ada@example.com" />
+      </label>
+      <button type="submit" class="btn btn--primary">Create passkey</button>
+    </form>
+  </div>
+  <p class="gate__status" data-gate-status role="status"></p>
+</div>

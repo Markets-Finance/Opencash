@@ -1,0 +1,43 @@
+<section class="panel" data-panel="home">
+  <div class="home-grid">
+    <div class="home-left">
+      <div class="card card--balance">
+        <div class="balance-head">
+          <span class="card__label">Wallet AUSD</span>
+          <span class="chain-badge">Monad Testnet</span>
+        </div>
+        <span class="stat-card__value stat-card__value--lg" data-home-balance>—</span>
+        <div class="balance-meta">
+          <span data-home-updated>—</span>
+          <button type="button" class="link-btn" data-home-refresh>⟳ Refresh</button>
+        </div>
+        <div class="action-grid">
+          <button type="button" class="action-btn" data-goto="trade">Trade</button>
+          <button type="button" class="action-btn" data-goto="bins">Bins</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-row"><span class="panel__label">Markets</span></div>
+        <div data-top-assets class="asset-list asset-list--loading">Loading…</div>
+      </div>
+    </div>
+
+    <div class="home-right">
+      <div class="ticker-row ticker-row--loading" data-ticker-row>Loading…</div>
+
+      <div class="card card--chart">
+        <span class="card__label">Portfolio Value</span>
+        <div class="chart-value-row">
+          <span class="stat-card__value" data-portfolio-value>—</span>
+          <span class="chart-change" data-portfolio-change></span>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="panel__subtitle">Positions</h3>
+        <div data-home-positions-table class="table-wrap table-wrap--loading">Loading…</div>
+      </div>
+    </div>
+  </div>
+</section>
