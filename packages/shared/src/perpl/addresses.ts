@@ -6,6 +6,7 @@ export type PerplDeployment = {
   exchange: `0x${string}`;
   collateral: `0x${string}`;
   collateralDecimals: number;
+  apiUrl: string;
 };
 
 export const perplMainnet: PerplDeployment = {
@@ -14,6 +15,7 @@ export const perplMainnet: PerplDeployment = {
   exchange: "0x34B6552d57a35a1D042CcAe1951BD1C370112a6F",
   collateral: "0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a",
   collateralDecimals: 6,
+  apiUrl: "https://app.perpl.xyz/api",
 };
 
 export const perplTestnet: PerplDeployment = {
@@ -22,6 +24,7 @@ export const perplTestnet: PerplDeployment = {
   exchange: "0x1964C32f0bE608E7D29302AFF5E61268E72080cc",
   collateral: "0xa9012a055bd4e0eDfF8Ce09f960291C09D5322dC",
   collateralDecimals: 6,
+  apiUrl: "https://testnet.perpl.xyz/api",
 };
 
 export function deploymentForChain(chainId: number): PerplDeployment {

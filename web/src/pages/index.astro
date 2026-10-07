@@ -7,7 +7,7 @@ const stages = [
   {
     name: "Fund",
     description:
-      "Deposit USDC to Hyperliquid. One margin balance backs every position.",
+      "Deposit AUSD to your Perpl account on Monad. One margin balance backs your positions.",
     position: "issue",
   },
   {
@@ -35,27 +35,27 @@ const applications = [
     tab: "Perps",
     audience: "FOR DIRECT TRADES",
     title: "Lever a single market.",
-    text: "Go long or short on any Hyperliquid market with the leverage you choose. Orders start as post-only limits, so you set the price instead of chasing it.",
+    text: "Go long or short on any Perpl market on Monad with the leverage you choose. Orders are priced within a slippage band of the mark, so a fill never lands far from the price you saw.",
     image: "skyline",
     label: "PERPS / LEVERAGED TRADES",
     facts: [
-      ["Venue", "Hyperliquid order book"],
+      ["Venue", "Perpl on-chain order book, Monad"],
       ["Leverage", "Capped by your deposit"],
-      ["Orders", "Limit, post-only by default"],
+      ["Orders", "Limit, slippage-bounded"],
     ],
   },
   {
-    id: "usdg",
-    tab: "USDC margin",
+    id: "ausd",
+    tab: "AUSD margin",
     audience: "FOR EVERY TRADE",
     title: "One balance backs every position.",
-    text: "Deposit USDC once. It's the margin for every market and every bin, with no separate collateral step per trade.",
+    text: "Deposit AUSD once. It is the margin for every market and every bin, with no separate collateral step per trade.",
     image: "skyline",
-    label: "USDC / MARGIN BALANCE",
+    label: "AUSD / MARGIN BALANCE",
     facts: [
-      ["Asset", "USDC"],
+      ["Asset", "AUSD"],
       ["Used for", "Margin on every position"],
-      ["Margin", "Cross or isolated, per position"],
+      ["Margin", "Isolated, per position"],
     ],
   },
   {
@@ -68,7 +68,7 @@ const applications = [
     label: "THEMATIC BINS / ONE POSITION",
     facts: [
       ["Composition", "Markets that move together"],
-      ["Pricing", "Each leg live off the Hyperliquid order book"],
+      ["Pricing", "Each leg live off the Perpl order book"],
       ["Rebalance", "When you choose, never on a schedule"],
     ],
   },
@@ -82,18 +82,18 @@ const applications = [
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="OpenCash is a trading terminal for Hyperliquid on phone and web. Trade any market with leverage capped to your deposit, or take a whole narrative in one bin."
+      content="OpenCash is a trading terminal for Perpl on Monad, on phone and web. Trade any market with leverage capped to your deposit, or take a whole narrative in one bin."
     />
     <meta name="author" content="Daiwik Maheshwari" />
     <meta name="creator" content="Daiwik Maheshwari" />
     <meta name="publisher" content="OpenCash" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="OpenCash" />
-    <meta property="og:title" content="OpenCash — Leverage and bins on Hyperliquid" />
-    <meta property="og:description" content="Leverage on any Hyperliquid market, and bins that take a whole narrative in one position, on phone and web." />
+    <meta property="og:title" content="OpenCash — Leverage and bins on Monad" />
+    <meta property="og:description" content="Leverage on any Perpl market on Monad, and bins that take a whole narrative in one position, on phone and web." />
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="OpenCash — Leverage and bins on Hyperliquid" />
-    <meta name="twitter:description" content="Leverage on any Hyperliquid market, and bins that take a whole narrative in one position, on phone and web." />
+    <meta name="twitter:title" content="OpenCash — Leverage and bins on Monad" />
+    <meta name="twitter:description" content="Leverage on any Perpl market on Monad, and bins that take a whole narrative in one position, on phone and web." />
     <meta name="theme-color" content="#0b0f0e" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link
@@ -104,7 +104,7 @@ const applications = [
       crossorigin
     />
     <link rel="preload" href="/images/skyline.webp" as="image" />
-    <title>OpenCash — Leverage and bins on Hyperliquid</title>
+    <title>OpenCash — Leverage and bins on Monad</title>
     <script is:inline>
       try {
         if (sessionStorage.getItem("logo-intro-seen")) document.documentElement.classList.add("logo-intro-skip");
@@ -162,7 +162,7 @@ const applications = [
         <canvas class="scan-canvas" aria-hidden="true"></canvas>
         <div class="hero-heading">
           <h1>Trade the narrative.<br class="mobile-break" /> With leverage.</h1><p>
-            Bins of Hyperliquid markets that move together, sized and levered as one position, on your phone and the web.
+            Bins of Perpl markets that move together, sized and levered as one position, on your phone and the web.
           </p>
         </div>
         <div class="scan-controls">
@@ -189,7 +189,7 @@ const applications = [
         </h2>
         <div class="intro-bottom">
           <span class="section-name"><i></i> WHY OPENCASH</span><p>
-            A trading interface for Hyperliquid where a bin takes a whole
+            A trading interface for Monad where a bin takes a whole
             narrative in one position, leverage is capped to your deposit, and every order starts as a limit.
           </p>
         </div>
@@ -249,15 +249,15 @@ const applications = [
       >
         <div class="section-heading">
           <h2 id="connection-title">
-            From a USDC balance<br />to an open position.
+            From an AUSD balance<br />to an open position.
           </h2><p>
-            OpenCash sits between your USDC balance and the
-            Hyperliquid order book. Orders default to post-only limits, every size is checked against Hyperliquid's $10 minimum before it is sent, and every call is signed by your own passkey.
+            OpenCash sits between your AUSD balance and the
+            Perpl order book on Monad. Every leg of a bin opens in one transaction that either fills together or reverts together, and every call is signed by your own passkey.
           </p>
         </div>
         <div
           class="connection-graphic"
-          aria-label="USDC balance connects to leveraged markets, thematic bins, and passkey-signed settlement"
+          aria-label="AUSD balance connects to leveraged markets, thematic bins, and passkey-signed settlement"
         >
           <svg
             class="connection-lines"
@@ -274,7 +274,7 @@ const applications = [
               <i></i><i></i><i></i>
             </div><Mark class="center-mark" /><strong>open</strong><span>CASH</span>
           </div>
-          <span class="connection-label top-left">USDC balance</span
+          <span class="connection-label top-left">AUSD balance</span
           ><span class="connection-label bottom-left"
             >Leveraged markets</span
           ><span class="connection-label top-right">Thematic bins</span
@@ -284,7 +284,7 @@ const applications = [
         </div>
         <div class="tech-strip">
           <span>BUILT ON</span><span class="chain-mark"
-            ><b>Hyperliquid</b></span
+            ><b>Monad</b></span
           ><span>Order book</span><span
             >Passkey signing ↗</span>
         </div>
@@ -298,7 +298,7 @@ const applications = [
           <h2 id="applications-title">
             Trade a market.<br />Or a whole narrative.
           </h2><p>
-            Leverage on any single market, one USDC balance behind every
+            Leverage on any single market, one AUSD balance behind every
             position, and bins that pool a narrative into one trade.
           </p>
         </div>
@@ -371,7 +371,7 @@ const applications = [
           ))
         }
         <p class="section-footnote">
-          Proposed surfaces. OpenCash runs on Hyperliquid testnet during early access.
+          Proposed surfaces. OpenCash runs on Monad testnet during early access.
         </p>
       </section>
       <section
@@ -383,7 +383,7 @@ const applications = [
           <h2 id="demo-title">See a position form.<br />Make the next move.</h2><p
           >
             A small, interactive look at the terminal we’re building. Walk a
-            sample bin from a USDC balance to a signed order.
+            sample bin from a AUSD balance to a signed order.
           </p>
         </div>
         <div class="demo-workspace">
@@ -404,7 +404,7 @@ const applications = [
             <ol class="workflow-steps">
               {
                 [
-                  "Fund with USDC",
+                  "Fund with AUSD",
                   "Pick a bin",
                   "Set the size",
                   "Sign with your passkey",
@@ -422,7 +422,7 @@ const applications = [
               }
             </ol><div class="demo-next">
               <p id="demo-description" aria-live="polite">
-                Start with USDC on Hyperliquid.
+                Start with AUSD on Monad.
               </p><button class="dark-button" id="demo-advance"
                 ><span>Pick a bin</span><svg
                   class="arrow"
@@ -439,7 +439,7 @@ const applications = [
         <div class="section-heading">
           <h2>One terminal.<br />Every leg connected.</h2><p>
             For traders, bin builders, and developers composing positions across
-            Hyperliquid's markets.
+            Perpl's markets on Monad.
           </p>
         </div>
         <div class="access-columns">
@@ -455,7 +455,7 @@ const applications = [
             <span class="small-label">DEVELOPER INFRASTRUCTURE</span><h3>
               Read the same markets.<br />Keep your own keys.
             </h3><p>
-              Every bin is built from Hyperliquid's public market data, so each leg,
+              Every bin is built from Perpl's on-chain market data, so each leg,
               weight and price is visible before you enter. OpenCash never receives a private key.
             </p><details>
               <summary
@@ -463,16 +463,16 @@ const applications = [
                 ></summary
               ><div class="integration-details">
                 <p>
-                  Market data comes from Hyperliquid's public info API. Orders
-                  go to its exchange API, checked against the $10 minimum before they are signed.
+                  Market data is read straight from the Perpl exchange contract. Orders
+                  go to the same contract, sized to a whole lot before they are signed.
                 </p><code
-                  >loadTradeMarkets(info)<br
-                  />placeLimitOrder(exchange, order)<br
-                  />modifyOrder(exchange, orderId, order)<br
-                  />setLeverage(exchange, asset, leverage)<br />updateIsolatedMargin(exchange, asset, amount)</code
+                  >loadMarkets()<br
+                  />sizeBinFor(bin, margin, data)<br
+                  />openBin(trader, sized, data, onStep)<br
+                  />loadOpenPositions(owner, data)<br />closePosition(trader, position)</code
                 ><p>
-                  Withdrawals only go to an address you have verified, and every
-                  order runs on Hyperliquid testnet during early access.
+                  Perpl trading keys cannot withdraw, and every
+                  order runs on Monad testnet during early access.
                 </p>
               </div>
             </details>
@@ -532,7 +532,7 @@ const applications = [
     <footer class="site-footer">
       <div class="footer-top">
         <a class="wordmark" href="#home"><Mark />open<span>cash</span></a><p>
-          A trading terminal for Hyperliquid on phone and web. Leverage with a ceiling.
+          A trading terminal for Monad on phone and web. Leverage with a ceiling.
         </p><div>
           <a href="#assets">Bins</a><a href="#platform">Platform</a><a
             href="#network">Developers</a
@@ -542,7 +542,7 @@ const applications = [
         Trade the narrative.<br /><span>Size the risk.</span>
       </div><div class="footer-bottom">
         <span>© {new Date().getFullYear()} OpenCash</span><span
-          >Early access · Hyperliquid testnet</span
+          >Early access · Monad testnet</span
         ><a href="#home">Back to top ↑</a>
       </div>
     </footer>

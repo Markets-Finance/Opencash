@@ -1,5 +1,7 @@
 import type { BinPosition } from "shared";
 import { bins, terminal, type MarketData } from "../perpl";
+import { drawLine } from "./charts";
+import { filterHistory, loadHistory, recordSnapshot, type HistoryRange } from "./history";
 import { changeClass, legStackHtml, markForSymbol, px, query, usd } from "./dom";
 import { getMarketData, getPositions } from "./market";
 import { requireTrader } from "./state";
@@ -68,6 +70,29 @@ export async function initHome() {
   const portfolioValueEl = query("[data-portfolio-value]");
   const portfolioChangeEl = query("[data-portfolio-change]");
 
+  const chartEl = query("[data-portfolio-chart]");
+  const rangeButtons = Array.from(
+    document.querySelectorAll<HTMLButtonElement>("[data-portfolio-range] [data-range]"),
+  );
+  let history = loadHistory(trader.address);
+  let range: HistoryRange = "1d";
+
+  function paintHistory() {
+    drawLine(
+      chartEl,
+      filterHistory(history, range),
+      "Portfolio history builds up as you use the app. Each visit adds a data point.",
+    );
+  }
+  rangeButtons.forEach((button) =>
+    button.addEventListener("click", () => {
+      range = button.dataset.range as HistoryRange;
+      rangeButtons.forEach((b) => b.classList.toggle("chip--active", b === button));
+      paintHistory();
+    }),
+  );
+  paintHistory();
+
   async function refreshBalance() {
     balanceEl.textContent = usd(await terminal.loadCollateralBalance(trader.address));
     updatedEl.textContent = new Date().toLocaleTimeString();
@@ -85,6 +110,8 @@ export async function initHome() {
     portfolioValueEl.textContent = usd(summary.total);
     portfolioChangeEl.textContent = `${usd(summary.unrealizedPnl)} unrealised`;
     portfolioChangeEl.className = `chart-change ${changeClass(summary.unrealizedPnl)}`;
+    history = recordSnapshot(trader.address, summary.total);
+    paintHistory();
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     for (const selector of ["[data-top-assets]", "[data-ticker-row]"]) {

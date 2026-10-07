@@ -12,6 +12,10 @@ export {
   type PortfolioSummary,
 } from "shared";
 
+export type PerpMarket = perpl.PerpMarket;
+export type Candle = perpl.Candle;
+export type CandleRangeKey = perpl.CandleRangeKey;
+
 export const terminal = createTerminal({
   publicClient,
   walletClientFor,

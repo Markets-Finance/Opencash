@@ -273,7 +273,7 @@ export function Account({
             email={profile?.email}
             tier={isDevAuth ? "Dev account" : "Passkey pass"}
             variant={variant}
-            network="Hyperliquid Testnet"
+            network="Monad Testnet"
             value={portfolio}
             copied={copied}
             onCopyAddress={() => void copyAddress()}
@@ -352,7 +352,7 @@ export function Account({
                   {panel === "wallets" && (
                     <View style={styles.card}>
                       <Text style={styles.note}>
-                        One passkey, one address. Hyperliquid Testnet
+                        One passkey, one address. Monad Testnet
                       </Text>
                       <Text style={styles.walletAddress}>{account.address}</Text>
                     </View>

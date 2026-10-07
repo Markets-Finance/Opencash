@@ -1,5 +1,7 @@
 import { perpl } from "shared";
-import { singleLegBin, sizeBinFor, terminal, type OpenPosition } from "../perpl";
+import { singleLegBin, sizeBinFor, terminal, type CandleRangeKey, type OpenPosition } from "../perpl";
+import { drawCandles } from "./charts";
+import { loadCandles } from "../perplApi";
 import { changeClass, errorText, markForSymbol, px, query, say, usd } from "./dom";
 import { getMarketData } from "./market";
 import { requireTrader } from "./state";
@@ -10,6 +12,7 @@ let searchTerm = "";
 let symbol = "BTC";
 let side: Side = "long";
 let positions: OpenPosition[] = [];
+let range: CandleRangeKey = "1d";
 let rerender: () => void = () => {};
 
 export function setTradeQuery(value: string) {
@@ -26,6 +29,7 @@ function elements() {
     label: query("[data-trade-market-label]"),
     price: query("[data-trade-market-price]"),
     meta: query("[data-trade-market-meta]"),
+    chart: query("[data-trade-chart]"),
     desk: query("[data-trade-desk]"),
     deskStatus: query("[data-trade-desk-status]"),
     title: query("[data-trade-ticket-title]"),
@@ -73,6 +77,18 @@ export async function initTrade() {
     ui.price.textContent = market ? px(market.mark) : "—";
     ui.meta.textContent = market ? `max ${data.maxLeverage.get(symbol) ?? "—"}x · ${market.numOrders} resting orders` : "";
     ui.title.textContent = `${side === "long" ? "Long" : "Short"} ${symbol}`;
+  }
+
+  async function renderChart() {
+    const market = data.markets.get(symbol);
+    if (!market) return;
+    const shown = symbol;
+    try {
+      const candles = await loadCandles(market, range);
+      if (shown === symbol) drawCandles(ui.chart, candles, "No trades in this range on Monad testnet.");
+    } catch (error) {
+      ui.chart.innerHTML = `<div class="chart-empty">${errorText(error)}</div>`;
+    }
   }
 
   function currentSizing() {
@@ -148,8 +164,18 @@ export async function initTrade() {
     renderMarkets();
     renderMarketHead();
     renderTicketSize();
+    void renderChart();
   }
   rerender = renderMarkets;
+
+  const rangeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-trade-range] [data-range]"));
+  rangeButtons.forEach((button) =>
+    button.addEventListener("click", () => {
+      range = button.dataset.range as CandleRangeKey;
+      rangeButtons.forEach((b) => b.classList.toggle("chip--active", b === button));
+      void renderChart();
+    }),
+  );
 
   document.querySelectorAll<HTMLButtonElement>("[data-side]").forEach((button) =>
     button.addEventListener("click", () => {

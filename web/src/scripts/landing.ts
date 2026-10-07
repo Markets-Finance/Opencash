@@ -214,7 +214,7 @@ tabs.forEach((tab,index) => {
 });
 let step = 0;
 const descriptions = [
-  'Start with USDC on Hyperliquid.',
+  'Start with AUSD on Monad.',
   'A bin pools the narrative into one position; each leg still prices on its own market.',
   'Set the size and leverage. The cap scales with your deposit.',
   'The orders are ready. Your passkey signs them; OpenCash never holds withdrawal power.',

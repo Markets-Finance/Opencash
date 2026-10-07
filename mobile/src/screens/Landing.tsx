@@ -25,7 +25,7 @@ export function Landing({ onSignIn }: { onSignIn: () => void }) {
           <Text style={styles.eyebrow}>OPENCASH</Text>
           <Text style={styles.title}>Trade the narrative.{"\n"}With leverage.</Text>
           <Text style={styles.subtitle}>
-            A bin groups Hyperliquid markets that move together into one
+            A bin groups Perpl markets on Monad that move together into one
             position. Set the size and leverage; your passkey signs every order.
           </Text>
         </View>

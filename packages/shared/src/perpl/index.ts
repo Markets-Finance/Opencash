@@ -49,3 +49,5 @@ export {
 } from "./write.js";
 export { fetchAccount, fetchPosition } from "./account.js";
 export type { PerpPosition, PerplAccount } from "./account.js";
+export { candleRanges, fetchCandles } from "./history.js";
+export type { Candle, CandleRangeKey } from "./history.js";
