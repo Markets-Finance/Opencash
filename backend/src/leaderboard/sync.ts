@@ -1,31 +1,24 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { createPublicClient, http, type Address } from "viem";
+import type { Address } from "viem";
 import {
   aggregate,
   decodeLogs,
   defaultRank,
   fetchLedgerLogs,
-  monad,
-  monadTestnetChain,
-  perpl,
   rankAccounts,
   resolveAddresses,
   type AccountStats,
   type LedgerEvent,
 } from "shared";
+import { applyCopies } from "../strategies/apply.js";
+import { api, client, deployment, network } from "./chain.js";
 
 type Ledger = { lastBlock: number; syncedAt: number; events: LedgerEvent[] };
 
-const network = process.env.LEADERBOARD_NETWORK === "mainnet" ? "mainnet" : "testnet";
-const deployment = network === "mainnet" ? perpl.perplMainnet : perpl.perplTestnet;
-const chain = network === "mainnet" ? monad : monadTestnetChain;
 const windowHours = Number(process.env.LEADERBOARD_WINDOW_HOURS ?? 6);
 const maxCatchUpBlocks = 40_000;
 const path = `data/ledger-${network}.json`;
-
-const client = createPublicClient({ chain, transport: http(), batch: { multicall: { wait: 20 } } });
-const api = perpl.createPerplApi(deployment.apiUrl);
 
 let ledger: Ledger | null = null;
 let ranked: { stats: AccountStats[]; at: number } | null = null;
@@ -61,6 +54,7 @@ export async function syncLedger(): Promise<void> {
     const decimals = new Map(markets.map((m) => [m.id, { price: m.priceDecimals, lot: m.sizeDecimals }]));
     const logs = await fetchLedgerLogs(client, deployment.exchange, BigInt(from), head);
     const { events } = decodeLogs(logs as never, decimals);
+    await applyCopies(events, Number(head), new Map(markets.map((m) => [m.symbol, m.id])));
 
     const kept = current.events.filter((e) => e.kind === "account" || ("block" in e && e.block >= windowStart));
     ledger = { lastBlock: Number(head), syncedAt: Date.now(), events: [...kept, ...events] };

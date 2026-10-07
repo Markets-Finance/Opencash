@@ -36,6 +36,7 @@ export * from "./agent/index.js";
 export * from "./bots/index.js";
 export * from "./leaderboard/index.js";
 export * from "./identity/index.js";
+export * from "./copy/index.js";
 export {
   parseAttestedPublicKey,
   parseCoseP256PublicKey,
@@ -43,3 +44,4 @@ export {
   relyingPartyIdHash,
 } from "./webauthn/publicKey.js";
 export type { P256PublicKey } from "./webauthn/publicKey.js";
+export * as templates from "./templates/index.js";
