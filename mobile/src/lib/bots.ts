@@ -17,6 +17,7 @@ export const toolbox = createToolbox(perpl.createPerplApi(perpl.perplTestnet.api
 
 let runtime: BotRuntime | null = null;
 let owner: string | null = null;
+let signer: TradingAccount | null = null;
 let current: Bot[] = [];
 const listeners = new Set<(bots: Bot[]) => void>();
 
@@ -36,6 +37,7 @@ export function subscribeBots(listener: (bots: Bot[]) => void): () => void {
 export async function startBots(trader: TradingAccount): Promise<void> {
   runtime?.stop();
   owner = trader.address;
+  signer = trader;
   const key = `opencash.bots.${trader.address.toLowerCase()}`;
   runtime = createBotRuntime({
     terminal,
@@ -58,10 +60,12 @@ export async function startBots(trader: TradingAccount): Promise<void> {
 }
 
 export const currentOwner = () => owner;
+export const currentTrader = () => signer;
 
 export function stopBots(): void {
   runtime?.stop();
   owner = null;
+  signer = null;
   runtime = null;
   notify([]);
 }
@@ -74,6 +78,11 @@ export async function draftBot(prompt: string, mode: BotMode): Promise<string | 
   }
   await runtime.add(createBot(card.name, mode, card, Date.now()));
   return null;
+}
+
+export async function addBotFromCard(card: Bot["card"], mode: BotMode): Promise<void> {
+  if (runtime === null) throw new Error("Bots are not running yet");
+  await runtime.add(createBot(card.name, mode, card, Date.now()));
 }
 
 export const setBotEnabled = (id: string, enabled: boolean) => runtime?.setEnabled(id, enabled);

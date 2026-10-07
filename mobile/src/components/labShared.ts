@@ -24,3 +24,7 @@ export function sample(values: number[], max = 90): number[] {
   const step = (values.length - 1) / (max - 1);
   return Array.from({ length: max }, (_, i) => values[Math.round(i * step)]!);
 }
+
+export function price(value: number): string {
+  return `$${value.toLocaleString(undefined, { maximumFractionDigits: value >= 100 ? 2 : 4 })}`;
+}

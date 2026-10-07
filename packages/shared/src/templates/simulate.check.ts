@@ -63,6 +63,14 @@ const close = (a: number, b: number, eps = 1e-6) => assert.ok(Math.abs(a - b) < 
 }
 
 {
+  let step = 0;
+  const roundTrip: Strategy = { step: () => (++step === 1 ? { market: 1000 } : step === 2 ? { flat: true } : {}) };
+  const r = simulate(roundTrip, [candle(0, 100, 100, 100, 100), candle(1, 100, 100, 100, 100), candle(2, 120, 120, 120, 120), candle(3, 120, 120, 120, 120)], base);
+  close(r.fills.reduce((sum, f) => sum + f.qtyDelta, 0), 0, 1e-12);
+  close(r.metrics.netPnlUsd, 200);
+}
+
+{
   const rise = Array.from({ length: 30 }, (_, i) => candle(i, 100, 101, 99, 100));
   const series = [...rise, candle(30, 100, 106, 100, 105), candle(31, 105, 108, 104, 107), candle(32, 107, 110, 106, 109), candle(33, 109, 110, 90, 91)];
   const strat = templateById("donchian").create({ ...templateById("donchian").defaults, shorts: 0 });

@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { bins, type Bin } from "shared";
 import { AssetMark } from "../components/AssetMark";
+import { Ranks } from "../components/Ranks";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { loadMarkets, type MarketData } from "../lib/perpl";
 import { dark, family, space, touch, track } from "../theme";
@@ -18,6 +19,7 @@ export function Bins({ onOpen, onComplete, onSelectTab }: BinsProps) {
   const [data, setData] = useState<MarketData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([bins[0].id, bins[1].id]);
+  const [view, setView] = useState<'bins' | 'ranks'>('bins');
 
   useEffect(() => {
     let live = true;
@@ -38,12 +40,15 @@ export function Bins({ onOpen, onComplete, onSelectTab }: BinsProps) {
       </View>
 
       <View style={styles.tabs}>
-        {['Picks', 'Majors', 'Layer ones', 'Spreads'].map((tab, index) => <View key={tab} style={[styles.tab, index === 0 && styles.activeTab]}><Text style={[styles.tabLabel, index === 0 && styles.activeTabLabel]}>{tab}</Text></View>)}
+        {['Picks', 'Majors', 'Layer ones', 'Spreads', 'Ranks'].map((tab) => {
+          const active = tab === 'Ranks' ? view === 'ranks' : view === 'bins' && tab === 'Picks';
+          return <Pressable key={tab} onPress={() => setView(tab === 'Ranks' ? 'ranks' : 'bins')} style={[styles.tab, active && styles.activeTab]}><Text style={[styles.tabLabel, active && styles.activeTabLabel]}>{tab}</Text></Pressable>;
+        })}
       </View>
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + tabBarHeight + 112 }]} showsVerticalScrollIndicator={false}>
-        <Text style={styles.intro}>Choose the markets you want to keep close.</Text>
-        {error !== null ? <Text style={styles.error}>{error}</Text> : data === null ? <View style={styles.loading}><ActivityIndicator color={dark.ink} /><Text style={styles.loadingLabel}>Loading markets</Text></View> : <View style={styles.grid}>
+        {view === 'ranks' ? <Ranks /> : <Text style={styles.intro}>Choose the markets you want to keep close.</Text>}
+        {view === 'ranks' ? null : error !== null ? <Text style={styles.error}>{error}</Text> : data === null ? <View style={styles.loading}><ActivityIndicator color={dark.ink} /><Text style={styles.loadingLabel}>Loading markets</Text></View> : <View style={styles.grid}>
           {bins.map((bin) => {
             const active = selected.includes(bin.id);
             const lead = bin.legs[0];
@@ -59,10 +64,10 @@ export function Bins({ onOpen, onComplete, onSelectTab }: BinsProps) {
         </View>}
       </ScrollView>
 
-      <View style={[styles.footer, { bottom: tabBarHeight + insets.bottom }]}>
+      {view === 'bins' && <View style={[styles.footer, { bottom: tabBarHeight + insets.bottom }]}>
         <Pressable onPress={onComplete} style={({ pressed }) => [styles.primaryButton, pressed && styles.cardPressed]}><Text style={styles.primaryLabel}>Add to Favorites</Text></Pressable>
         <Pressable onPress={onComplete} hitSlop={12}><Text style={styles.other}>Add other pairs</Text></Pressable>
-      </View>
+      </View>}
       <TabBar active="bins" onSelect={onSelectTab} />
     </View>
   );

@@ -49,7 +49,7 @@ export const donchian: Template = {
         const exit = long
           ? last.close < lowest(history, params.exitN!, 1)
           : last.close > highest(history, params.exitN!, 1);
-        if (exit) return { market: -position.qty * last.close, stopPrice: null };
+        if (exit) return { flat: true, stopPrice: null };
         return { stopPrice: stop };
       },
     };

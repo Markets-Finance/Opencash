@@ -5,13 +5,14 @@ import { loadSeries, removePaper, subscribePapers } from "../lib/lab";
 import { dark, family, space, touch } from "../theme";
 import { AssetMark } from "./AssetMark";
 import { LineChart } from "./LineChart";
-import { meta, money, pct, sample, tints } from "./labShared";
+import { meta, money, pct, price, sample, tints } from "./labShared";
 
 type Row = { bot: templates.PaperBot; result: templates.SimResult | null; error: string | null };
 
 export function PaperBots() {
   const [bots, setBots] = useState<templates.PaperBot[]>([]);
   const [views, setViews] = useState<Row[]>([]);
+  const [openId, setOpenId] = useState<string | null>(null);
 
   useEffect(() => subscribePapers(setBots), []);
 
@@ -75,6 +76,32 @@ export function PaperBots() {
                 </View>
               </>
             )}
+            {result && result.candles > 0 && (
+              <Pressable onPress={() => setOpenId(openId === bot.id ? null : bot.id)} style={styles.delete}>
+                <Text style={styles.deleteLabel}>
+                  {openId === bot.id ? "Hide" : "All data"} · {result.fills.length} fills
+                </Text>
+              </Pressable>
+            )}
+            {result && m && openId === bot.id && (
+              <View style={styles.full}>
+                <Text style={styles.stat}>
+                  Fees {money(-m.feesUsd)} · Funding {money(m.fundingUsd)} · Winning exits {m.winRatePct === null ? "—" : `${m.winRatePct.toFixed(0)}%`}
+                </Text>
+                <Text style={styles.stat}>
+                  In market {m.exposurePct.toFixed(0)}% · Just holding {pct(m.holdReturnPct)}
+                </Text>
+                {result.fills.length === 0 && <Text style={styles.muted}>No fills yet.</Text>}
+                {result.fills
+                  .slice(-40)
+                  .reverse()
+                  .map((fill, i) => (
+                    <Text key={`${fill.time}-${i}`} style={[styles.fill, fill.qtyDelta > 0 ? styles.buy : styles.sell]}>
+                      {new Date(fill.time).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}  {fill.qtyDelta > 0 ? "Buy" : "Sell"} {price(fill.price)} · ${Math.abs(fill.qtyDelta * fill.price).toFixed(2)} · fee ${fill.feeUsd.toFixed(3)} · {fill.reason}
+                    </Text>
+                  ))}
+              </View>
+            )}
             <Pressable onPress={() => removePaper(bot.id)} style={styles.delete}>
               <Text style={styles.deleteLabel}>Delete</Text>
             </Pressable>
@@ -99,5 +126,9 @@ const styles = StyleSheet.create({
   stat: { fontFamily: family.medium, fontSize: 12, color: dark.muted },
   delete: { minHeight: touch, justifyContent: "center", alignSelf: "flex-start" },
   deleteLabel: { fontFamily: family.medium, fontSize: 13, color: dark.muted },
+  full: { gap: space.xs },
+  fill: { fontFamily: family.regular, fontSize: 11, lineHeight: 16 },
+  buy: { color: dark.green },
+  sell: { color: dark.red },
   stripe: { position: "absolute", left: 0, top: 0, bottom: 0, width: 4 },
 });

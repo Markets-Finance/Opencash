@@ -33,7 +33,7 @@ export const grid: Template = {
         if (last.close < floor * 0.99) {
           stopped = true;
           held.clear();
-          return { market: -position.qty * last.close, limits: [], stopPrice: null };
+          return { flat: true, limits: [], stopPrice: null };
         }
         const limits = [];
         for (let k = 1; k < rungs.length; k += 1) {

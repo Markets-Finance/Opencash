@@ -45,7 +45,7 @@ export const trail: Template = {
           const move = ((last.close - position.avgPrice) / position.avgPrice) * (long ? 1 : -1) * 100;
           if (move >= params.targetPct!) {
             done = true;
-            return { market: -position.qty * last.close, stopPrice: null };
+            return { flat: true, stopPrice: null };
           }
         }
         return { stopPrice: extreme * (1 - (params.side! * params.trailPct!) / 100) };

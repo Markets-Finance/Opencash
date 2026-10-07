@@ -54,6 +54,13 @@ function equityAt(book: Book, mark: number): number {
   return book.cash + book.qty * (mark - book.avg);
 }
 
+const minNotionalUsd = 1;
+
+function tooSmall(book: Book, delta: number, price: number): boolean {
+  const adds = book.qty === 0 || Math.sign(delta) === Math.sign(book.qty);
+  return adds && Math.abs(delta * price) < minNotionalUsd;
+}
+
 function clipDelta(book: Book, delta: number, price: number, maxLeverage: number): number {
   const equity = equityAt(book, price);
   if (equity <= 0) return 0;
@@ -80,6 +87,7 @@ export function simulate(
 
   let fundingIndex = 0;
   let pendingMarket = 0;
+  let pendingFlat = false;
   let resting: LimitOrder[] = [];
   let stopPrice: number | null = null;
   let peak = options.allocationUsd;
@@ -98,10 +106,17 @@ export function simulate(
     const candle = candles[i]!;
     carried = [];
 
+    if (pendingFlat && book.qty !== 0) {
+      const price = candle.open * (1 - Math.sign(book.qty) * slip);
+      record(applyTrade(book, candle.time, -book.qty, price, options.takerFeeBps, "market"), book.qty > 0 ? "sell" : "buy");
+      pendingMarket = 0;
+    }
+    pendingFlat = false;
+
     if (pendingMarket !== 0) {
       const price = candle.open * (1 + Math.sign(pendingMarket) * slip);
       const delta = clipDelta(book, pendingMarket / price, price, options.maxLeverage);
-      if (delta !== 0) record(applyTrade(book, candle.time, delta, price, options.takerFeeBps, "market"), delta > 0 ? "buy" : "sell");
+      if (delta !== 0 && !tooSmall(book, delta, price)) record(applyTrade(book, candle.time, delta, price, options.takerFeeBps, "market"), delta > 0 ? "buy" : "sell");
       pendingMarket = 0;
     }
 
@@ -128,7 +143,7 @@ export function simulate(
         const price = order.usd > 0 ? Math.min(order.price, candle.open) : Math.max(order.price, candle.open);
         const wanted = order.usd / price;
         const delta = clipDelta(book, wanted, price, options.maxLeverage);
-        if (delta === 0) continue;
+        if (delta === 0 || tooSmall(book, delta, price)) continue;
         record(
           applyTrade(book, candle.time, delta, order.price, options.makerFeeBps, "limit"),
           delta > 0 ? "buy" : "sell",
@@ -169,6 +184,7 @@ export function simulate(
       allocationUsd: options.allocationUsd,
     });
     pendingMarket = out.market ?? 0;
+    pendingFlat = out.flat ?? false;
     resting = out.limits ?? [];
     if (out.stopPrice !== undefined) stopPrice = out.stopPrice;
   }

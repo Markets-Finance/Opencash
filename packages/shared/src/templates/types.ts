@@ -36,6 +36,7 @@ export type StepInput = {
 
 export type StepOutput = {
   market?: number;
+  flat?: boolean;
   limits?: LimitOrder[];
   stopPrice?: number | null;
 };

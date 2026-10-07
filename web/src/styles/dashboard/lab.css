@@ -398,3 +398,21 @@ button.tile[aria-pressed="true"] {
 .pbot .link-btn {
   font-size: 12px;
 }
+
+.pbot__details {
+  display: grid;
+  gap: var(--sp-sm);
+  font-size: 13px;
+}
+.pbot__details summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+.pbot__stats--full {
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  margin-top: var(--sp-sm);
+}
+.pbot__details .table-wrap {
+  max-height: 260px;
+  overflow: auto;
+}

@@ -1,5 +1,5 @@
 import { templates } from "shared";
-import { esc, markForSymbol, query } from "../dom";
+import { esc, markForSymbol, px, query, usd } from "../dom";
 import { requireTrader } from "../state";
 import { equityChart } from "./chart";
 import { loadSeries, simOptions, type Series } from "./data";
@@ -30,6 +30,26 @@ function save() {
   }
 }
 
+function fillsTable(fills: templates.Fill[], m: templates.SimMetrics): string {
+  const rows = fills
+    .slice(-60)
+    .reverse()
+    .map(
+      (f) => `<tr><td>${new Date(f.time).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</td><td class="${f.qtyDelta > 0 ? "change-up" : "change-down"}">${f.qtyDelta > 0 ? "Buy" : "Sell"}</td><td>${px(f.price)}</td><td>${usd(Math.abs(f.qtyDelta * f.price))}</td><td>${usd(f.feeUsd)}</td><td>${f.reason}</td></tr>`,
+    )
+    .join("");
+  return `<details class="pbot__details"><summary>All data · ${fills.length} fills</summary>
+    <div class="pbot__stats pbot__stats--full">
+      <span><small>Fees</small>${usd(m.feesUsd)}</span>
+      <span><small>Funding</small>${usd(m.fundingUsd)}</span>
+      <span><small>Winning exits</small>${m.winRatePct === null ? "—" : `${m.winRatePct.toFixed(0)}%`}</span>
+      <span><small>In market</small>${m.exposurePct.toFixed(0)}%</span>
+      <span><small>Just holding</small>${pct(m.holdReturnPct)}</span>
+    </div>
+    ${fills.length === 0 ? `<p class="lab__empty">No fills yet.</p>` : `<div class="table-wrap"><table class="data-table"><thead><tr><th>Time</th><th>Side</th><th>Price</th><th>Size</th><th>Fee</th><th>Type</th></tr></thead><tbody>${rows}</tbody></table></div>`}
+  </details>`;
+}
+
 async function card(bot: templates.PaperBot): Promise<string> {
   const info = meta[bot.templateId];
   let body = `<p class="lab__empty">Loading prices.</p>`;
@@ -47,7 +67,8 @@ async function card(bot: templates.PaperBot): Promise<string> {
             <span><small>Exits</small>${m.closingFills}</span>
             <span><small>Worst dip</small>${m.maxDrawdownPct.toFixed(1)}%</span>
             <span><small>Running</small>${ago(Date.now() - bot.startedAt)}</span>
-          </div>`;
+          </div>
+          ${fillsTable(result.fills, m)}`;
   } catch (error) {
     body = `<p class="lab__empty">${esc(error instanceof Error ? error.message : String(error))}</p>`;
   }
@@ -66,7 +87,11 @@ async function card(bot: templates.PaperBot): Promise<string> {
 
 export async function paintPapers() {
   const host = query("[data-paper-list]");
+  const open = new Set(Array.from(host.querySelectorAll<HTMLElement>("[data-paper]")).filter((el) => el.querySelector("details[open]")).map((el) => el.dataset.paper));
   host.innerHTML = (await Promise.all(bots.map(card))).join("");
+  host.querySelectorAll<HTMLElement>("[data-paper]").forEach((el) => {
+    if (open.has(el.dataset.paper)) el.querySelector("details")?.setAttribute("open", "");
+  });
   host.closest<HTMLElement>(".agent__bots")!.toggleAttribute("data-has-paper", bots.length > 0);
 }
 
