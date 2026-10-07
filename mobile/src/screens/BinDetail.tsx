@@ -92,7 +92,7 @@ export function BinDetail({ bin, data, balance, trader, onBack }: BinDetailProps
           <Text style={styles.back}>←</Text>
         </Pressable>
         <Text style={styles.heading}>{bin.name}</Text>
-        <View style={styles.iconButton} />
+        <View style={styles.iconSpacer} />
       </View>
 
       <ScrollView
@@ -213,19 +213,21 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontFamily: family.semibold,
-    fontSize: 19,
-    letterSpacing: track(19, -0.03),
+    fontSize: 26,
+    letterSpacing: -1,
+    textTransform: "uppercase",
     color: dark.ink,
   },
+  iconSpacer: { width: 54, height: 54 },
   iconButton: {
     width: 54,
     height: 54,
     borderRadius: 27,
-    backgroundColor: dark.surface,
+    backgroundColor: "#f3f4f1",
     alignItems: "center",
     justifyContent: "center",
   },
-  back: { fontFamily: family.regular, fontSize: 22, color: dark.muted },
+  back: { fontFamily: family.medium, fontSize: 22, color: "#14181a" },
   content: { padding: space.lg, gap: space.lg },
   identityRow: { flexDirection: "row", alignItems: "center", gap: space.md },
   thesis: {

@@ -124,9 +124,9 @@ export default function App() {
           <Trade trader={trader} onSelectTab={goTab} />
         ) : null
       ) : screen === "bots" ? (
-        <Bots onSelectTab={goTab} />
+        <Bots name={profile?.name} onSelectTab={goTab} />
       ) : screen === "home" ? (
-        trader !== null ? <Home trader={trader} onSelectTab={goTab} /> : null
+        trader !== null ? <Home trader={trader} name={profile?.name} onSelectTab={goTab} /> : null
       ) : bin !== null && markets !== null && trader !== null ? (
         <BinDetail
           bin={bin}

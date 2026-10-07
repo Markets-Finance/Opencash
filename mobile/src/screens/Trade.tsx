@@ -13,6 +13,7 @@ import { perpl, type TradingAccount } from "shared";
 import { AssetMark } from "../components/AssetMark";
 import { LineChart } from "../components/LineChart";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
+import { CardTitle, ScreenTitle, SelectPill, Switcher, Tag, ToneCard, tone } from "../components/ui";
 import {
   candleRanges,
   closePosition,
@@ -172,104 +173,79 @@ export function Trade({ trader, onSelectTab }: TradeProps) {
 
   return (
     <View style={styles.screen}>
-      <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
-        <Text style={styles.heading}>Trade</Text>
-        <View style={styles.badge}>
-          <Text style={styles.badgeLabel}>Perpl · Monad Testnet</Text>
-        </View>
-      </View>
-
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + insets.bottom + touch + space.xxl }]}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + space.sm, paddingBottom: tabBarHeight + insets.bottom + space.xl }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {loadError !== null ? (
-          <Text style={styles.error}>{loadError}</Text>
-        ) : market === null ? (
-          <ActivityIndicator color={dark.ink} />
-        ) : (
-          <View style={styles.marketHead}>
-            <AssetMark symbol={market.symbol} size={space.xxl + space.sm} />
-            <View style={styles.flex}>
-              <Text style={styles.marketSymbol}>{market.symbol}</Text>
-              <Text style={styles.muted}>{market.name}</Text>
-            </View>
-            <View style={styles.alignEnd}>
-              <Text style={styles.marketPrice}>{px(market.mark)}</Text>
-              <Text style={styles.muted}>Max {cap}x</Text>
-            </View>
-          </View>
-        )}
-
-        <View style={styles.card}>
-          <View style={styles.rowBetween}>
-            <Text style={styles.sectionTitle}>PRICE</Text>
-            {rangeChange !== null && (
-              <Text style={rangeChange >= 0 ? styles.up : styles.down}>
-                {`${rangeChange >= 0 ? "+" : ""}${rangeChange.toFixed(2)}%`} this range
-              </Text>
-            )}
-          </View>
-          {candles === null ? (
-            <View style={styles.chartEmpty}>
-              <ActivityIndicator color={dark.ink} />
-            </View>
-          ) : candles.length < 2 ? (
-            <View style={styles.chartEmpty}>
-              <Text style={styles.muted}>No trades in this range on Monad testnet.</Text>
-            </View>
-          ) : (
-            <LineChart
-              values={candles.map((c) => c.close)}
-              height={200}
-              color={dark.green}
-              label={(i) => `${stamp(candles[i].time, range)} · ${px(candles[i].close)}`}
-            />
-          )}
-          <View style={styles.segment}>
-            {rangeKeys.map((key) => (
-              <Pressable
-                key={key}
-                onPress={() => setRange(key)}
-                style={[styles.segmentItem, range === key && styles.segmentItemActive]}
-              >
-                <Text style={[styles.segmentLabel, range === key && styles.segmentLabelActive]}>
-                  {key.toUpperCase()}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
+        <ScreenTitle title="Trade" right={<Tag label="Monad Testnet" dot={dark.green} />} />
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
           {tradable.map((m) => (
-            <Pressable
-              key={m.symbol}
-              onPress={() => setSymbol(m.symbol)}
-              style={[styles.chip, m.symbol === symbol && styles.chipActive]}
-            >
-              <AssetMark symbol={m.symbol} size={24} />
-              <Text style={styles.chipLabel}>{m.symbol}</Text>
+            <Pressable key={m.symbol} onPress={() => setSymbol(m.symbol)} style={[styles.chip, m.symbol === symbol && styles.chipActive]}>
+              <AssetMark symbol={m.symbol} size={22} />
+              <Text style={[styles.chipLabel, m.symbol === symbol && styles.chipLabelActive]}>{m.symbol}</Text>
             </Pressable>
           ))}
         </ScrollView>
 
-        <View style={styles.card}>
-          <View style={styles.segment}>
-            {(["long", "short"] as Direction[]).map((side) => (
-              <Pressable
-                key={side}
-                onPress={() => setDirection(side)}
-                style={[styles.segmentItem, direction === side && styles.segmentItemActive]}
-              >
-                <Text style={[styles.segmentLabel, direction === side && styles.segmentLabelActive]}>
-                  {side === "long" ? "Long" : "Short"}
-                </Text>
+        {loadError !== null && <Text style={styles.error}>{loadError}</Text>}
+
+        <ToneCard fill={tone.violet}>
+          {market === null ? (
+            <ActivityIndicator color={tone.ink} />
+          ) : (
+            <View style={styles.marketHead}>
+              <AssetMark symbol={market.symbol} size={44} />
+              <View style={styles.flex}>
+                <Text style={styles.marketSymbol}>{market.symbol}</Text>
+                <Text style={styles.onColorMuted}>Max {cap}x leverage</Text>
+              </View>
+              <Text style={styles.marketPrice}>{px(market.mark)}</Text>
+            </View>
+          )}
+          {rangeChange !== null && (
+            <View style={styles.changeTag}>
+              <Text style={styles.changeText}>
+                {rangeChange >= 0 ? "▲" : "▼"} {Math.abs(rangeChange).toFixed(2)}% over {range.toUpperCase()}
+              </Text>
+            </View>
+          )}
+          {candles === null ? (
+            <View style={styles.chartEmpty}>
+              <ActivityIndicator color={tone.ink} />
+            </View>
+          ) : candles.length < 2 ? (
+            <View style={styles.chartEmpty}>
+              <Text style={styles.onColorMuted}>No trades in this range on Monad testnet.</Text>
+            </View>
+          ) : (
+            <LineChart
+              values={candles.map((c) => c.close)}
+              height={180}
+              color={tone.ink}
+              label={(i) => `${stamp(candles[i].time, range)} · ${px(candles[i].close)}`}
+            />
+          )}
+          <View style={styles.ranges}>
+            {rangeKeys.map((key) => (
+              <Pressable key={key} onPress={() => setRange(key)} style={[styles.range, range === key && styles.rangeActive]}>
+                <Text style={[styles.rangeLabel, range === key && styles.rangeLabelActive]}>{key.toUpperCase()}</Text>
               </Pressable>
             ))}
           </View>
+        </ToneCard>
 
+        <ToneCard>
+          <CardTitle>New position</CardTitle>
+          <Switcher
+            items={[
+              { key: "long", label: "Long", dot: dark.green },
+              { key: "short", label: "Short", dot: dark.red },
+            ]}
+            value={direction}
+            onChange={setDirection}
+          />
           <Text style={styles.fieldLabel}>MARGIN (AUSD)</Text>
           <TextInput
             value={amount}
@@ -279,60 +255,62 @@ export function Trade({ trader, onSelectTab }: TradeProps) {
             placeholderTextColor={dark.muted}
             style={styles.input}
           />
-
           <Text style={styles.fieldLabel}>LEVERAGE</Text>
           <View style={styles.row}>
             {leverageChoices.filter((value) => value <= cap).map((value) => (
-              <Pressable
-                key={value}
-                onPress={() => setLeverage(value)}
-                style={[styles.chip, leverage === value && styles.chipActive]}
-              >
-                <Text style={styles.chipLabel}>{value}x</Text>
-              </Pressable>
+              <SelectPill key={value} label={`${value}x`} active={leverage === value} onPress={() => setLeverage(value)} />
             ))}
           </View>
-
           {leg !== null && (
-            <Text style={styles.muted}>
-              {leg.lots} {symbol} · {usd(leg.notional)} notional · {leg.leverage}x
-            </Text>
+            <View style={styles.tags}>
+              <Tag label={`${leg.lots} ${symbol}`} />
+              <Tag label={`${usd(leg.notional)} position`} />
+              <Tag label={`${leg.leverage}x`} />
+            </View>
           )}
-
           <Pressable
             disabled={blocked !== null}
             onPress={() => void submit()}
-            style={[styles.primary, direction === "short" && styles.short, blocked !== null && styles.disabled]}
+            style={({ pressed }) => [
+              styles.primary,
+              { backgroundColor: direction === "long" ? dark.green : tone.coral },
+              blocked !== null && styles.disabled,
+              pressed && styles.pressed,
+            ]}
           >
             <Text style={styles.primaryLabel}>{blocked ?? `${direction === "long" ? "Long" : "Short"} ${symbol}`}</Text>
           </Pressable>
           {status !== null && <Text style={status.failed ? styles.error : styles.muted}>{status.text}</Text>}
-        </View>
+        </ToneCard>
 
-        <Text style={styles.sectionTitle}>POSITIONS</Text>
+        <Text style={styles.section}>POSITIONS</Text>
         {positions === null ? (
           <ActivityIndicator color={dark.ink} />
         ) : positions.length === 0 ? (
-          <Text style={styles.empty}>No open positions on Monad testnet for this address.</Text>
+          <Text style={styles.muted}>No open positions on Monad testnet for this address.</Text>
         ) : (
-          <View style={styles.card}>
-            {positions.map((entry) => (
-              <View key={entry.market.perpId} style={styles.listRow}>
-                <View style={styles.flex}>
-                  <Text style={styles.rowTitle}>
-                    {entry.position.positionType === perpl.OrderType.OpenLong ? "Long" : "Short"} {entry.market.symbol}
+          positions.map((entry) => {
+            const long = entry.position.positionType === perpl.OrderType.OpenLong;
+            return (
+              <ToneCard key={entry.market.perpId}>
+                <View style={styles.marketHead}>
+                  <AssetMark symbol={entry.market.symbol} size={36} />
+                  <Text style={styles.positionTitle}>
+                    {long ? "LONG" : "SHORT"} {entry.market.symbol}
                   </Text>
-                  <Text style={styles.muted}>
-                    {entry.position.lots} @ {px(entry.position.entryPrice)} · margin {usd(entry.position.deposit)}
-                  </Text>
+                  <Text style={[styles.pnl, { color: entry.position.pnl >= 0 ? dark.green : dark.red }]}>{usd(entry.position.pnl)}</Text>
                 </View>
-                <Text style={entry.position.pnl >= 0 ? styles.up : styles.down}>{usd(entry.position.pnl)}</Text>
-                <Pressable disabled={busy} onPress={() => void close(entry)} style={styles.smallButton}>
-                  <Text style={styles.smallLabel}>Close</Text>
+                <View style={styles.tags}>
+                  <Tag label={`${entry.position.lots} lots`} dot={long ? dark.green : dark.red} />
+                  <Tag label={`Entry ${px(entry.position.entryPrice)}`} />
+                  <Tag label={`Margin ${usd(entry.position.deposit)}`} />
+                </View>
+                <Pressable disabled={busy} onPress={() => void close(entry)} style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}>
+                  <Text style={styles.closeLabel}>Close position</Text>
                 </Pressable>
-              </View>
-            ))}
-          </View>
+              </ToneCard>
+            );
+          })
         )}
       </ScrollView>
 
@@ -343,43 +321,38 @@ export function Trade({ trader, onSelectTab }: TradeProps) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: dark.paper },
-  header: { paddingHorizontal: space.lg, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  heading: { fontFamily: family.semibold, fontSize: 25, letterSpacing: track(25, -0.04), color: dark.ink },
-  badge: { borderRadius: 999, paddingVertical: space.xs, paddingHorizontal: space.md, backgroundColor: dark.surface },
-  badgeLabel: { fontFamily: family.medium, fontSize: 11, color: dark.ink },
-  content: { padding: space.lg, gap: space.lg },
+  content: { paddingHorizontal: space.lg, gap: space.lg },
   flex: { flex: 1, minWidth: 0 },
-  alignEnd: { alignItems: "flex-end" },
   row: { flexDirection: "row", gap: space.sm },
-  rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  chartEmpty: { height: 200, alignItems: "center", justifyContent: "center" },
-  marketHead: { flexDirection: "row", alignItems: "center", gap: space.md },
-  marketSymbol: { fontFamily: family.semibold, fontSize: 19, color: dark.ink },
-  marketPrice: { fontFamily: family.semibold, fontSize: 19, color: dark.ink },
-  muted: { fontFamily: family.regular, fontSize: 12, color: dark.muted },
-  up: { fontFamily: family.medium, fontSize: 13, color: dark.green },
-  down: { fontFamily: family.medium, fontSize: 13, color: dark.red },
-  error: { fontFamily: family.regular, fontSize: 13, color: dark.red },
-  empty: { fontFamily: family.regular, fontSize: 13, color: dark.muted, textAlign: "center", paddingVertical: space.xl },
-  card: { padding: space.lg, borderRadius: 18, backgroundColor: dark.surface, gap: space.md },
-  sectionTitle: { fontFamily: family.medium, fontSize: 11, letterSpacing: track(11, 0.12), color: dark.muted },
-  segment: { flexDirection: "row", borderRadius: 999, backgroundColor: dark.surfaceHover, padding: 3 },
-  segmentItem: { flex: 1, minHeight: touch, alignItems: "center", justifyContent: "center", borderRadius: 999 },
-  segmentItemActive: { backgroundColor: dark.line },
-  segmentLabel: { fontFamily: family.medium, fontSize: 13, color: dark.muted },
-  segmentLabelActive: { color: dark.ink },
+  tags: { flexDirection: "row", flexWrap: "wrap", gap: space.xs },
   chips: { gap: space.sm },
-  chip: { flexDirection: "row", alignItems: "center", gap: space.sm, borderRadius: 999, paddingVertical: space.sm, paddingHorizontal: space.md, backgroundColor: dark.surfaceHover, borderWidth: 1, borderColor: "transparent" },
-  chipActive: { borderColor: dark.green },
-  chipLabel: { fontFamily: family.semibold, fontSize: 13, color: dark.ink },
+  chip: { flexDirection: "row", alignItems: "center", gap: space.xs, paddingHorizontal: space.md, minHeight: touch, borderRadius: 999, backgroundColor: tone.card },
+  chipActive: { backgroundColor: tone.paper },
+  chipLabel: { fontFamily: family.medium, fontSize: 13, color: dark.ink },
+  chipLabelActive: { color: tone.ink },
+  marketHead: { flexDirection: "row", alignItems: "center", gap: space.md },
+  marketSymbol: { fontFamily: family.semibold, fontSize: 24, letterSpacing: -0.8, color: tone.ink },
+  marketPrice: { fontFamily: family.medium, fontSize: 26, letterSpacing: -1, color: tone.ink },
+  onColorMuted: { fontFamily: family.regular, fontSize: 12, color: "rgba(20, 24, 26, 0.7)" },
+  changeTag: { alignSelf: "flex-start", paddingVertical: 4, paddingHorizontal: space.sm, borderRadius: 999, backgroundColor: tone.ink },
+  changeText: { fontFamily: family.medium, fontSize: 12, color: tone.paper },
+  chartEmpty: { height: 180, alignItems: "center", justifyContent: "center" },
+  ranges: { flexDirection: "row", gap: space.xs },
+  range: { flex: 1, minHeight: touch, borderRadius: 999, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255, 255, 255, 0.35)" },
+  rangeActive: { backgroundColor: tone.ink },
+  rangeLabel: { fontFamily: family.medium, fontSize: 12, color: tone.ink },
+  rangeLabelActive: { color: tone.paper },
   fieldLabel: { fontFamily: family.medium, fontSize: 11, letterSpacing: track(11, 0.12), color: dark.muted },
-  input: { fontFamily: family.light, fontSize: 32, letterSpacing: track(32, -0.04), color: dark.ink, padding: 0 },
-  primary: { minHeight: touch + space.md, borderRadius: 999, backgroundColor: dark.green, alignItems: "center", justifyContent: "center" },
-  short: { backgroundColor: dark.red },
-  primaryLabel: { fontFamily: family.semibold, fontSize: 15, color: dark.paper },
+  input: { fontFamily: family.light, fontSize: 40, letterSpacing: track(40, -0.04), color: dark.ink, padding: 0 },
+  primary: { minHeight: touch + space.md, borderRadius: 999, alignItems: "center", justifyContent: "center" },
+  primaryLabel: { fontFamily: family.semibold, fontSize: 15, color: tone.ink },
   disabled: { opacity: 0.45 },
-  listRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  rowTitle: { fontFamily: family.semibold, fontSize: 14, color: dark.ink },
-  smallButton: { borderRadius: 999, paddingVertical: space.sm, paddingHorizontal: space.md, backgroundColor: dark.surfaceHover },
-  smallLabel: { fontFamily: family.medium, fontSize: 13, color: dark.ink },
+  pressed: { opacity: 0.75 },
+  muted: { fontFamily: family.regular, fontSize: 12, lineHeight: 18, color: dark.muted },
+  error: { fontFamily: family.regular, fontSize: 13, color: dark.red },
+  section: { fontFamily: family.semibold, fontSize: 22, letterSpacing: -0.8, color: dark.ink },
+  positionTitle: { flex: 1, fontFamily: family.semibold, fontSize: 18, letterSpacing: -0.5, color: dark.ink },
+  pnl: { fontFamily: family.semibold, fontSize: 16 },
+  closeButton: { minHeight: touch, borderRadius: 999, backgroundColor: tone.raised, alignItems: "center", justifyContent: "center" },
+  closeLabel: { fontFamily: family.medium, fontSize: 14, color: dark.ink },
 });

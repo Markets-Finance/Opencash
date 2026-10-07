@@ -309,7 +309,7 @@ export function Account({
             <Text style={styles.back}>←</Text>
           </Pressable>
           <Text style={styles.heading}>{titles[panel]}</Text>
-          <View style={styles.iconButton} />
+          <View style={styles.iconSpacer} />
         </View>
         <ScrollView
           contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + insets.bottom + space.xl }]}
@@ -376,13 +376,13 @@ export function Account({
             <Text style={styles.back}>←</Text>
           </Pressable>
           <Text style={styles.heading}>Account</Text>
-          <View style={styles.iconButton} />
+          <View style={styles.iconSpacer} />
         </View>
       )}
       {showTabBar && (
         <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
           <Text style={styles.heading}>Account</Text>
-          <View style={styles.iconButton} />
+          <View style={styles.iconSpacer} />
         </View>
       )}
 
@@ -496,19 +496,21 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontFamily: family.semibold,
-    fontSize: 19,
-    letterSpacing: track(19, -0.03),
+    fontSize: 26,
+    letterSpacing: -1,
+    textTransform: "uppercase",
     color: dark.ink,
   },
+  iconSpacer: { width: 54, height: 54 },
   iconButton: {
     width: 54,
     height: 54,
     borderRadius: 27,
-    backgroundColor: dark.surface,
+    backgroundColor: "#f3f4f1",
     alignItems: "center",
     justifyContent: "center",
   },
-  back: { fontFamily: family.regular, fontSize: 22, color: dark.muted },
+  back: { fontFamily: family.medium, fontSize: 22, color: "#14181a" },
   content: { padding: space.lg, gap: space.lg },
   lede: {
     fontFamily: family.regular,

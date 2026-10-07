@@ -12,6 +12,7 @@ export const tone = {
   paper: "#f3f4f1",
   ink: "#14181a",
   card: "#1d2321",
+  raised: "#29312e",
 } as const;
 
 export type Tone = keyof typeof tone;
@@ -99,9 +100,9 @@ export function CardTitle({ children, onColor }: { children: string; onColor?: b
 
 const styles = StyleSheet.create({
   titleRow: { flexDirection: "row", alignItems: "center", gap: space.md, minHeight: 52 },
-  title: { flexShrink: 1, fontFamily: family.semibold, fontSize: 30, lineHeight: 32, letterSpacing: -1.2, color: dark.ink },
+  title: { flex: 1, fontFamily: family.semibold, fontSize: 30, lineHeight: 32, letterSpacing: -1.2, color: dark.ink },
   round: { width: touch + space.xs, height: touch + space.xs, borderRadius: 24, alignItems: "center", justifyContent: "center" },
-  roundGlyph: { fontFamily: family.medium, fontSize: 20 },
+  roundGlyph: { fontFamily: family.medium, fontSize: 24 },
   pressed: { opacity: 0.75 },
   arrow: { width: 40, height: 40, borderRadius: 20, backgroundColor: tone.paper, alignItems: "center", justifyContent: "center" },
   arrowDark: { backgroundColor: tone.ink },
@@ -111,7 +112,7 @@ const styles = StyleSheet.create({
   pillActive: { backgroundColor: tone.paper },
   pillLabel: { fontFamily: family.medium, fontSize: 13, color: dark.muted },
   pillLabelActive: { color: tone.ink },
-  tag: { flexDirection: "row", alignItems: "center", gap: space.xs, paddingVertical: 4, paddingHorizontal: space.sm, borderRadius: 999, backgroundColor: dark.surfaceHover },
+  tag: { flexDirection: "row", alignItems: "center", gap: space.xs, paddingVertical: 4, paddingHorizontal: space.sm, borderRadius: 999, backgroundColor: tone.raised },
   tagOnColor: { backgroundColor: "rgba(20, 24, 26, 0.12)" },
   tagDot: { width: 8, height: 8, borderRadius: 4 },
   tagLabel: { fontFamily: family.medium, fontSize: 11, letterSpacing: 0.3, color: dark.ink },
@@ -119,4 +120,45 @@ const styles = StyleSheet.create({
   card: { borderRadius: 28, padding: space.lg, gap: space.md },
   cardTitle: { fontFamily: family.semibold, fontSize: 22, lineHeight: 24, letterSpacing: -0.8, color: dark.ink },
   onColor: { color: tone.ink },
+});
+
+export function Switcher<K extends string>({
+  items,
+  value,
+  onChange,
+}: {
+  items: { key: K; label: string; dot: string; count?: number }[];
+  value: K;
+  onChange: (key: K) => void;
+}) {
+  return (
+    <View style={switcher.wrap} accessibilityRole="tablist">
+      {items.map((item) => {
+        const active = item.key === value;
+        return (
+          <Pressable
+            key={item.key}
+            onPress={() => onChange(item.key)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: active }}
+            style={[switcher.item, active && switcher.itemActive]}
+          >
+            <View style={[switcher.dot, { backgroundColor: item.dot }]} />
+            <Text style={[switcher.label, active && switcher.labelActive]}>{item.label.toUpperCase()}</Text>
+            {item.count !== undefined && <Text style={[switcher.count, active && switcher.labelActive]}>{item.count}</Text>}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+const switcher = StyleSheet.create({
+  wrap: { flexDirection: "row", padding: space.xs, gap: space.xs, borderRadius: 999, backgroundColor: tone.card },
+  item: { flex: 1, minHeight: touch + space.md, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: space.sm, borderRadius: 999 },
+  itemActive: { backgroundColor: tone.paper },
+  dot: { width: 10, height: 10, borderRadius: 5 },
+  label: { fontFamily: family.semibold, fontSize: 14, letterSpacing: -0.2, color: dark.muted },
+  labelActive: { color: tone.ink },
+  count: { fontFamily: family.medium, fontSize: 12, color: dark.muted },
 });
