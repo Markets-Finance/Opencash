@@ -1,5 +1,6 @@
 import type { Address, PublicClient } from "viem";
 import { exchangeAbi } from "./abi.js";
+import { normalizeSymbol } from "./logos.js";
 import { fromLNS, fromPNS, fromLeverageHdths, toLNS } from "./scale.js";
 
 export type PerpMarket = {
@@ -65,7 +66,7 @@ export async function fetchMarket(
   return {
     perpId,
     name: info.name,
-    symbol: info.symbol,
+    symbol: normalizeSymbol(info.symbol),
     priceDecimals,
     lotDecimals,
     mark: fromPNS(info.markPNS, priceDecimals),

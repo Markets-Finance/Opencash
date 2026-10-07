@@ -1,3 +1,5 @@
+import { perpl } from "shared";
+
 export function usd(value: number): string {
   return `${value < 0 ? "−" : ""}$${Math.abs(value).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
@@ -20,7 +22,9 @@ export function esc(text: string): string {
 }
 
 export function markForSymbol(symbol: string): string {
-  return `<span class="row-mark">${esc(symbol.slice(0, 1).toUpperCase())}</span>`;
+  const letter = esc(symbol.slice(0, 1).toUpperCase());
+  const url = perpl.marketLogoUrl(symbol);
+  return `<span class="row-mark row-mark--logo"><img src="${url}" alt="" loading="lazy" onerror="this.remove();this.nextElementSibling.hidden=false" /><span hidden>${letter}</span></span>`;
 }
 
 export function legStackHtml(symbols: string[]): string {

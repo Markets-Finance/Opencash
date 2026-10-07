@@ -2,7 +2,17 @@ import { createTerminal, perpl } from "shared";
 import { publicClient, walletClientFor } from "./chain";
 
 export {
+  createBot,
+  createBotRuntime,
+  type Bot,
+  type BotMode,
+  type BotRuntime,
   bins,
+  binFromCard,
+  cardFromBin,
+  ruleDrafter,
+  type StrategyCard,
+  type StrategyLeg,
   singleLegBin,
   sizeBinFor,
   type Bin,

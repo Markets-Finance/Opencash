@@ -15,6 +15,8 @@ export {
   type PortfolioSummary,
 } from "shared";
 
+export const terminal = createTerminal({ publicClient, walletClientFor, deployment: perpl.perplTestnet });
+
 export const {
   deployment,
   loadMarkets,
@@ -25,7 +27,7 @@ export const {
   loadSummary,
   openBin,
   closePosition,
-} = createTerminal({ publicClient, walletClientFor, deployment: perpl.perplTestnet });
+} = terminal;
 
 export const loadCandles = (market: perpl.PerpMarket, range: CandleRangeKey) =>
   perpl.fetchCandles(perpl.perplTestnet.apiUrl, market, range);

@@ -14,6 +14,8 @@ import type { Bin, TradingAccount } from "shared";
 import { Account, type Profile } from "./src/screens/Account";
 import { BinDetail } from "./src/screens/BinDetail";
 import { Bins } from "./src/screens/Bins";
+import { Bots } from "./src/screens/Bots";
+import { startBots, stopBots } from "./src/lib/bots";
 import { Trade } from "./src/screens/Trade";
 import type { TabKey } from "./src/components/TabBar";
 import { Home } from "./src/screens/Home";
@@ -33,7 +35,8 @@ type Screen =
   | "bins"
   | "bin"
   | "home"
-  | "trade";
+  | "trade"
+  | "bots";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("landing");
@@ -65,6 +68,8 @@ export default function App() {
 
   function onAuthenticated(account: TradingAccount | null) {
     setTrader(account);
+    if (account === null) stopBots();
+    else void startBots(account);
     setBalance(null);
     setPortfolio(null);
     if (account === null) return;
@@ -83,6 +88,7 @@ export default function App() {
     if (key === "home") setScreen("home");
     else if (key === "bins") setScreen("bins");
     else if (key === "trade") setScreen("trade");
+    else if (key === "bots") setScreen("bots");
     else setScreen("account");
   }
 
@@ -117,6 +123,8 @@ export default function App() {
         trader !== null ? (
           <Trade trader={trader} onSelectTab={goTab} />
         ) : null
+      ) : screen === "bots" ? (
+        <Bots onSelectTab={goTab} />
       ) : screen === "home" ? (
         trader !== null ? <Home trader={trader} onSelectTab={goTab} /> : null
       ) : bin !== null && markets !== null && trader !== null ? (

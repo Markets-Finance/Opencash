@@ -1,4 +1,5 @@
 import { avatars, query } from "./dom";
+import { initIdentity } from "./identity";
 import { disconnect } from "./tabs";
 import { requireTrader } from "./state";
 
@@ -44,6 +45,7 @@ export function initAccount() {
     }
   }
   void paint();
+  void initIdentity();
 
   query<HTMLButtonElement>("[data-save-profile]").addEventListener("click", () => {
     saveProfile({ name: nameInput.value.trim(), email: emailInput.value.trim(), variant });

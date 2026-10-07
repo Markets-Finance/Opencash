@@ -62,13 +62,27 @@ export function sizeBinFor(
   return sizeBin(bin, margin, data.markets, data.maxLeverage);
 }
 
+const marketCacheMs = 15_000;
+
 export function createTerminal(config: TerminalConfig) {
   const { deployment } = config;
   const client = config.publicClient as PublicClient;
   const walletFor = (account: TradingAccount) =>
     config.walletClientFor(account) as WalletClient<Transport, Chain, Account>;
 
-  async function loadMarkets(): Promise<MarketData> {
+  let cached: { at: number; data: Promise<MarketData> } | null = null;
+
+  function loadMarkets(): Promise<MarketData> {
+    if (cached && Date.now() - cached.at < marketCacheMs) return cached.data;
+    const data = readMarkets();
+    cached = { at: Date.now(), data };
+    data.catch(() => {
+      if (cached?.data === data) cached = null;
+    });
+    return data;
+  }
+
+  async function readMarkets(): Promise<MarketData> {
     const list = await fetchMarkets(client, deployment.exchange);
     const maxLeverage = new Map<string, number>();
     await Promise.all(

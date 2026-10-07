@@ -249,6 +249,7 @@ export function Trade({ trader, onSelectTab }: TradeProps) {
               onPress={() => setSymbol(m.symbol)}
               style={[styles.chip, m.symbol === symbol && styles.chipActive]}
             >
+              <AssetMark symbol={m.symbol} size={24} />
               <Text style={styles.chipLabel}>{m.symbol}</Text>
             </Pressable>
           ))}
@@ -368,7 +369,7 @@ const styles = StyleSheet.create({
   segmentLabel: { fontFamily: family.medium, fontSize: 13, color: dark.muted },
   segmentLabelActive: { color: dark.ink },
   chips: { gap: space.sm },
-  chip: { borderRadius: 999, paddingVertical: space.sm, paddingHorizontal: space.md, backgroundColor: dark.surfaceHover, borderWidth: 1, borderColor: "transparent" },
+  chip: { flexDirection: "row", alignItems: "center", gap: space.sm, borderRadius: 999, paddingVertical: space.sm, paddingHorizontal: space.md, backgroundColor: dark.surfaceHover, borderWidth: 1, borderColor: "transparent" },
   chipActive: { borderColor: dark.green },
   chipLabel: { fontFamily: family.semibold, fontSize: 13, color: dark.ink },
   fieldLabel: { fontFamily: family.medium, fontSize: 11, letterSpacing: track(11, 0.12), color: dark.muted },

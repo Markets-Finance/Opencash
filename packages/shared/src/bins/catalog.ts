@@ -8,7 +8,7 @@ export const bins: Bin[] = [
     legs: [
       { symbol: "BTC", direction: "long", weightBps: 4000, leverage: 3 },
       { symbol: "ETH", direction: "long", weightBps: 3500, leverage: 3 },
-      { symbol: "SOL_v2", direction: "long", weightBps: 2500, leverage: 3 },
+      { symbol: "SOL", direction: "long", weightBps: 2500, leverage: 3 },
     ],
   },
   {
@@ -17,7 +17,7 @@ export const bins: Bin[] = [
     thesis: "Four settlement layers in one position, including the chain this runs on.",
     legs: [
       { symbol: "ETH", direction: "long", weightBps: 3000, leverage: 3 },
-      { symbol: "SOL_v2", direction: "long", weightBps: 3000, leverage: 3 },
+      { symbol: "SOL", direction: "long", weightBps: 3000, leverage: 3 },
       { symbol: "MON", direction: "long", weightBps: 2500, leverage: 3 },
       { symbol: "HYPE", direction: "long", weightBps: 1500, leverage: 3 },
     ],

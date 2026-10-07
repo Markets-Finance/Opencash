@@ -8,6 +8,10 @@ import { requireTrader } from "./state";
 
 const featuredSymbols = [...new Set(bins.flatMap((bin) => bin.legs.map((leg) => leg.symbol)))];
 
+function listedSymbols(data: MarketData): string[] {
+  return featuredSymbols.filter((symbol) => data.markets.has(symbol));
+}
+
 function renderPositionsTable(container: HTMLElement, positions: BinPosition[]) {
   if (positions.length === 0) {
     container.className = "empty";
@@ -34,7 +38,7 @@ function renderPositionsTable(container: HTMLElement, positions: BinPosition[]) 
 
 function renderMarkets(container: HTMLElement, data: MarketData) {
   container.className = "asset-list";
-  container.innerHTML = featuredSymbols
+  container.innerHTML = listedSymbols(data)
     .map((symbol) => {
       const market = data.markets.get(symbol);
       return `
@@ -50,7 +54,7 @@ function renderMarkets(container: HTMLElement, data: MarketData) {
 
 function renderTicker(container: HTMLElement, data: MarketData) {
   container.className = "ticker-row";
-  container.innerHTML = featuredSymbols
+  container.innerHTML = listedSymbols(data)
     .slice(0, 4)
     .map((symbol) => {
       const market = data.markets.get(symbol);

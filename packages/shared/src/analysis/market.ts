@@ -1,0 +1,126 @@
+import type { ApiCandle, ApiMarket, Book, FundingPoint, Ticker } from "../perpl/api.js";
+import { annualizedVolPct, maxDrawdownPct, mean, median } from "./stats.js";
+
+export type FundingSummary = {
+  samples: number;
+  nowAprPct: number;
+  meanAprPct: number;
+  medianAprPct: number;
+  positiveShare: number;
+};
+
+export type MarketSnapshot = {
+  symbol: string;
+  mark: number;
+  spreadBps: number;
+  change24hPct: number;
+  volume24hUsd: number;
+  openInterestUsd: number;
+  maxLeverage: number;
+  makerFeeBps: number;
+  takerFeeBps: number;
+  funding: FundingSummary;
+};
+
+export type PriceStats = {
+  candles: number;
+  returnPct: number;
+  highPrice: number;
+  lowPrice: number;
+  annualizedVolPct: number;
+  maxDrawdownPct: number;
+};
+
+export type DepthSummary = {
+  bidUsdWithin10Bps: number;
+  askUsdWithin10Bps: number;
+  bidUsdWithin25Bps: number;
+  askUsdWithin25Bps: number;
+  bidUsdWithin50Bps: number;
+  askUsdWithin50Bps: number;
+};
+
+export function fundingAprPct(ratePpm: number, intervalSec: number): number {
+  return ratePpm * 1e-6 * (86400 / intervalSec) * 365 * 100;
+}
+
+export function summarizeFunding(points: FundingPoint[], intervalSec: number): FundingSummary {
+  const aprs = points.map((p) => fundingAprPct(p.ratePpm, intervalSec));
+  return {
+    samples: aprs.length,
+    nowAprPct: aprs.length > 0 ? aprs[aprs.length - 1] : 0,
+    meanAprPct: mean(aprs),
+    medianAprPct: median(aprs),
+    positiveShare: aprs.length === 0 ? 0 : aprs.filter((a) => a > 0).length / aprs.length,
+  };
+}
+
+export function spreadBps(ticker: Ticker): number {
+  return ticker.mid > 0 ? ((ticker.ask - ticker.bid) / ticker.mid) * 1e4 : 0;
+}
+
+export function snapshotMarket(market: ApiMarket, ticker: Ticker, funding: FundingPoint[]): MarketSnapshot {
+  return {
+    symbol: market.symbol,
+    mark: ticker.mark,
+    spreadBps: spreadBps(ticker),
+    change24hPct: ticker.prevDay > 0 ? ((ticker.mark - ticker.prevDay) / ticker.prevDay) * 100 : 0,
+    volume24hUsd: ticker.volume24hUsd,
+    openInterestUsd: ticker.openInterestUsd,
+    maxLeverage: market.maxLeverage,
+    makerFeeBps: market.makerFeePpm / 100,
+    takerFeeBps: market.takerFeePpm / 100,
+    funding: summarizeFunding(funding, market.fundingIntervalSec),
+  };
+}
+
+export function priceStats(candles: ApiCandle[], resolutionSec: number): PriceStats {
+  const closes = candles.map((c) => c.close);
+  if (closes.length < 2) {
+    return { candles: closes.length, returnPct: 0, highPrice: 0, lowPrice: 0, annualizedVolPct: 0, maxDrawdownPct: 0 };
+  }
+  return {
+    candles: closes.length,
+    returnPct: ((closes[closes.length - 1] - closes[0]) / closes[0]) * 100,
+    highPrice: Math.max(...candles.map((c) => c.high)),
+    lowPrice: Math.min(...candles.map((c) => c.low)),
+    annualizedVolPct: annualizedVolPct(closes, resolutionSec),
+    maxDrawdownPct: maxDrawdownPct(closes),
+  };
+}
+
+function usdWithin(levels: Book["bids"], mid: number, bps: number, side: "bid" | "ask"): number {
+  const limit = side === "bid" ? mid * (1 - bps / 1e4) : mid * (1 + bps / 1e4);
+  return levels
+    .filter((level) => (side === "bid" ? level.price >= limit : level.price <= limit))
+    .reduce((sum, level) => sum + level.price * level.size, 0);
+}
+
+export function summarizeDepth(book: Book, mid: number): DepthSummary {
+  return {
+    bidUsdWithin10Bps: usdWithin(book.bids, mid, 10, "bid"),
+    askUsdWithin10Bps: usdWithin(book.asks, mid, 10, "ask"),
+    bidUsdWithin25Bps: usdWithin(book.bids, mid, 25, "bid"),
+    askUsdWithin25Bps: usdWithin(book.asks, mid, 25, "ask"),
+    bidUsdWithin50Bps: usdWithin(book.bids, mid, 50, "bid"),
+    askUsdWithin50Bps: usdWithin(book.asks, mid, 50, "ask"),
+  };
+}
+
+export function slippageBps(book: Book, side: "buy" | "sell", notionalUsd: number, mid: number): number | null {
+  const levels = side === "buy" ? book.asks : book.bids;
+  let remaining = notionalUsd;
+  let cost = 0;
+  let filledBase = 0;
+  for (const level of levels) {
+    const levelUsd = level.price * level.size;
+    const take = Math.min(remaining, levelUsd);
+    cost += take;
+    filledBase += take / level.price;
+    remaining -= take;
+    if (remaining <= 0) break;
+  }
+  if (remaining > 0 || filledBase === 0) return null;
+  const average = cost / filledBase;
+  return side === "buy" ? ((average - mid) / mid) * 1e4 : ((mid - average) / mid) * 1e4;
+}

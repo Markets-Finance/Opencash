@@ -51,3 +51,15 @@ export { fetchAccount, fetchPosition } from "./account.js";
 export type { PerpPosition, PerplAccount } from "./account.js";
 export { candleRanges, fetchCandles } from "./history.js";
 export type { Candle, CandleRangeKey } from "./history.js";
+export { marketLogoUrl, normalizeSymbol } from "./logos.js";
+export { createPerplApi } from "./api.js";
+export type {
+  ApiCandle,
+  ApiMarket,
+  Book,
+  BookLevel,
+  FundingPoint,
+  PerplApi,
+  Ticker,
+} from "./api.js";
+export { perplEventsAbi } from "./events.js";

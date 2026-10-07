@@ -1,0 +1,23 @@
+<section class="panel" data-panel="bots" hidden>
+  <div class="bots">
+    <div class="bots__create card">
+      <span class="card__label">New bot</span>
+      <p class="bots__note">
+        Bots run in this tab while you are signed in. Close it and they stop. Every action is logged with its
+        transaction.
+      </p>
+      <form class="bots__form" data-bot-form>
+        <input type="text" data-bot-input autocomplete="off" placeholder="long MON short BTC 2x $100 stop 8% tp 12%" />
+        <select data-bot-mode aria-label="Mode">
+          <option value="guard">Guard an open position</option>
+          <option value="auto">Auto open and guard</option>
+        </select>
+        <button type="submit" class="btn btn--primary">Create</button>
+      </form>
+      <p class="agent__hint" data-bot-hint></p>
+    </div>
+    <div class="bots__list" data-bot-list>
+      <p class="empty">No bots yet.</p>
+    </div>
+  </div>
+</section>

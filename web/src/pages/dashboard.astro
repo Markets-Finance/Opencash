@@ -1,4 +1,6 @@
 ---
+import AgentPanel from "../components/dashboard/AgentPanel.astro";
+import BotsPanel from "../components/dashboard/BotsPanel.astro";
 import AccountPanel from "../components/dashboard/AccountPanel.astro";
 import BinsPanel from "../components/dashboard/BinsPanel.astro";
 import Gate from "../components/dashboard/Gate.astro";
@@ -12,6 +14,8 @@ import "../styles/dashboard/shell.css";
 import "../styles/dashboard/home.css";
 import "../styles/dashboard/theme.css";
 import "../styles/dashboard/components.css";
+import "../styles/dashboard/agent.css";
+import "../styles/dashboard/bots.css";
 ---
 
 <html lang="en">
@@ -26,6 +30,8 @@ import "../styles/dashboard/components.css";
       <Topbar />
       <main class="dash__content">
         <HomePanel />
+        <AgentPanel />
+        <BotsPanel />
         <BinsPanel />
         <TradePanel />
         <AccountPanel />

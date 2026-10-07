@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
+import { perpl } from "shared";
 import { dark, family } from "../theme";
 
 type AssetMarkProps = {
@@ -10,7 +11,8 @@ type AssetMarkProps = {
 
 export function AssetMark({ symbol, size = 32, uri }: AssetMarkProps) {
   const [failed, setFailed] = useState(false);
-  const showLogo = uri !== undefined && !failed;
+  const logoUrl = uri ?? perpl.marketLogoUrl(symbol);
+  const showLogo = !failed;
 
   return (
     <View
@@ -22,7 +24,7 @@ export function AssetMark({ symbol, size = 32, uri }: AssetMarkProps) {
     >
       {showLogo ? (
         <Image
-          source={{ uri }}
+          source={{ uri: logoUrl }}
           style={{ width: size, height: size, borderRadius: size / 2 }}
           onError={() => setFailed(true)}
         />

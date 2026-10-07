@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Mark } from "../components/Mark";
-import { dark, family, space, track } from "../theme";
+import { dark, family, space } from "../theme";
 
 export function Landing({ onSignIn }: { onSignIn: () => void }) {
   const insets = useSafeAreaInsets();
@@ -10,38 +10,15 @@ export function Landing({ onSignIn }: { onSignIn: () => void }) {
     <View
       style={[
         styles.screen,
-        {
-          paddingTop: insets.top + space.xxl,
-          paddingBottom: insets.bottom + space.xl,
-        },
+        { paddingTop: insets.top + space.xxl, paddingBottom: insets.bottom + space.xl },
       ]}
     >
       <View style={styles.content}>
         <View style={styles.mark}>
-          <Mark size={40} tint={dark.onAccent} />
+          <Mark size={72} tint={dark.onAccent} />
         </View>
-
-        <View style={styles.copy}>
-          <Text style={styles.eyebrow}>OPENCASH</Text>
-          <Text style={styles.title}>Trade the narrative.{"\n"}With leverage.</Text>
-          <Text style={styles.subtitle}>
-            A bin groups Perpl markets on Monad that move together into one
-            position. Set the size and leverage; your passkey signs every order.
-          </Text>
-        </View>
-
-        <View style={styles.facts}>
-          {[
-            ["Composition", "Markets that move together"],
-            ["Leverage", "Capped by your deposit"],
-            ["Custody", "OpenCash never holds withdrawal power"],
-          ].map(([label, value]) => (
-            <View key={label} style={styles.fact}>
-              <Text style={styles.factLabel}>{label}</Text>
-              <Text style={styles.factValue}>{value}</Text>
-            </View>
-          ))}
-        </View>
+        <Text style={styles.name}>OpenCash</Text>
+        <Text style={styles.tagline}>Trade the story.</Text>
       </View>
 
       <Pressable
@@ -55,56 +32,18 @@ export function Landing({ onSignIn }: { onSignIn: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: dark.paper,
-    paddingHorizontal: space.xl,
-  },
-  content: { flex: 1, justifyContent: "center", gap: space.xl },
+  screen: { flex: 1, backgroundColor: dark.paper, paddingHorizontal: space.xl },
+  content: { flex: 1, alignItems: "center", justifyContent: "center", gap: space.lg },
   mark: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
+    width: 128,
+    height: 128,
+    borderRadius: 40,
     backgroundColor: dark.accent,
     alignItems: "center",
     justifyContent: "center",
   },
-  copy: { gap: space.md },
-  eyebrow: {
-    fontFamily: family.medium,
-    fontSize: 11,
-    letterSpacing: track(11, 0.14),
-    color: dark.muted,
-  },
-  title: {
-    fontFamily: family.display,
-    fontSize: 38,
-    lineHeight: 38 * 1.14,
-    color: dark.ink,
-  },
-  subtitle: {
-    fontFamily: family.regular,
-    fontSize: 15,
-    lineHeight: 15 * 1.6,
-    color: dark.muted,
-    maxWidth: 320,
-  },
-  facts: { gap: space.md, padding: space.lg, borderRadius: 18, backgroundColor: dark.surface, borderWidth: 1, borderColor: dark.surfaceLine },
-  fact: { flexDirection: "row", alignItems: "baseline", gap: space.md },
-  factLabel: {
-    fontFamily: family.medium,
-    fontSize: 11,
-    letterSpacing: track(11, 0.12),
-    color: dark.muted,
-    width: 96,
-  },
-  factValue: {
-    flex: 1,
-    fontFamily: family.regular,
-    fontSize: 13,
-    lineHeight: 13 * 1.55,
-    color: dark.ink,
-  },
+  name: { fontFamily: family.display, fontSize: 44, color: dark.ink },
+  tagline: { fontFamily: family.regular, fontSize: 18, color: dark.muted },
   button: {
     alignItems: "center",
     justifyContent: "center",

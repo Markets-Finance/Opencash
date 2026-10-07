@@ -17,6 +17,10 @@ type HomeProps = {
 function usd(value: number): string {
   return `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
+function px(value: number): string {
+  const digits = value >= 100 ? 2 : value >= 1 ? 4 : 6;
+  return `$${value.toLocaleString(undefined, { maximumFractionDigits: digits })}`;
+}
 function money(value: number): { whole: string; cents: string } {
   const [whole, cents] = Math.abs(value)
     .toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -46,6 +50,7 @@ export function Home({ trader, onSelectTab }: HomeProps) {
     };
   }, [trader.address]);
 
+  const listed = data ? featuredSymbols.filter((symbol) => data.markets.has(symbol)) : featuredSymbols;
   const total = money(summary?.total ?? 0);
   const pnl = summary?.unrealizedPnl ?? 0;
   const change = money(Math.abs(pnl));
@@ -71,7 +76,7 @@ export function Home({ trader, onSelectTab }: HomeProps) {
             <View style={[styles.dot, styles.dotBottomLeft]} />
             <View style={[styles.dot, styles.dotBottomRight]} />
             <View style={styles.coinStack}>
-              {(summary?.symbols.length ? summary.symbols : featuredSymbols).slice(0, 4).map((coin, index) => (
+              {(summary?.symbols.length ? summary.symbols : listed).slice(0, 4).map((coin, index) => (
                 <CoinMark key={coin} coin={coin} first={index === 0} />
               ))}
             </View>
@@ -111,14 +116,15 @@ export function Home({ trader, onSelectTab }: HomeProps) {
 
         <Text style={styles.sectionTitle}>Markets</Text>
         <View style={styles.card}>
-          {featuredSymbols.map((symbol) => {
+          {listed.map((symbol) => {
             const mark = data?.markets.get(symbol)?.mark;
+            const leverage = data?.maxLeverage.get(symbol);
             return (
               <View key={symbol} style={styles.assetRow}>
                 <AssetMark symbol={symbol} size={32} />
                 <Text style={styles.assetSymbol}>{symbol}</Text>
-                <View style={styles.spacer} />
-                <Text style={styles.assetPrice}>{mark === undefined ? "—" : usd(mark)}</Text>
+                <Text style={styles.assetPrice}>{mark === undefined ? "—" : px(mark)}</Text>
+                <Text style={styles.assetLeverage}>{leverage === undefined ? "—" : `${leverage}x`}</Text>
               </View>
             );
           })}
@@ -130,15 +136,16 @@ export function Home({ trader, onSelectTab }: HomeProps) {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.tickerRow}
         >
-          {featuredSymbols.slice(0, 4).map((symbol) => {
+          {listed.slice(0, 4).map((symbol) => {
             const mark = data?.markets.get(symbol)?.mark;
+            const leverage = data?.maxLeverage.get(symbol);
             return (
               <View key={symbol} style={styles.tickerCard}>
                 <View style={styles.tickerHead}>
                   <AssetMark symbol={symbol} size={22} />
                   <Text style={styles.tickerSymbol}>{symbol}</Text>
                 </View>
-                <Text style={styles.tickerPrice}>{mark === undefined ? "—" : usd(mark)}</Text>
+                <Text style={styles.tickerPrice}>{mark === undefined ? "—" : px(mark)}</Text>
               </View>
             );
           })}
@@ -177,7 +184,7 @@ type CoinMarkProps = { coin: string; first: boolean };
 function CoinMark({ coin, first }: CoinMarkProps) {
   return (
     <View style={[styles.coin, !first && styles.coinOverlap]}>
-      <Text style={styles.coinLetter}>{coin.slice(0, 1)}</Text>
+      <AssetMark symbol={coin} size={(styles.coin.width as number) - 4} />
     </View>
   );
 }
@@ -292,9 +299,10 @@ const styles = StyleSheet.create({
     color: dark.muted,
   },
   assetRow: { flexDirection: "row", alignItems: "center", gap: space.sm, paddingVertical: space.sm },
-  assetSymbol: { fontFamily: family.semibold, fontSize: 14, color: dark.ink },
+  assetSymbol: { flex: 1, fontFamily: family.semibold, fontSize: 14, color: dark.ink },
   spacer: { flex: 1 },
-  assetPrice: { fontFamily: family.medium, fontSize: 13, color: dark.ink },
+  assetPrice: { minWidth: 96, textAlign: "right", fontFamily: family.medium, fontSize: 13, color: dark.ink },
+  assetLeverage: { minWidth: 40, textAlign: "right", fontFamily: family.regular, fontSize: 12, color: dark.muted },
   assetChange: { fontFamily: family.regular, fontSize: 11, minWidth: 54, textAlign: "right" },
   changeUp: { color: dark.green },
   changeDown: { color: dark.red },

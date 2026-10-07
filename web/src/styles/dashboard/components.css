@@ -141,6 +141,7 @@
   overflow: hidden;
 }
 .row-mark--logo {
+  border-radius: 50%;
   background: #fff;
   border: 1px solid var(--surface-line);
 }

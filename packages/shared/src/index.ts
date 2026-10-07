@@ -30,6 +30,12 @@ export * from "./hood/index.js";
 export * as perpl from "./perpl/index.js";
 export * from "./bins/index.js";
 export * from "./terminal/index.js";
+export * from "./analysis/index.js";
+export * from "./strategy/index.js";
+export * from "./agent/index.js";
+export * from "./bots/index.js";
+export * from "./leaderboard/index.js";
+export * from "./identity/index.js";
 export {
   parseAttestedPublicKey,
   parseCoseP256PublicKey,

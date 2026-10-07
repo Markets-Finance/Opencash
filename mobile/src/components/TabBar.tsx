@@ -3,12 +3,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Diamond } from "./Diamond";
 import { dark, family, space, touch, track } from "../theme";
 
-export type TabKey = "home" | "bins" | "trade" | "account";
+export type TabKey = "home" | "bins" | "trade" | "bots" | "account";
 
 const tabs: { key: TabKey; label: string }[] = [
   { key: "home", label: "Home" },
   { key: "bins", label: "Bins" },
   { key: "trade", label: "Trade" },
+  { key: "bots", label: "Bots" },
   { key: "account", label: "Account" },
 ];
 

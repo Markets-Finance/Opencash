@@ -91,11 +91,14 @@
   font-size: 13px;
   font-weight: 500;
   text-align: right;
+  min-width: 96px;
+  font-variant-numeric: tabular-nums;
 }
 .asset-row__change {
   font-size: 11px;
   text-align: right;
   min-width: 56px;
+  color: var(--muted);
 }
 .change-up {
   color: var(--up);
