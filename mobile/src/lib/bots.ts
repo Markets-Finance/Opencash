@@ -16,6 +16,7 @@ import { terminal } from "./perpl";
 export const toolbox = createToolbox(perpl.createPerplApi(perpl.perplTestnet.apiUrl), defaultLimits);
 
 let runtime: BotRuntime | null = null;
+let owner: string | null = null;
 let current: Bot[] = [];
 const listeners = new Set<(bots: Bot[]) => void>();
 
@@ -34,6 +35,7 @@ export function subscribeBots(listener: (bots: Bot[]) => void): () => void {
 
 export async function startBots(trader: TradingAccount): Promise<void> {
   runtime?.stop();
+  owner = trader.address;
   const key = `opencash.bots.${trader.address.toLowerCase()}`;
   runtime = createBotRuntime({
     terminal,
@@ -55,8 +57,11 @@ export async function startBots(trader: TradingAccount): Promise<void> {
   runtime.start();
 }
 
+export const currentOwner = () => owner;
+
 export function stopBots(): void {
   runtime?.stop();
+  owner = null;
   runtime = null;
   notify([]);
 }

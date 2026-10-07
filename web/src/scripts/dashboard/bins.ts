@@ -1,9 +1,12 @@
-import { bins, sizeBinFor, terminal, type Bin, type EntryStep } from "../perpl";
+import { bins, cardFromBin, sizeBinFor, terminal, type Bin, type EntryStep } from "../perpl";
+import { setCard } from "./agent/card";
+import { addBotFromCard } from "./bots";
 import { errorText, legStackHtml, query, usd } from "./dom";
 import { initHome } from "./home";
 import { getMarketData, getPositions } from "./market";
-import { openModal } from "./modal";
+import { closeModal, openModal } from "./modal";
 import { requireTrader } from "./state";
+import { activateTab } from "./tabs";
 
 const stepLabels: Record<EntryStep, string> = {
   approve: "Approving AUSD…",
@@ -44,6 +47,10 @@ function openBinModal(bin: Bin) {
     </div>
     <button type="button" class="btn btn--primary" data-bin-size>Size this bin</button>
     <div data-bin-sizing></div>
+    <div class="btn-row">
+      <button type="button" class="btn" data-bin-agent>Edit in Agent</button>
+      <button type="button" class="btn" data-bin-bot>Run as guard bot</button>
+    </div>
     <p class="status-line" data-bin-status></p>
   `);
   const status = query("[data-bin-status]", detail);
@@ -54,6 +61,24 @@ function openBinModal(bin: Bin) {
     status.dataset.tone = "error";
     status.textContent = errorText(error);
   }
+
+  const binCard = () => cardFromBin(bin, Number(amountInput.value) > 0 ? Number(amountInput.value) : 100, 10);
+
+  query<HTMLButtonElement>("[data-bin-agent]", detail).addEventListener("click", () => {
+    closeModal();
+    activateTab("agent");
+    setCard(binCard());
+  });
+
+  query<HTMLButtonElement>("[data-bin-bot]", detail).addEventListener("click", async () => {
+    try {
+      await addBotFromCard(binCard(), "guard");
+      status.dataset.tone = "";
+      status.textContent = "Guard bot added under Your bots in the Agent tab. Press Start there.";
+    } catch (error) {
+      fail(error);
+    }
+  });
 
   query<HTMLButtonElement>("[data-bin-size]", detail).addEventListener("click", async () => {
     const amount = Number(amountInput.value);

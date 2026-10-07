@@ -1,5 +1,5 @@
 import type { Candle } from "../perpl/history.js";
-import { clampParams, templateById } from "./index.js";
+import { clampParams, templateById } from "./registry.js";
 import { simulate } from "./simulate.js";
 import type { Params, SimOptions, SimResult, TemplateId } from "./types.js";
 

@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Bot, BotMode } from "shared";
+import { PaperBots } from "../components/PaperBots";
+import { StrategyLab } from "../components/StrategyLab";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { draftBot, removeBot, setBotEnabled, subscribeBots, updateBotRules } from "../lib/bots";
 import { dark, family, space, touch, track } from "../theme";
@@ -51,8 +53,11 @@ export function Bots({ onSelectTab }: BotsProps) {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        <StrategyLab />
+        <PaperBots />
+
         <View style={styles.card}>
-          <Text style={styles.label}>NEW BOT</Text>
+          <Text style={styles.label}>ASK THE AGENT</Text>
           <Text style={styles.muted}>
             Bots run while the app is open and signed in. Every action is logged with its transaction.
           </Text>
