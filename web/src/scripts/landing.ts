@@ -214,10 +214,10 @@ tabs.forEach((tab,index) => {
 });
 let step = 0;
 const descriptions = [
-  'Start with USDG on Robinhood Chain.',
-  'A bin pools the framing into one position; each leg still prices on its own venue.',
-  'Every trade is a spot swap. Nothing is lent and no interest accrues.',
-  'The batch is ready. Your passkey signs it; OpenCash never holds withdrawal power.',
+  'Start with USDC on Hyperliquid.',
+  'A bin pools the narrative into one position; each leg still prices on its own market.',
+  'Set the size and leverage. The cap scales with your deposit.',
+  'The orders are ready. Your passkey signs them; OpenCash never holds withdrawal power.',
 ];
 const actions = ['Pick a bin','Set the size','Sign with your passkey','Start again'];
 function updateDemo() {

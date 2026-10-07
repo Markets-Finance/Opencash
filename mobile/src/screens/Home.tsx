@@ -1,21 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { bins, type BinPosition, type MarketChart, type TradingAccount } from "shared";
 import { AssetMark, LegStack } from "../components/AssetMark";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
-import {
-  fetchMarketCharts,
-  fetchPortfolioHistory,
-  snapshotPortfolio,
-  type PortfolioSnapshot,
-} from "../lib/backend";
+import { fetchMarketCharts, snapshotPortfolio } from "../lib/backend";
+import { coinLogoUrl, fallbackCoins, loadHlSummary, type HlSummary } from "../lib/hl";
 import { loadPositions, loadTokens, loadUsdgBalance } from "../lib/hood";
-import { family, space, track } from "../theme";
+import { dark, family, space, touch, track } from "../theme";
 
 const featuredSymbols = [...new Set(bins.flatMap((bin) => bin.legs.map((leg) => leg.symbol)))];
-
-type Range = "1d" | "7d" | "30d" | "all";
 
 type HomeProps = {
   trader: TradingAccount;
@@ -28,33 +22,26 @@ function usd(value: number): string {
 function pct(value: number): string {
   return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 }
-function filterByRange(history: PortfolioSnapshot[], range: Range): PortfolioSnapshot[] {
-  if (range === "all") return history;
-  const days = range === "1d" ? 1 : range === "7d" ? 7 : 30;
-  const cutoff = Date.now() - days * 86_400_000;
-  return history.filter((snapshot) => Date.parse(snapshot.createdAt) >= cutoff);
+function money(value: number): { whole: string; cents: string } {
+  const [whole, cents] = Math.abs(value)
+    .toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    .split(".");
+  return { whole: `${value < 0 ? "−" : ""}$${whole}`, cents: `.${cents}` };
 }
 
 export function Home({ trader, onSelectTab }: HomeProps) {
   const insets = useSafeAreaInsets();
   const [balance, setBalance] = useState<number | null>(null);
-  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+  const [hl, setHl] = useState<HlSummary | null>(null);
   const [positions, setPositions] = useState<BinPosition[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [charts, setCharts] = useState<Record<string, MarketChart> | null>(null);
-  const [history, setHistory] = useState<PortfolioSnapshot[] | null>(null);
-  const [range, setRange] = useState<Range>("1d");
 
-  function refreshBalance() {
+  useEffect(() => {
     loadUsdgBalance(trader.address)
-      .then((next) => {
-        setBalance(next);
-        setUpdatedAt(new Date().toLocaleTimeString());
-      })
+      .then(setBalance)
       .catch(() => setBalance(null));
-  }
-
-  useEffect(refreshBalance, [trader.address]);
+  }, [trader.address]);
 
   useEffect(() => {
     let live = true;
@@ -65,9 +52,9 @@ export function Home({ trader, onSelectTab }: HomeProps) {
     fetchMarketCharts(featuredSymbols)
       .then((next) => live && setCharts(next))
       .catch(() => {});
-    fetchPortfolioHistory(trader.address)
-      .then((next) => live && setHistory(next))
-      .catch(() => live && setHistory([]));
+    loadHlSummary(trader.address)
+      .then((next) => live && setHl(next))
+      .catch(() => live && setHl(null));
     return () => {
       live = false;
     };
@@ -79,19 +66,9 @@ export function Home({ trader, onSelectTab }: HomeProps) {
     void snapshotPortfolio({ owner: trader.address, usdgBalance: balance, positionsValue }).catch(() => {});
   }, [balance, positions, trader.address]);
 
-  const positionsValue = useMemo(
-    () => (positions ?? []).reduce((sum, p) => sum + p.valueUsdg, 0),
-    [positions],
-  );
-  const totalValue = (balance ?? 0) + positionsValue;
-
-  const filteredHistory = useMemo(() => filterByRange(history ?? [], range), [history, range]);
-  const rangeChange =
-    filteredHistory.length >= 2
-      ? ((filteredHistory[filteredHistory.length - 1].totalValue - filteredHistory[0].totalValue) /
-          (filteredHistory[0].totalValue || 1)) *
-        100
-      : null;
+  const total = money(hl?.total ?? 0);
+  const pnl = hl?.unrealizedPnl ?? 0;
+  const change = money(Math.abs(pnl));
 
   return (
     <View style={styles.screen}>
@@ -107,53 +84,40 @@ export function Home({ trader, onSelectTab }: HomeProps) {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.hero}>
-          <View style={styles.heroTopRow}>
-            <View style={styles.heroBadge}>
-              <Text style={styles.heroBadgeText}>Robinhood Chain</Text>
+        <View style={styles.wallet}>
+          <View style={styles.walletFace}>
+            <View style={[styles.dot, styles.dotTopLeft]} />
+            <View style={[styles.dot, styles.dotTopRight]} />
+            <View style={[styles.dot, styles.dotBottomLeft]} />
+            <View style={[styles.dot, styles.dotBottomRight]} />
+            <View style={styles.coinStack}>
+              {(hl?.coins ?? fallbackCoins).map((coin, index) => (
+                <CoinMark key={coin} coin={coin} first={index === 0} />
+              ))}
             </View>
-            <Pressable onPress={refreshBalance} hitSlop={10} style={styles.heroRefresh}>
-              <Text style={styles.heroRefreshText}>⟳</Text>
+            <Text style={styles.walletBalance} numberOfLines={1} adjustsFontSizeToFit>
+              {total.whole}
+              <Text style={styles.walletCents}>{total.cents}</Text>
+            </Text>
+            <Text style={styles.walletChange}>
+              {pnl >= 0 ? "+" : "−"} {change.whole}
+              {change.cents}
+            </Text>
+          </View>
+          <View style={styles.walletActions}>
+            <Pressable style={styles.walletAction} onPress={() => onSelectTab("trade")}>
+              <Text style={styles.walletIcon}>⟳</Text>
+              <Text style={styles.walletActionLabel}>Swap</Text>
+            </Pressable>
+            <View style={styles.walletDivider} />
+            <Pressable style={styles.walletAction} onPress={() => onSelectTab("trade")}>
+              <View style={styles.sendIcon}>
+                <Text style={styles.walletIcon}>↑</Text>
+                <View style={styles.sendBar} />
+              </View>
+              <Text style={styles.walletActionLabel}>Send</Text>
             </Pressable>
           </View>
-          <Text style={styles.heroLabel}>Portfolio Value</Text>
-          <Text style={styles.heroValue}>{usd(totalValue)}</Text>
-          <View style={styles.heroBottomRow}>
-            <View style={styles.heroChangeBlock}>
-              <Text style={styles.heroRangeLabel}>
-                {range === "1d" ? "Today" : range === "7d" ? "Past 7 days" : range === "30d" ? "Past 30 days" : "All time"} to date
-              </Text>
-              {rangeChange !== null ? (
-                <Text
-                  style={[
-                    styles.heroChangeValue,
-                    rangeChange >= 0 ? styles.heroChangeUp : styles.heroChangeDown,
-                  ]}
-                >
-                  {pct(rangeChange)}
-                </Text>
-              ) : (
-                <Text style={styles.heroChangeEmpty}>Building history…</Text>
-              )}
-            </View>
-            <View style={styles.heroChart}>
-              <Sparkline points={filteredHistory.map((s) => s.totalValue)} light compact />
-            </View>
-          </View>
-          <View style={styles.chipRow}>
-            {(["1d", "7d", "30d", "all"] as Range[]).map((key) => (
-              <Pressable
-                key={key}
-                onPress={() => setRange(key)}
-                style={[styles.heroChip, range === key && styles.heroChipActive]}
-              >
-                <Text style={[styles.heroChipLabel, range === key && styles.heroChipLabelActive]}>
-                  {key === "1d" ? "1D" : key === "7d" ? "7D" : key === "30d" ? "1M" : "All"}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-          <Text style={styles.heroUpdatedAt}>Balance updated {updatedAt ?? "—"}</Text>
         </View>
 
         <View style={styles.actionRow}>
@@ -220,7 +184,7 @@ export function Home({ trader, onSelectTab }: HomeProps) {
         {error !== null ? (
           <Text style={styles.error}>{error}</Text>
         ) : positions === null ? (
-          <ActivityIndicator color="#090909" />
+          <ActivityIndicator color={dark.ink} />
         ) : positions.length === 0 ? (
           <Text style={styles.empty}>No open positions yet. Open a bin to take a framing.</Text>
         ) : (
@@ -244,39 +208,23 @@ export function Home({ trader, onSelectTab }: HomeProps) {
   );
 }
 
-type SparklineProps = { points: number[]; light?: boolean; compact?: boolean };
+type CoinMarkProps = { coin: string; first: boolean };
 
-function Sparkline({ points, light, compact }: SparklineProps) {
-  if (points.length < 2) {
-    if (compact) return null;
-    return (
-      <Text style={[styles.chartEmpty, light && styles.chartEmptyLight]}>
-        Portfolio history builds up as you use the app — each visit adds a real data point.
-      </Text>
-    );
-  }
-  const min = Math.min(...points);
-  const max = Math.max(...points);
-  const range = max - min || 1;
-  const maxHeight = compact ? 44 : 92;
+function CoinMark({ coin, first }: CoinMarkProps) {
+  const [failed, setFailed] = useState(false);
   return (
-    <View style={[styles.sparkline, compact && styles.sparklineCompact]}>
-      {points.map((value, i) => (
-        <View
-          key={i}
-          style={[
-            styles.sparkBar,
-            light && styles.sparkBarLight,
-            { height: 4 + ((value - min) / range) * maxHeight },
-          ]}
-        />
-      ))}
+    <View style={[styles.coin, !first && styles.coinOverlap]}>
+      {failed ? (
+        <Text style={styles.coinLetter}>{coin.slice(0, 1)}</Text>
+      ) : (
+        <Image source={{ uri: coinLogoUrl(coin) }} style={styles.coinImage} onError={() => setFailed(true)} />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#ededed" },
+  screen: { flex: 1, backgroundColor: dark.paper },
   header: {
     paddingHorizontal: space.lg,
     flexDirection: "row",
@@ -287,120 +235,117 @@ const styles = StyleSheet.create({
     fontFamily: family.semibold,
     fontSize: 25,
     letterSpacing: track(25, -0.04),
-    color: "#0c0c0c",
+    color: dark.ink,
   },
   iconButton: { width: 54, height: 54, borderRadius: 27 },
   content: { padding: space.lg, gap: space.lg },
-  card: { padding: space.lg, borderRadius: 18, backgroundColor: "#fafafa", gap: space.sm },
-  muted: { fontFamily: family.regular, fontSize: 12, color: "#858589" },
+  card: { padding: space.lg, borderRadius: space.lg, backgroundColor: dark.surface, borderWidth: 1, borderColor: dark.surfaceLine, gap: space.sm },
+  muted: { fontFamily: family.regular, fontSize: 12, color: dark.muted },
 
-  hero: {
-    padding: space.lg,
-    borderRadius: 24,
-    backgroundColor: "#7165ed",
+  wallet: {
+    padding: space.md,
+    borderRadius: space.xl + space.md,
+    borderWidth: 1,
+    borderColor: dark.surfaceLine,
+    backgroundColor: dark.wallet,
   },
-  heroTopRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  heroBadge: {
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.16)",
+  walletFace: {
+    alignItems: "center",
+    paddingVertical: space.xxl,
+    paddingHorizontal: space.xl,
+    borderRadius: space.xl,
+    backgroundColor: dark.lime,
   },
-  heroBadgeText: { fontFamily: family.medium, fontSize: 11, color: "rgba(255,255,255,0.85)" },
-  heroRefresh: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "rgba(255,255,255,0.16)",
+  dot: {
+    position: "absolute",
+    width: space.sm,
+    height: space.sm,
+    borderRadius: space.xs,
+    backgroundColor: dark.wallet,
+  },
+  dotTopLeft: { top: space.xl, left: space.xl },
+  dotTopRight: { top: space.xl, right: space.xl },
+  dotBottomLeft: { bottom: space.xl, left: space.xl },
+  dotBottomRight: { bottom: space.xl, right: space.xl },
+  coinStack: { flexDirection: "row" },
+  coin: {
+    width: space.xxl,
+    height: space.xxl,
+    borderRadius: space.xxl / 2,
+    borderWidth: 2,
+    borderColor: dark.wallet,
+    backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
-  heroRefreshText: { fontSize: 16, color: "#fff" },
-  heroLabel: {
-    fontFamily: family.medium,
-    fontSize: 12,
-    color: "rgba(255,255,255,0.7)",
-    marginTop: space.lg,
-  },
-  heroValue: {
+  coinOverlap: { marginLeft: -space.xs },
+  coinImage: { width: "100%", height: "100%" },
+  coinLetter: { fontFamily: family.semibold, fontSize: 14, color: dark.wallet },
+  walletBalance: {
     fontFamily: family.semibold,
-    fontSize: 38,
-    letterSpacing: track(38, -0.03),
-    color: "#fff",
-    marginTop: 2,
-  },
-  heroBottomRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    marginTop: space.lg,
-  },
-  heroChangeBlock: { gap: 4 },
-  heroRangeLabel: { fontFamily: family.regular, fontSize: 11, color: "rgba(255,255,255,0.65)" },
-  heroChangeValue: { fontFamily: family.semibold, fontSize: 22, letterSpacing: track(22, -0.02) },
-  heroChangeUp: { color: "#baf7c9" },
-  heroChangeDown: { color: "#ffc2ba" },
-  heroChangeEmpty: { fontFamily: family.regular, fontSize: 13, color: "rgba(255,255,255,0.7)" },
-  heroChart: { width: 130 },
-  heroChip: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.14)",
-  },
-  heroChipActive: { backgroundColor: "#fff" },
-  heroChipLabel: { fontFamily: family.medium, fontSize: 11, color: "rgba(255,255,255,0.85)" },
-  heroChipLabelActive: { color: "#131315" },
-  heroUpdatedAt: {
-    fontFamily: family.regular,
-    fontSize: 10,
-    color: "rgba(255,255,255,0.5)",
+    fontSize: 56,
+    letterSpacing: track(56, -0.05),
+    color: dark.limeInk,
     marginTop: space.md,
   },
+  walletCents: { fontSize: 30, letterSpacing: track(30, -0.03) },
+  walletChange: {
+    fontFamily: family.medium,
+    fontSize: 22,
+    letterSpacing: track(22, -0.02),
+    color: dark.limeInk,
+    marginTop: space.sm,
+  },
+  walletActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: space.xxl,
+  },
+  walletAction: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: space.sm,
+  },
+  walletIcon: { fontSize: 24, lineHeight: 28, color: dark.onWallet },
+  sendIcon: { alignItems: "center" },
+  sendBar: { width: space.lg, height: 2, borderRadius: 1, backgroundColor: dark.onWallet },
+  walletActionLabel: { fontFamily: family.medium, fontSize: 24, color: dark.onWallet },
+  walletDivider: { width: 1, height: space.section, backgroundColor: dark.line },
 
   actionRow: { flexDirection: "row", gap: space.sm },
   actionButton: {
     flex: 1,
     paddingVertical: space.md,
     borderRadius: 14,
-    backgroundColor: "#ececec",
+    minHeight: touch,
+    justifyContent: "center",
+    backgroundColor: dark.surfaceHover,
     alignItems: "center",
   },
-  actionLabel: { fontFamily: family.medium, fontSize: 13, color: "#131315" },
+  actionLabel: { fontFamily: family.medium, fontSize: 13, color: dark.ink },
   sectionTitle: {
     fontFamily: family.medium,
     fontSize: 11,
     letterSpacing: track(11, 0.12),
-    color: "#858589",
+    color: dark.muted,
   },
   assetRow: { flexDirection: "row", alignItems: "center", gap: space.sm, paddingVertical: space.sm },
-  assetSymbol: { fontFamily: family.semibold, fontSize: 14, color: "#131315" },
+  assetSymbol: { fontFamily: family.semibold, fontSize: 14, color: dark.ink },
   spacer: { flex: 1 },
-  assetPrice: { fontFamily: family.medium, fontSize: 13, color: "#131315" },
+  assetPrice: { fontFamily: family.medium, fontSize: 13, color: dark.ink },
   assetChange: { fontFamily: family.regular, fontSize: 11, minWidth: 54, textAlign: "right" },
-  changeUp: { color: "#1f8a4c" },
-  changeDown: { color: "#c0392b" },
+  changeUp: { color: dark.green },
+  changeDown: { color: dark.red },
   tickerRow: { gap: space.md, paddingRight: space.lg },
-  tickerCard: { width: 140, padding: space.md, borderRadius: 14, backgroundColor: "#fafafa", gap: 4 },
+  tickerCard: { width: 140, padding: space.md, borderRadius: space.md, backgroundColor: dark.surface, borderWidth: 1, borderColor: dark.surfaceLine, gap: space.xs },
   tickerHead: { flexDirection: "row", alignItems: "center", gap: 6 },
-  tickerSymbol: { fontFamily: family.regular, fontSize: 11, color: "#858589" },
-  tickerPrice: { fontFamily: family.semibold, fontSize: 17, color: "#131315" },
+  tickerSymbol: { fontFamily: family.regular, fontSize: 11, color: dark.muted },
+  tickerPrice: { fontFamily: family.semibold, fontSize: 17, color: dark.ink },
   tickerChange: { fontFamily: family.regular, fontSize: 11 },
-  chipRow: { flexDirection: "row", gap: space.xs, marginTop: space.md },
-  sparkline: { flexDirection: "row", alignItems: "flex-end", gap: 3, height: 92, marginTop: space.md },
-  sparklineCompact: { height: 44, marginTop: 0 },
-  sparkBar: { flex: 1, backgroundColor: "#7165ed", borderRadius: 2, minHeight: 4 },
-  sparkBarLight: { backgroundColor: "rgba(255,255,255,0.85)" },
-  chartEmpty: {
-    fontFamily: family.regular,
-    fontSize: 12,
-    color: "#858589",
-    textAlign: "center",
-    marginTop: space.lg,
-    lineHeight: 12 * 1.6,
-  },
-  chartEmptyLight: { color: "rgba(255,255,255,0.7)" },
-  list: { borderRadius: 18, backgroundColor: "#fafafa", overflow: "hidden" },
+  list: { borderRadius: space.lg, backgroundColor: dark.surface, borderWidth: 1, borderColor: dark.surfaceLine, overflow: "hidden" },
   positionRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -409,6 +354,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.md,
   },
   positionIdentity: { flex: 1, gap: 2 },
-  empty: { fontFamily: family.regular, fontSize: 13, color: "#858589" },
-  error: { fontFamily: family.regular, fontSize: 13, color: "#a5382a" },
+  empty: { fontFamily: family.regular, fontSize: 13, color: dark.muted },
+  error: { fontFamily: family.regular, fontSize: 13, color: dark.red },
 });

@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Bin, BinSizingIssue, SizedBin, TradingAccount } from "shared";
 import { AssetMark, LegStack } from "../components/AssetMark";
 import { openBin, sizeBinFor, type EntryStep, type HoodData } from "../lib/hood";
-import { family, space, track } from "../theme";
+import { dark, family, space, track } from "../theme";
 
 type BinDetailProps = {
   bin: Bin;
@@ -113,7 +113,7 @@ export function BinDetail({ bin, data, balance, trader, onBack }: BinDetailProps
               onChangeText={setAmount}
               keyboardType="decimal-pad"
               placeholder="0"
-              placeholderTextColor="#b3b3b6"
+              placeholderTextColor={dark.muted}
               style={styles.amountInput}
             />
           </View>
@@ -165,7 +165,7 @@ export function BinDetail({ bin, data, balance, trader, onBack }: BinDetailProps
 
         <Text style={styles.footnote}>
           All legs swap together or none do. Price and slippage are quoted live
-          from Uniswap on Robinhood Chain.
+          from the Hyperliquid order book.
         </Text>
       </ScrollView>
 
@@ -184,7 +184,7 @@ export function BinDetail({ bin, data, balance, trader, onBack }: BinDetailProps
           ]}
         >
           {busy ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={dark.onAccent} />
           ) : (
             <Text
               style={[
@@ -202,7 +202,7 @@ export function BinDetail({ bin, data, balance, trader, onBack }: BinDetailProps
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#ededed" },
+  screen: { flex: 1, backgroundColor: dark.paper },
   header: {
     paddingHorizontal: space.lg,
     flexDirection: "row",
@@ -213,17 +213,17 @@ const styles = StyleSheet.create({
     fontFamily: family.semibold,
     fontSize: 19,
     letterSpacing: track(19, -0.03),
-    color: "#0c0c0c",
+    color: dark.ink,
   },
   iconButton: {
     width: 54,
     height: 54,
     borderRadius: 27,
-    backgroundColor: "#f8f8f8",
+    backgroundColor: dark.surface,
     alignItems: "center",
     justifyContent: "center",
   },
-  back: { fontFamily: family.regular, fontSize: 22, color: "#55555a" },
+  back: { fontFamily: family.regular, fontSize: 22, color: dark.muted },
   content: { padding: space.lg, gap: space.lg },
   identityRow: { flexDirection: "row", alignItems: "center", gap: space.md },
   thesis: {
@@ -231,28 +231,28 @@ const styles = StyleSheet.create({
     fontFamily: family.regular,
     fontSize: 13,
     lineHeight: 13 * 1.6,
-    color: "#77777a",
+    color: dark.muted,
   },
   amountCard: {
     padding: space.lg,
     borderRadius: 18,
-    backgroundColor: "#fafafa",
+    backgroundColor: dark.surface,
     gap: space.sm,
   },
   fieldLabel: {
     fontFamily: family.medium,
     fontSize: 11,
     letterSpacing: track(11, 0.12),
-    color: "#858589",
+    color: dark.muted,
   },
   amountRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  currency: { fontFamily: family.light, fontSize: 32, color: "#131315" },
+  currency: { fontFamily: family.light, fontSize: 32, color: dark.ink },
   amountInput: {
     flex: 1,
     fontFamily: family.light,
     fontSize: 40,
     letterSpacing: track(40, -0.04),
-    color: "#131315",
+    color: dark.ink,
     padding: 0,
   },
   presets: { flexDirection: "row", gap: space.sm },
@@ -260,36 +260,36 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingVertical: space.sm,
     paddingHorizontal: space.md,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: dark.surfaceHover,
   },
-  chipPressed: { backgroundColor: "#e4e4e4" },
-  chipLabel: { fontFamily: family.medium, fontSize: 13, color: "#131315" },
-  balance: { fontFamily: family.regular, fontSize: 12, color: "#858589" },
+  chipPressed: { backgroundColor: dark.surfaceLine },
+  chipLabel: { fontFamily: family.medium, fontSize: 13, color: dark.ink },
+  balance: { fontFamily: family.regular, fontSize: 12, color: dark.muted },
   legsCard: {
     padding: space.lg,
     borderRadius: 18,
-    backgroundColor: "#fafafa",
+    backgroundColor: dark.surface,
     gap: space.md,
   },
   legRow: { flexDirection: "row", alignItems: "center", gap: space.md },
   legIdentity: { flex: 1, minWidth: 0 },
-  legSymbol: { fontFamily: family.semibold, fontSize: 14, color: "#131315" },
-  legStat: { fontFamily: family.regular, fontSize: 11, color: "#858589" },
-  legPrice: { fontFamily: family.medium, fontSize: 13, color: "#131315" },
-  warnCard: { padding: space.md, borderRadius: 14, backgroundColor: "#fdeceb" },
+  legSymbol: { fontFamily: family.semibold, fontSize: 14, color: dark.ink },
+  legStat: { fontFamily: family.regular, fontSize: 11, color: dark.muted },
+  legPrice: { fontFamily: family.medium, fontSize: 13, color: dark.ink },
+  warnCard: { padding: space.md, borderRadius: 14, backgroundColor: dark.redSoft },
   warnText: {
     fontFamily: family.regular,
     fontSize: 12,
     lineHeight: 12 * 1.6,
-    color: "#a5382a",
+    color: dark.red,
   },
-  status: { fontFamily: family.regular, fontSize: 13, color: "#4e4e51" },
-  statusFailed: { color: "#a5382a" },
+  status: { fontFamily: family.regular, fontSize: 13, color: dark.ink },
+  statusFailed: { color: dark.red },
   footnote: {
     fontFamily: family.regular,
     fontSize: 11,
     lineHeight: 11 * 1.6,
-    color: "#9a9a9d",
+    color: dark.muted,
   },
   footer: {
     position: "absolute",
@@ -298,26 +298,26 @@ const styles = StyleSheet.create({
     bottom: 0,
     paddingHorizontal: space.xl,
     paddingTop: space.md,
-    backgroundColor: "rgba(237,237,237,0.96)",
+    backgroundColor: dark.paper,
     gap: space.sm,
   },
   totals: { flexDirection: "row", alignItems: "baseline" },
-  totalLabel: { flex: 1, fontFamily: family.regular, fontSize: 13, color: "#77777a" },
+  totalLabel: { flex: 1, fontFamily: family.regular, fontSize: 13, color: dark.muted },
   totalValue: {
     fontFamily: family.semibold,
     fontSize: 20,
     letterSpacing: track(20, -0.03),
-    color: "#0c0c0c",
+    color: dark.ink,
   },
   primaryButton: {
     minHeight: 64,
     borderRadius: 33,
-    backgroundColor: "#050505",
+    backgroundColor: dark.accent,
     alignItems: "center",
     justifyContent: "center",
   },
-  primaryButtonDisabled: { backgroundColor: "#dcdcdc" },
+  primaryButtonDisabled: { backgroundColor: dark.surfaceHover },
   primaryButtonPressed: { opacity: 0.85 },
-  primaryLabel: { fontFamily: family.medium, fontSize: 16, color: "#fff" },
-  primaryLabelDisabled: { color: "#8a8a8d" },
+  primaryLabel: { fontFamily: family.medium, fontSize: 16, color: dark.onAccent },
+  primaryLabelDisabled: { color: dark.muted },
 });

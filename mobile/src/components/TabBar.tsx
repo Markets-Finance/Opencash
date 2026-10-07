@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Diamond } from "./Diamond";
-import { color, family, space, track } from "../theme";
+import { dark, family, space, touch, track } from "../theme";
 
 export type TabKey = "home" | "bins" | "trade" | "account";
 
@@ -32,7 +32,7 @@ export function TabBar({ active, onSelect }: TabBarProps) {
             accessibilityState={{ selected }}
             style={({ pressed }) => [styles.tab, pressed && styles.pressed]}
           >
-            <Diamond size={5} fill={selected ? color.purple : color.node} />
+            <Diamond size={5} fill={selected ? dark.accent : dark.line} />
             <Text style={[styles.label, selected && styles.labelActive]}>
               {tab.label}
             </Text>
@@ -52,18 +52,18 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     flexDirection: "row",
-    paddingTop: space.md,
-    backgroundColor: color.paper,
+    paddingTop: space.sm,
+    backgroundColor: dark.paper,
     borderTopWidth: 1,
-    borderTopColor: color.line,
+    borderTopColor: dark.surfaceLine,
   },
-  tab: { flex: 1, alignItems: "center", gap: space.xs },
+  tab: { flex: 1, minHeight: touch, alignItems: "center", justifyContent: "center", gap: space.xs },
   pressed: { opacity: 0.6 },
   label: {
     fontFamily: family.regular,
     fontSize: 11,
     letterSpacing: track(11, 0.06),
-    color: "#8a8884",
+    color: dark.muted,
   },
-  labelActive: { fontFamily: family.medium, color: color.purpleLabel },
+  labelActive: { fontFamily: family.medium, color: dark.ink },
 });

@@ -4,6 +4,7 @@
   "main": "index.ts",
   "dependencies": {
     "@category-labs/mera": "0.2.0",
+    "@expo-google-fonts/dela-gothic-one": "^0.4.1",
     "@expo-google-fonts/dm-sans": "^0.4.2",
     "@react-native-async-storage/async-storage": "^3.1.1",
     "@scure/bip32": "^2.4.0",

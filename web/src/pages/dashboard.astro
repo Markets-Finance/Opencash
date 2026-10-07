@@ -3,6 +3,7 @@ import { isDevAuth } from "shared";
 import AccountCard from "../components/AccountCard.astro";
 import Mark from "../components/Mark.astro";
 import "../styles/landing.css";
+import "../styles/system.css";
 ---
 
 <html lang="en">
@@ -44,7 +45,7 @@ import "../styles/landing.css";
       <p class="gate__status" data-gate-status role="status"></p>
     </div>
 
-    <div class="dash" data-dash hidden>
+    <div class="dash" data-dash data-tab="home" hidden>
       <header class="dash__topbar">
         <a class="wordmark" href="/"><Mark />open<span>cash</span></a>
         <nav class="dash__tabs" data-tabs role="tablist" aria-label="Dashboard sections">
@@ -62,9 +63,22 @@ import "../styles/landing.css";
             data-global-search
             autocomplete="off"
           />
-          <button type="button" class="dash__address-chip" data-topbar-address>
-            <span data-topbar-address-text>—</span>
-          </button>
+          <div class="dash__account-menu" data-account-menu>
+            <button
+              type="button"
+              class="dash__address-chip"
+              data-topbar-address
+              aria-haspopup="menu"
+              aria-expanded="false"
+            >
+              <span data-topbar-address-text>—</span>
+            </button>
+            <div class="dash__menu" role="menu" data-account-menu-list hidden>
+              <button type="button" class="dash__menu-item" role="menuitem" data-disconnect>
+                Disconnect
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -75,7 +89,7 @@ import "../styles/landing.css";
               <div class="card card--balance">
                 <div class="balance-head">
                   <span class="card__label">My Balance</span>
-                  <span class="chain-badge">Robinhood Chain</span>
+                  <span class="chain-badge">Hyperliquid Testnet</span>
                 </div>
                 <span class="stat-card__value stat-card__value--lg" data-home-balance>—</span>
                 <div class="balance-meta">
@@ -129,52 +143,95 @@ import "../styles/landing.css";
         </section>
 
         <section class="panel" data-panel="trade" hidden>
-          <div data-trade-list-view>
-            <div class="toolbar">
-              <input
-                type="search"
-                class="search-input"
-                placeholder="Search symbol or name"
-                data-trade-search
-                autocomplete="off"
-              />
-              <div class="chip-row" data-trade-category>
-                <button type="button" class="chip chip--active" data-category="all">All</button>
-                <button type="button" class="chip" data-category="held">Held</button>
-              </div>
-            </div>
-            <div data-trade-list class="table-wrap table-wrap--loading">Loading…</div>
-          </div>
-
-          <div data-asset-view hidden>
-            <button type="button" class="link-btn" data-asset-back>← Back to search</button>
-            <div class="asset-layout">
-              <div class="asset-main">
-                <div class="asset-header" data-asset-header></div>
-                <div class="asset-price-row">
-                  <span class="asset-price-value" data-asset-price>—</span>
-                  <span class="asset-price-change" data-asset-change></span>
-                </div>
-                <div class="chip-row" data-asset-range>
-                  <button type="button" class="chip chip--active" data-range="5d">5D</button>
-                  <button type="button" class="chip" data-range="1mo">1M</button>
-                  <button type="button" class="chip" data-range="3mo">3M</button>
-                  <button type="button" class="chip" data-range="1y">1Y</button>
-                </div>
-                <div class="chart-area" data-asset-chart></div>
-                <div class="asset-stats-row" data-asset-stats></div>
-              </div>
-              <div class="asset-side">
-                <div class="card card--trade-panel">
-                  <p class="quote-line" data-asset-holding></p>
-                  <div class="mode-row">
-                    <button type="button" class="chip chip--active" data-mode="buy">Buy</button>
-                    <button type="button" class="chip" data-mode="sell">Sell</button>
+          <div class="hl-trade">
+            <div class="home-grid">
+              <div class="home-left">
+                <div class="card card--balance">
+                  <div class="balance-head">
+                    <span class="card__label">My Balance</span>
+                    <span class="chain-badge">Hyperliquid Testnet</span>
                   </div>
-                  <div data-asset-mode-body></div>
-                  <p class="status-line" data-asset-status></p>
+                  <span class="stat-card__value stat-card__value--lg hl-mono" data-hl-balance>—</span>
+                  <div class="balance-meta">
+                    <span class="hl-mono" data-hl-updated>—</span>
+                    <button type="button" class="link-btn" data-hl-refresh>⟳ Refresh</button>
+                  </div>
+                  <div class="action-grid">
+                    <button type="button" class="action-btn" data-hl-action="deposit" disabled>Deposit</button>
+                    <button type="button" class="action-btn" data-hl-action="withdraw">Withdraw</button>
+                    <button type="button" class="action-btn" data-hl-action="swap">Swap</button>
+                    <button type="button" class="action-btn" data-hl-action="transfer">Transfer</button>
+                  </div>
+                  <p class="hl-note" data-hl-wallet-note></p>
+                </div>
+
+                <div class="card">
+                  <div class="section-row"><span class="panel__label">Top Assets</span></div>
+                  <div data-hl-assets class="asset-list asset-list--loading">Loading…</div>
                 </div>
               </div>
+
+              <div class="home-right">
+                <div class="ticker-row ticker-row--loading" data-hl-ticker>Loading…</div>
+
+                <div class="card card--chart">
+                  <div class="section-row">
+                    <div>
+                      <span class="card__label" data-hl-chart-label>—</span>
+                      <div class="chart-value-row">
+                        <span class="stat-card__value hl-mono" data-hl-chart-value>—</span>
+                        <span class="chart-change" data-hl-chart-change></span>
+                      </div>
+                    </div>
+                    <div class="chip-row" data-hl-range>
+                      <button type="button" class="chip" data-range="1h">1H</button>
+                      <button type="button" class="chip" data-range="4h">4H</button>
+                      <button type="button" class="chip chip--active" data-range="1d">1D</button>
+                      <button type="button" class="chip" data-range="1w">1W</button>
+                      <button type="button" class="chip" data-range="1m">1M</button>
+                    </div>
+                  </div>
+                  <div class="chart-area hl-chart" data-hl-chart></div>
+                  <div class="hl-axis" data-hl-axis></div>
+                </div>
+
+                <div class="hl-desk">
+                  <div class="card">
+                    <div class="section-row">
+                      <div class="chip-row" data-hl-desk-tabs>
+                        <button type="button" class="chip chip--active" data-desk="positions">Positions</button>
+                        <button type="button" class="chip" data-desk="orders">Open Orders</button>
+                        <button type="button" class="chip" data-desk="fills">Fills</button>
+                      </div>
+                    </div>
+                    <div data-hl-desk class="table-wrap table-wrap--loading">Loading…</div>
+                    <p class="status-line" data-hl-desk-status></p>
+                  </div>
+                </div>
+              </div>
+
+              <aside class="hl-ticket-bar">
+                <div class="card hl-ticket" data-hl-ticket>
+                  <span class="card__label" data-hl-ticket-title>Order</span>
+                  <div class="mode-row">
+                    <button type="button" class="chip chip--active" data-side="buy">Buy / Long</button>
+                    <button type="button" class="chip" data-side="sell">Sell / Short</button>
+                  </div>
+                  <label class="field"><span>Limit price</span><input type="number" min="0" step="any" data-ticket-price /></label>
+                  <label class="field"><span>Notional (USD)</span><input type="number" min="10" step="any" value="10.2" data-ticket-notional /></label>
+                  <div class="hl-ticket__row" data-ticket-perp>
+                    <label class="field"><span>Leverage</span><input type="number" min="1" step="1" value="5" data-ticket-leverage /></label>
+                    <label class="field"><span>Margin</span><select data-ticket-margin><option value="cross">Cross</option><option value="isolated">Isolated</option></select></label>
+                  </div>
+                  <div class="hl-ticket__row">
+                    <label class="field"><span>Time in force</span><select data-ticket-tif><option value="Alo">Post-only</option><option value="Gtc">Gtc</option><option value="Ioc">Ioc</option></select></label>
+                    <label class="hl-check"><input type="checkbox" data-ticket-reduce /> Reduce-only</label>
+                  </div>
+                  <p class="quote-line" data-ticket-size></p>
+                  <button type="button" class="btn btn--primary" data-ticket-submit>Place order</button>
+                  <p class="status-line" data-ticket-status></p>
+                </div>
+              </aside>
             </div>
           </div>
         </section>
@@ -220,10 +277,7 @@ import "../styles/landing.css";
         --radius-sm: 12px;
         --radius-md: 16px;
         --radius-lg: 20px;
-        --content-max: 1320px;
-        --surface: #f0efe9;
-        --surface-hover: #e8e6df;
-        --surface-line: #e2e0d9;
+        --content-max: none;
       }
 
       .gate {
@@ -238,7 +292,7 @@ import "../styles/landing.css";
       .gate__dev {
         padding: var(--sp-sm) var(--sp-md);
         border-radius: 4px;
-        background: var(--purple);
+        background: var(--accent);
         color: #fff;
         font-size: 11px;
         letter-spacing: 0.08em;
@@ -262,7 +316,7 @@ import "../styles/landing.css";
       .gate__lede {
         max-width: 46ch;
         font-size: 14px;
-        color: #5c5c5f;
+        color: var(--muted);
       }
       .gate__actions {
         display: flex;
@@ -283,10 +337,10 @@ import "../styles/landing.css";
       .gate__status {
         min-height: 20px;
         font-size: 13px;
-        color: #5c5c5f;
+        color: var(--muted);
       }
       .gate__status[data-tone="error"] {
-        color: #b4443a;
+        color: var(--down);
       }
 
       .btn {
@@ -305,12 +359,12 @@ import "../styles/landing.css";
         border-color: var(--ink);
       }
       .btn--primary {
-        border-color: var(--purple);
-        background: var(--purple);
-        color: var(--paper);
+        border-color: var(--accent);
+        background: var(--accent);
+        color: var(--on-accent);
       }
       .btn--primary:hover {
-        background: #5f52e4;
+        background: var(--accent);
       }
       .btn--primary:disabled {
         opacity: 0.5;
@@ -336,7 +390,7 @@ import "../styles/landing.css";
         font-size: 10px;
         letter-spacing: 0.14em;
         text-transform: uppercase;
-        color: #5c5c5f;
+        color: var(--muted);
       }
       .field input,
       .field textarea {
@@ -352,12 +406,13 @@ import "../styles/landing.css";
       }
       .field input:focus-visible,
       .field textarea:focus-visible {
-        outline: 2px solid var(--purple);
+        outline: 2px solid var(--accent);
         outline-offset: 2px;
       }
 
       /* ---- Shell ---- */
       .dash {
+        --gutter: var(--sp-lg);
         min-height: 100vh;
       }
       .dash__topbar {
@@ -397,7 +452,7 @@ import "../styles/landing.css";
         font: inherit;
         font-size: 14px;
         font-weight: 500;
-        color: #5c5c5f;
+        color: var(--muted);
         padding: 6px 2px;
         border-bottom: 2px solid transparent;
         cursor: pointer;
@@ -408,7 +463,7 @@ import "../styles/landing.css";
       }
       .dash__tabs button[aria-selected="true"] {
         color: var(--ink);
-        border-bottom-color: var(--purple);
+        border-bottom-color: var(--accent);
       }
       .dash__topbar-spacer {
         flex: 1;
@@ -430,7 +485,7 @@ import "../styles/landing.css";
       }
       .dash__address-chip {
         border: 0;
-        background: #ece9e3;
+        background: var(--surface-hover);
         color: var(--ink);
         font-size: 12px;
         font-weight: 500;
@@ -440,7 +495,41 @@ import "../styles/landing.css";
         white-space: nowrap;
       }
       .dash__address-chip:hover {
-        background: #e0ddd5;
+        background: var(--surface-line);
+      }
+      .dash__account-menu {
+        position: relative;
+      }
+      .dash__menu {
+        position: absolute;
+        top: calc(100% + var(--sp-xs));
+        right: 0;
+        z-index: 20;
+        min-width: 160px;
+        padding: var(--sp-xs);
+        border: 1px solid var(--surface-line);
+        border-radius: var(--radius-sm);
+        background: var(--paper);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+      }
+      .dash__menu[hidden] {
+        display: none;
+      }
+      .dash__menu-item {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        color: var(--ink);
+        font: inherit;
+        font-size: 13px;
+        text-align: left;
+        padding: var(--sp-sm);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+      }
+      .dash__menu-item:hover,
+      .dash__menu-item:focus-visible {
+        background: var(--surface-hover);
       }
       .dash__content {
         max-width: var(--content-max);
@@ -451,14 +540,14 @@ import "../styles/landing.css";
         font-size: 11px;
         letter-spacing: 0.12em;
         text-transform: uppercase;
-        color: #858589;
+        color: var(--muted);
         margin: var(--sp-2xl) 0 var(--sp-md);
       }
       .panel__label {
         font-size: 11px;
         letter-spacing: 0.12em;
         text-transform: uppercase;
-        color: #858589;
+        color: var(--muted);
       }
       .section-row {
         display: flex;
@@ -494,8 +583,8 @@ import "../styles/landing.css";
         font-size: 11px;
         padding: 4px 10px;
         border-radius: 999px;
-        background: #ece9e3;
-        color: #5c5c5f;
+        background: var(--surface-hover);
+        color: var(--muted);
       }
       .stat-card__value--lg {
         font-size: 38px;
@@ -507,7 +596,7 @@ import "../styles/landing.css";
         align-items: center;
         justify-content: space-between;
         font-size: 12px;
-        color: #858589;
+        color: var(--muted);
         margin-bottom: var(--sp-xs);
       }
       .action-grid {
@@ -519,7 +608,7 @@ import "../styles/landing.css";
       .action-btn {
         padding: 12px 8px;
         border-radius: var(--radius-sm);
-        background: #ece9e3;
+        background: var(--surface-hover);
         border: 0;
         font: inherit;
         font-size: 13px;
@@ -529,7 +618,7 @@ import "../styles/landing.css";
         text-align: center;
       }
       .action-btn:hover {
-        background: #e0ddd5;
+        background: var(--surface-line);
       }
 
       .asset-list {
@@ -538,7 +627,7 @@ import "../styles/landing.css";
       }
       .asset-list--loading {
         font-size: 13px;
-        color: #858589;
+        color: var(--muted);
       }
       .asset-row {
         display: flex;
@@ -567,10 +656,10 @@ import "../styles/landing.css";
         min-width: 56px;
       }
       .change-up {
-        color: #1f8a4c;
+        color: var(--up);
       }
       .change-down {
-        color: #c0392b;
+        color: var(--down);
       }
 
       .ticker-row {
@@ -582,7 +671,7 @@ import "../styles/landing.css";
         display: block;
         padding: var(--sp-lg);
         font-size: 13px;
-        color: #858589;
+        color: var(--muted);
         background: var(--surface);
         border-radius: var(--radius-md);
       }
@@ -604,7 +693,7 @@ import "../styles/landing.css";
       }
       .ticker-card__symbol {
         font-size: 12px;
-        color: #858589;
+        color: var(--muted);
       }
       .ticker-card__price {
         font-size: 20px;
@@ -640,78 +729,267 @@ import "../styles/landing.css";
         align-items: center;
         justify-content: center;
         height: 220px;
-        color: #858589;
+        color: var(--muted);
         font-size: 13px;
         text-align: center;
         padding: 0 var(--sp-xl);
       }
 
-      /* ---- Single-asset trading view (Trade tab) ---- */
-      .asset-layout {
-        display: grid;
-        grid-template-columns: 1fr 320px;
-        gap: var(--sp-xl);
-        align-items: start;
-        margin-top: var(--sp-md);
-      }
-      .asset-header {
-        margin-bottom: var(--sp-md);
-      }
-      .asset-header .modal__identity .row-mark {
-        width: 40px;
-        height: 40px;
-        border-radius: 12px;
-        font-size: 16px;
-      }
-      .asset-price-row {
-        display: flex;
-        align-items: baseline;
-        gap: var(--sp-sm);
-        margin-bottom: var(--sp-md);
-      }
-      .asset-price-value {
-        font-size: 38px;
-        font-weight: 500;
-        letter-spacing: -0.03em;
-      }
-      .asset-price-change {
-        font-size: 15px;
-        font-weight: 500;
-      }
-      .asset-stats-row {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: var(--sp-md);
-        margin-top: var(--sp-lg);
-      }
-      .asset-side {
-        display: flex;
-        flex-direction: column;
-        gap: var(--sp-md);
-      }
-      .card--trade-panel {
-        position: sticky;
-        top: 100px;
-      }
-
-      .stat-card {
-        border-radius: var(--radius-md);
-        background: var(--surface);
-        padding: var(--sp-lg);
-        display: flex;
-        flex-direction: column;
-        gap: var(--sp-xs);
-      }
-      .stat-card__label {
-        font-size: 11px;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: #858589;
-      }
       .stat-card__value {
         font-size: 32px;
         font-weight: 500;
         letter-spacing: -0.03em;
+      }
+
+      /* ---- Dark theme ---- */
+      .dash,
+      .modal {
+        background: var(--paper);
+        color: var(--ink);
+      }
+      .dash .dash__topbar {
+        background: rgba(11, 15, 14, 0.92);
+      }
+      .dash .dash__topbar .wordmark,
+      .dash .dash__tabs button {
+        color: #9aa39f;
+      }
+      .dash .dash__tabs button[aria-selected="true"],
+      .dash .dash__tabs button:hover {
+        color: var(--ink);
+      }
+      .dash .dash__search {
+        color: var(--ink);
+      }
+      .dash .dash__address-chip {
+        background: var(--surface-hover);
+        color: var(--ink);
+      }
+      .dash .dash__address-chip:hover {
+        background: var(--surface-line);
+      }
+      .hl-trade {
+        color: var(--ink);
+      }
+      :is(.dash, .modal) .card {
+        border: 1px solid var(--surface-line);
+      }
+      :is(.dash, .modal) .card--balance {
+        background: var(--lime);
+        color: var(--lime-ink);
+        border-color: var(--wallet);
+      }
+      .card--balance :is(.card__label, .balance-meta, .link-btn) {
+        color: var(--lime-ink);
+      }
+      :is(.dash, .modal) .card--balance :is(.chain-badge, .action-btn) {
+        background: var(--wallet);
+        color: var(--on-wallet);
+      }
+      :is(.dash, .modal) .card--balance .action-btn:hover:not(:disabled) {
+        background: var(--lime-ink);
+      }
+      :is(.dash, .modal) .card + .card {
+        margin-top: 0;
+      }
+      :is(.dash, .modal) .chain-badge,
+      :is(.dash, .modal) .action-btn,
+      :is(.dash, .modal) .chip {
+        background: var(--surface-hover);
+        color: var(--ink);
+      }
+      :is(.dash, .modal) .action-btn:hover:not(:disabled),
+      :is(.dash, .modal) .chip:hover {
+        background: var(--surface-line);
+      }
+      :is(.dash, .modal) .chip--active,
+      :is(.dash, .modal) .chip--active:hover {
+        background: var(--line);
+      }
+      .dash button:disabled,
+      .dash input:disabled,
+      .dash select:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      :is(.dash, .modal) .row-mark {
+        background: var(--surface-line);
+      }
+      :is(.dash, .modal) .row-mark--logo {
+        background: #fff;
+      }
+      :is(.dash, .modal) .change-up {
+        color: var(--hl-green);
+      }
+      :is(.dash, .modal) .change-down {
+        color: var(--hl-red);
+      }
+      :is(.dash, .modal) .link-btn {
+        border: 0;
+        background: none;
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+      :is(.dash, .modal) .field input,
+      :is(.dash, .modal) .field select {
+        height: var(--sp-2xl);
+      }
+      :is(.dash, .modal) .field select {
+        padding: 0 14px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--paper);
+        font: inherit;
+        font-size: 14px;
+        color: var(--ink);
+        width: 100%;
+      }
+      :is(.dash, .modal) .table-wrap {
+        overflow-x: auto;
+      }
+      :is(.dash, .modal) .data-table tbody tr {
+        cursor: default;
+      }
+      :is(.dash, .modal) .data-table tbody td {
+        white-space: nowrap;
+      }
+      .hl-mono {
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        letter-spacing: -0.02em;
+      }
+      .hl-note {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: var(--sp-xs);
+      }
+      .hl-asset {
+        width: 100%;
+        border: 0;
+        background: none;
+        font: inherit;
+        color: inherit;
+        text-align: left;
+        cursor: pointer;
+        padding: var(--sp-sm);
+        border-radius: var(--radius-sm);
+      }
+      .hl-asset:hover,
+      .hl-asset--active {
+        background: var(--surface-hover);
+      }
+      .hl-asset__detail {
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 11px;
+        font-weight: 400;
+        color: var(--muted);
+      }
+      :is(.dash, .modal) .ticker-card {
+        border: 1px solid var(--surface-line);
+        font: inherit;
+        color: inherit;
+        text-align: left;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+      }
+      :is(.dash, .modal) .ticker-card--active {
+        border-color: var(--hl-green);
+      }
+      .hl-chart {
+        position: relative;
+        height: 260px;
+        cursor: crosshair;
+      }
+      .hl-chart__dot {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 2px solid var(--hl-green);
+        background: var(--paper);
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+      }
+      .hl-chart__tip {
+        position: absolute;
+        top: var(--sp-sm);
+        padding: var(--sp-xs) var(--sp-sm);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        background: var(--surface-hover);
+        font-size: 12px;
+        white-space: nowrap;
+        transform: translateX(-50%);
+        pointer-events: none;
+      }
+      .hl-axis {
+        display: flex;
+        justify-content: space-between;
+        margin-top: var(--sp-sm);
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .hl-trade .home-grid {
+        grid-template-columns: 300px minmax(0, 1fr) 320px;
+      }
+      .hl-ticket-bar {
+        position: sticky;
+        top: calc(70px + var(--sp-lg));
+      }
+      @media (max-width: 1280px) {
+        .hl-trade .home-grid {
+          grid-template-columns: 300px minmax(0, 1fr);
+        }
+        .hl-ticket-bar {
+          grid-column: 2;
+          position: static;
+        }
+      }
+      .hl-desk {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--sp-lg);
+        align-items: start;
+      }
+      .hl-desk > .card {
+        min-width: 0;
+      }
+      .hl-ticket {
+        display: flex;
+        flex-direction: column;
+        gap: var(--sp-sm);
+      }
+      .hl-ticket .mode-row {
+        margin: var(--sp-xs) 0 0;
+      }
+      .hl-ticket__row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--sp-sm);
+        align-items: end;
+      }
+      .hl-ticket__row[hidden] {
+        display: none;
+      }
+      .hl-check {
+        display: flex;
+        align-items: center;
+        gap: var(--sp-xs);
+        padding-bottom: var(--sp-sm);
+        font-size: 13px;
+      }
+      .hl-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--sp-xs);
+      }
+      .hl-trade .hl-actions .chip {
+        padding: var(--sp-xs) var(--sp-sm);
+        font-size: 12px;
       }
 
       /* ---- Generic cards ---- */
@@ -731,7 +1009,7 @@ import "../styles/landing.css";
       .card__body {
         font-size: 13px;
         line-height: 1.6;
-        color: #6a686b;
+        color: var(--muted);
         margin-top: var(--sp-xs);
       }
 
@@ -748,7 +1026,7 @@ import "../styles/landing.css";
       .table-wrap--loading {
         padding: var(--sp-xl);
         font-size: 13px;
-        color: #858589;
+        color: var(--muted);
         background: var(--surface);
         border-radius: var(--radius-md);
       }
@@ -766,7 +1044,7 @@ import "../styles/landing.css";
         gap: var(--sp-sm);
       }
       .tile-card:hover {
-        outline: 2px solid var(--purple);
+        outline: 2px solid var(--accent);
         outline-offset: -2px;
       }
       .tile-card__name {
@@ -780,7 +1058,7 @@ import "../styles/landing.css";
       }
       .tile-card__thesis {
         font-size: 12px;
-        color: #6a686b;
+        color: var(--muted);
         line-height: 1.5;
       }
       .tile-card__legs {
@@ -793,25 +1071,10 @@ import "../styles/landing.css";
         display: flex;
         justify-content: space-between;
         font-size: 12px;
-        color: #79797d;
+        color: var(--muted);
       }
 
-      /* ---- Table (Trade) ---- */
-      .toolbar {
-        display: flex;
-        align-items: center;
-        gap: var(--sp-md);
-        margin-bottom: var(--sp-lg);
-      }
-      .search-input {
-        flex: 1;
-        padding: 12px var(--sp-md);
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        background: var(--paper);
-        font: inherit;
-        font-size: 14px;
-      }
+      /* ---- Table ---- */
       .table-wrap {
         border-radius: var(--radius-md);
         background: var(--surface);
@@ -826,7 +1089,7 @@ import "../styles/landing.css";
         font-size: 11px;
         letter-spacing: 0.1em;
         text-transform: uppercase;
-        color: #858589;
+        color: var(--muted);
         padding: var(--sp-md) var(--sp-lg);
         border-bottom: 1px solid var(--line);
       }
@@ -851,7 +1114,7 @@ import "../styles/landing.css";
         font-weight: 600;
       }
       .cell-muted {
-        color: #858589;
+        color: var(--muted);
       }
       .cell-value {
         text-align: right;
@@ -863,7 +1126,7 @@ import "../styles/landing.css";
         width: 32px;
         height: 32px;
         border-radius: 10px;
-        background: #dedbd2;
+        background: var(--surface-hover);
         display: grid;
         place-items: center;
         font-size: 13px;
@@ -906,7 +1169,7 @@ import "../styles/landing.css";
         border-radius: var(--radius-md);
       }
       .error-text {
-        color: #a5382a;
+        color: var(--down);
       }
 
       .chip-row {
@@ -917,7 +1180,7 @@ import "../styles/landing.css";
       .chip {
         border-radius: 999px;
         padding: 9px 16px;
-        background: #ece9e3;
+        background: var(--surface-hover);
         border: 0;
         font: inherit;
         font-size: 13px;
@@ -983,7 +1246,7 @@ import "../styles/landing.css";
         background: none;
         border: 0;
         font-size: 20px;
-        color: #858589;
+        color: var(--muted);
         cursor: pointer;
         line-height: 1;
         padding: var(--sp-xs);
@@ -1010,25 +1273,25 @@ import "../styles/landing.css";
       }
       .quote-line {
         font-size: 13px;
-        color: #6a686b;
+        color: var(--muted);
         margin: var(--sp-xs) 0;
       }
       .warn-line {
         font-size: 12px;
-        color: #a5382a;
+        color: var(--down);
         margin: var(--sp-sm) 0;
       }
       .status-line {
         font-size: 13px;
-        color: #6a686b;
+        color: var(--muted);
         margin-top: var(--sp-sm);
       }
       .status-line[data-tone="error"] {
-        color: #a5382a;
+        color: var(--down);
       }
       .form-error {
         font-size: 12px;
-        color: #a5382a;
+        color: var(--down);
         min-height: 14px;
       }
 
@@ -1056,7 +1319,7 @@ import "../styles/landing.css";
         text-transform: capitalize;
       }
       .receipt-row__detail {
-        color: #6a686b;
+        color: var(--muted);
         margin-top: 2px;
       }
 
@@ -1081,7 +1344,7 @@ import "../styles/landing.css";
       .account-status {
         min-height: 20px;
         font-size: 13px;
-        color: #5c5c5f;
+        color: var(--muted);
       }
 
       @media (max-width: 960px) {
@@ -1101,21 +1364,14 @@ import "../styles/landing.css";
           width: 140px;
         }
         .home-grid,
+        .hl-trade .home-grid,
         .ticker-row,
         .action-grid,
-        .asset-layout,
-        .asset-stats-row {
+        .hl-desk {
           grid-template-columns: 1fr;
-        }
-        .card--trade-panel {
-          position: static;
         }
         .ticker-row {
           grid-template-columns: repeat(2, 1fr);
-        }
-        .toolbar {
-          flex-direction: column;
-          align-items: stretch;
         }
         .account-layout__card {
           flex-basis: 100%;
@@ -1126,38 +1382,53 @@ import "../styles/landing.css";
 
     <script>
       import { isMeraError } from "@category-labs/mera";
-      import { stockLogoUrl, type BinPosition, type TradingAccount } from "shared";
+      import {
+        cancelOrder,
+        minNotionalUsd,
+        modifyOrder,
+        moveUsd,
+        placeLimitOrder,
+        setLeverage,
+        stockLogoUrl,
+        updateIsolatedMargin,
+        withdrawUsd,
+        type BinPosition,
+        type HlTif,
+        type TradingAccount,
+      } from "shared";
       import { createAccount, signIn } from "../scripts/mera";
       import { loadAssetRegistry } from "../scripts/assets";
       import {
         bins,
-        buyToken,
-        checkTradable,
         loadPositions,
-        loadTokenHolding,
         loadTokens,
-        loadTradeAssets,
         loadUsdgBalance,
         openBin,
-        quoteSell,
-        quoteTrade,
-        sellToken,
         sizeBinFor,
         sizeProposal,
         type Bin,
         type EntryStep,
         type HoodData,
-        type TradeAsset,
       } from "../scripts/hood";
       import {
-        fetchMarketChart,
         fetchMarketCharts,
         fetchPortfolioHistory,
-        fetchTradableSymbols,
         snapshotPortfolio,
-        type ChartRange,
         type PortfolioSnapshot,
       } from "../scripts/backend";
+      import {
+        chartRanges,
+        getExchange,
+        loadCandles,
+        loadDesk,
+        loadTradeMarkets,
+        logoFor,
+        maxOrderNotionalUsd,
+        type ChartRangeKey,
+        type HlCandle,
+        type HlDesk,
+        type TradeMarket,
+      } from "../scripts/hl";
 
       type AvatarModule = typeof import("../lib/avatar");
       let avatarModule: AvatarModule | null = null;
@@ -1303,6 +1574,7 @@ import "../styles/landing.css";
       const loadedPanels = new Set<string>();
 
       function activateTab(key: string) {
+        dash.dataset.tab = key;
         for (const button of tabButtons) {
           const active = button.dataset.tab === key;
           button.setAttribute("aria-selected", String(active));
@@ -1323,19 +1595,38 @@ import "../styles/landing.css";
       document.querySelectorAll<HTMLButtonElement>("[data-goto]").forEach((button) =>
         button.addEventListener("click", () => activateTab(button.dataset.goto!)),
       );
+      const accountMenu = document.querySelector<HTMLElement>("[data-account-menu]")!;
+      const accountMenuButton = document.querySelector<HTMLButtonElement>("[data-topbar-address]")!;
+      const accountMenuList = document.querySelector<HTMLElement>("[data-account-menu-list]")!;
+
+      function setAccountMenu(open: boolean) {
+        accountMenuList.hidden = !open;
+        accountMenuButton.setAttribute("aria-expanded", String(open));
+      }
+
+      function disconnect() {
+        trader?.end();
+        trader = null;
+        location.reload();
+      }
+
+      accountMenuButton.addEventListener("click", () => setAccountMenu(accountMenuList.hidden));
+      document.addEventListener("click", (event) => {
+        if (!accountMenu.contains(event.target as Node)) setAccountMenu(false);
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") setAccountMenu(false);
+      });
       document
-        .querySelector<HTMLButtonElement>("[data-topbar-address]")!
-        .addEventListener("click", () => activateTab("account"));
+        .querySelector<HTMLButtonElement>("[data-disconnect]")!
+        .addEventListener("click", disconnect);
 
       const globalSearchInput = document.querySelector<HTMLInputElement>("[data-global-search]")!;
       globalSearchInput.addEventListener("input", () => {
         const value = globalSearchInput.value;
         activateTab("trade");
-        closeAssetView();
-        const tradeSearchInput = document.querySelector<HTMLInputElement>("[data-trade-search]")!;
-        tradeSearchInput.value = value;
         tradeQuery = value.trim().toLowerCase();
-        if (tradeAssets) renderTradeList(document.querySelector<HTMLElement>("[data-trade-list]")!);
+        if (tradeMarkets.length > 0) renderHlAssets();
       });
 
       // ---- Shared market data ----
@@ -1654,263 +1945,580 @@ import "../styles/landing.css";
         });
       }
 
-      // ---- Trade ----
-      let tradeAssets: TradeAsset[] | null = null;
+      // ---- Trade (Hyperliquid) ----
+      let tradeMarkets: TradeMarket[] = [];
+      let selectedMarket: TradeMarket | null = null;
       let tradeQuery = "";
-      let tradeCategory: "all" | "held" = "all";
+      let chartRange: ChartRangeKey = "1d";
+      let deskTab: "positions" | "orders" | "fills" = "positions";
+      let desk: HlDesk | null = null;
+      let ticketSide: "buy" | "sell" = "buy";
 
-      async function initTrade() {
-        const listEl = document.querySelector<HTMLElement>("[data-trade-list]")!;
-        const searchInput = document.querySelector<HTMLInputElement>("[data-trade-search]")!;
-        const categoryRow = document.querySelector<HTMLElement>("[data-trade-category]")!;
+      const hlBalance = document.querySelector<HTMLElement>("[data-hl-balance]")!;
+      const hlUpdated = document.querySelector<HTMLElement>("[data-hl-updated]")!;
+      const hlWalletNote = document.querySelector<HTMLElement>("[data-hl-wallet-note]")!;
+      const hlAssets = document.querySelector<HTMLElement>("[data-hl-assets]")!;
+      const hlTicker = document.querySelector<HTMLElement>("[data-hl-ticker]")!;
+      const hlChart = document.querySelector<HTMLElement>("[data-hl-chart]")!;
+      const hlAxis = document.querySelector<HTMLElement>("[data-hl-axis]")!;
+      const hlChartLabel = document.querySelector<HTMLElement>("[data-hl-chart-label]")!;
+      const hlChartValue = document.querySelector<HTMLElement>("[data-hl-chart-value]")!;
+      const hlChartChange = document.querySelector<HTMLElement>("[data-hl-chart-change]")!;
+      const hlDesk = document.querySelector<HTMLElement>("[data-hl-desk]")!;
+      const hlDeskStatus = document.querySelector<HTMLElement>("[data-hl-desk-status]")!;
+      const ticket = document.querySelector<HTMLElement>("[data-hl-ticket]")!;
+      const ticketTitle = ticket.querySelector<HTMLElement>("[data-hl-ticket-title]")!;
+      const ticketPrice = ticket.querySelector<HTMLInputElement>("[data-ticket-price]")!;
+      const ticketNotional = ticket.querySelector<HTMLInputElement>("[data-ticket-notional]")!;
+      const ticketPerp = ticket.querySelector<HTMLElement>("[data-ticket-perp]")!;
+      const ticketLeverage = ticket.querySelector<HTMLInputElement>("[data-ticket-leverage]")!;
+      const ticketMargin = ticket.querySelector<HTMLSelectElement>("[data-ticket-margin]")!;
+      const ticketTif = ticket.querySelector<HTMLSelectElement>("[data-ticket-tif]")!;
+      const ticketReduce = ticket.querySelector<HTMLInputElement>("[data-ticket-reduce]")!;
+      const ticketSize = ticket.querySelector<HTMLElement>("[data-ticket-size]")!;
+      const ticketSubmit = ticket.querySelector<HTMLButtonElement>("[data-ticket-submit]")!;
+      const ticketStatus = ticket.querySelector<HTMLElement>("[data-ticket-status]")!;
 
-        searchInput.addEventListener("input", () => {
-          tradeQuery = searchInput.value.trim().toLowerCase();
-          renderTradeList(listEl);
-        });
-        categoryRow.querySelectorAll<HTMLButtonElement>("[data-category]").forEach((button) => {
-          button.addEventListener("click", () => {
-            tradeCategory = button.dataset.category as "all" | "held";
-            categoryRow.querySelectorAll("[data-category]").forEach((b) => b.classList.toggle("chip--active", b === button));
-            renderTradeList(listEl);
-          });
-        });
-
-        try {
-          const [data, safeEntries] = await Promise.all([getHoodData(), fetchTradableSymbols()]);
-          const safeSymbols = new Set(safeEntries.map((entry) => entry.symbol));
-          const allAssets = await loadTradeAssets(data.tokens);
-          // Some Robinhood Chain Stock Tokens have a pool with almost no
-          // liquidity — the quote succeeds but the price is nowhere near
-          // real. Only list symbols the backend has verified price against
-          // its own reference feed, not just "a pool exists".
-          tradeAssets = allAssets.filter((asset) => safeSymbols.has(asset.token.symbol));
-          renderTradeList(listEl);
-        } catch (error) {
-          listEl.className = "error-text";
-          listEl.textContent = error instanceof Error ? error.message : String(error);
-        }
+      function esc(text: string): string {
+        return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+      }
+      function px(value: number): string {
+        const digits = value >= 100 ? 2 : value >= 1 ? 4 : 6;
+        return `$${value.toLocaleString(undefined, { maximumFractionDigits: digits })}`;
+      }
+      function dayChange(market: TradeMarket): number {
+        return market.prevDayPx > 0 ? ((market.markPx - market.prevDayPx) / market.prevDayPx) * 100 : 0;
+      }
+      function marketFor(coin: string): TradeMarket | undefined {
+        return tradeMarkets.find((m) => m.coin === coin);
+      }
+      function marketMark(coin: string): string {
+        const market = marketFor(coin);
+        const symbol = market?.symbol ?? coin.split(":").pop()!;
+        return markHtml(market ? logoFor(market) : undefined, esc(symbol));
+      }
+      function errorText(error: unknown): string {
+        return error instanceof Error ? error.message : String(error);
+      }
+      function say(el: HTMLElement, message: string, tone: "info" | "error" = "info") {
+        el.textContent = message;
+        el.dataset.tone = tone;
       }
 
-      function renderTradeList(listEl: HTMLElement) {
-        if (!tradeAssets) return;
-        const heldSymbols = new Set(
-          (positionsCache ?? []).flatMap((position) => position.legs.map((leg) => leg.symbol)),
-        );
-        const filtered = tradeAssets.filter((asset) => {
-          if (tradeCategory === "held" && !heldSymbols.has(asset.token.symbol)) return false;
-          if (tradeQuery === "") return true;
-          return (
-            asset.token.symbol.toLowerCase().includes(tradeQuery) ||
-            asset.token.name.toLowerCase().includes(tradeQuery)
-          );
-        });
-        if (filtered.length === 0) {
-          listEl.className = "empty";
-          listEl.textContent = tradeCategory === "held" ? "No direct holdings from a bin yet." : "No tokens match that search.";
+      function renderHlAssets() {
+        const list = tradeQuery
+          ? tradeMarkets
+              .filter((m) => m.coin.toLowerCase().includes(tradeQuery) || m.symbol.toLowerCase().includes(tradeQuery))
+              .slice(0, 30)
+          : tradeMarkets.filter((m) => m.kind === "perp").slice(0, 12);
+        if (list.length === 0) {
+          hlAssets.className = "empty";
+          hlAssets.textContent = "No Hyperliquid markets match that search.";
           return;
         }
-        listEl.className = "table-wrap";
-        const rows = filtered
-          .map(
-            (asset) => `
-              <tr data-symbol="${asset.token.symbol}">
-                <td><div class="cell-identity">${markHtml(stockLogoUrl(asset.token.symbol), asset.token.symbol)}${asset.token.symbol}</div></td>
-                <td class="cell-muted">${asset.token.name}</td>
-                <td class="cell-value">${asset.price === null ? "—" : asset.halted ? "Halted" : usd(asset.price)}</td>
-              </tr>
-            `,
-          )
+        hlAssets.className = "asset-list";
+        hlAssets.innerHTML = list
+          .map((m) => {
+            const change = dayChange(m);
+            return `
+              <button type="button" class="asset-row hl-asset ${m === selectedMarket ? "hl-asset--active" : ""}" data-coin="${esc(m.coin)}">
+                ${marketMark(m.coin)}
+                <span class="asset-row__identity">${esc(m.symbol)}<span class="hl-asset__detail">${esc(m.detail)}</span></span>
+                <span class="asset-row__price hl-mono">${px(m.markPx)}</span>
+                <span class="asset-row__change ${changeClass(change)}">${pct(change)}</span>
+              </button>
+            `;
+          })
           .join("");
-        listEl.innerHTML = `
+        hlAssets.querySelectorAll<HTMLButtonElement>("[data-coin]").forEach((button) =>
+          button.addEventListener("click", () => selectMarket(button.dataset.coin!)),
+        );
+      }
+
+      function renderHlTicker() {
+        const featured = [
+          ...(selectedMarket ? [selectedMarket] : []),
+          ...tradeMarkets.filter((m) => m.kind === "perp" && m !== selectedMarket),
+        ].slice(0, 4);
+        hlTicker.className = "ticker-row";
+        hlTicker.innerHTML = featured
+          .map((m) => {
+            const change = dayChange(m);
+            return `
+              <button type="button" class="ticker-card ${m === selectedMarket ? "ticker-card--active" : ""}" data-coin="${esc(m.coin)}">
+                <div class="ticker-card__head">
+                  ${marketMark(m.coin)}
+                  <span class="ticker-card__symbol">${esc(m.symbol)} · ${esc(m.detail)}</span>
+                </div>
+                <span class="ticker-card__price hl-mono">${px(m.markPx)}</span>
+                <span class="ticker-card__change ${changeClass(change)}">${pct(change)} vs 24h</span>
+              </button>
+            `;
+          })
+          .join("");
+        hlTicker.querySelectorAll<HTMLButtonElement>("[data-coin]").forEach((button) =>
+          button.addEventListener("click", () => selectMarket(button.dataset.coin!)),
+        );
+      }
+
+      function drawCandleChart(candles: HlCandle[]) {
+        const values = candles.map((c) => c.close);
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        const spread = max - min || 1;
+        const w = 600;
+        const h = 240;
+        const pad = 8;
+        const xs = values.map((_, i) => pad + (i / (values.length - 1)) * (w - pad * 2));
+        const ys = values.map((v) => h - pad - ((v - min) / spread) * (h - pad * 2));
+        const line = xs.map((x, i) => `${x.toFixed(1)},${ys[i].toFixed(1)}`).join(" ");
+        hlChart.innerHTML = `
+          <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="hl-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#3ddc84" stop-opacity="0.22" />
+                <stop offset="1" stop-color="#3ddc84" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+            <polygon points="${pad},${h} ${line} ${w - pad},${h}" fill="url(#hl-fill)" />
+            <polyline points="${line}" fill="none" stroke="#3ddc84" stroke-width="2" vector-effect="non-scaling-stroke" />
+            <line data-cross y1="0" y2="${h}" stroke="#5b6662" stroke-dasharray="4 4" vector-effect="non-scaling-stroke" visibility="hidden" />
+          </svg>
+          <span class="hl-chart__dot" hidden></span>
+          <div class="hl-chart__tip hl-mono" hidden></div>
+        `;
+        const cross = hlChart.querySelector<SVGLineElement>("[data-cross]")!;
+        const dot = hlChart.querySelector<HTMLElement>(".hl-chart__dot")!;
+        const tip = hlChart.querySelector<HTMLElement>(".hl-chart__tip")!;
+        const short = chartRanges[chartRange].spanMs <= 86_400_000;
+        const stamp = (time: number) =>
+          short
+            ? new Date(time).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
+            : new Date(time).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+        hlChart.onmousemove = (event) => {
+          const rect = hlChart.getBoundingClientRect();
+          const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+          const i = Math.round(ratio * (values.length - 1));
+          const left = (xs[i] / w) * 100;
+          cross.setAttribute("x1", String(xs[i]));
+          cross.setAttribute("x2", String(xs[i]));
+          cross.setAttribute("visibility", "visible");
+          dot.hidden = false;
+          dot.style.left = `${left}%`;
+          dot.style.top = `${(ys[i] / h) * 100}%`;
+          const change = ((values[i] - candles[0].open) / candles[0].open) * 100;
+          tip.hidden = false;
+          tip.style.left = `${Math.min(85, Math.max(15, left))}%`;
+          tip.innerHTML = `${stamp(candles[i].time)} · ${px(values[i])} <span class="${changeClass(change)}">${pct(change)}</span>`;
+        };
+        hlChart.onmouseleave = () => {
+          cross.setAttribute("visibility", "hidden");
+          dot.hidden = true;
+          tip.hidden = true;
+        };
+        hlAxis.innerHTML = [0, 1, 2, 3, 4]
+          .map((k) => `<span>${stamp(candles[Math.round((k * (candles.length - 1)) / 4)].time)}</span>`)
+          .join("");
+      }
+
+      async function renderHlChart() {
+        const market = selectedMarket;
+        if (!market) return;
+        hlChartLabel.textContent = `${market.symbol} · ${market.detail}`;
+        hlChartValue.textContent = px(market.markPx);
+        hlChartChange.textContent = "";
+        hlAxis.innerHTML = "";
+        hlChart.onmousemove = null;
+        hlChart.innerHTML = `<div class="chart-empty">Loading…</div>`;
+        let candles: HlCandle[];
+        try {
+          candles = await loadCandles(market.coin, chartRange);
+        } catch {
+          if (selectedMarket === market) hlChart.innerHTML = `<div class="chart-empty">Chart unavailable right now.</div>`;
+          return;
+        }
+        if (selectedMarket !== market) return;
+        if (candles.length < 2) {
+          hlChart.innerHTML = `<div class="chart-empty">No trades in this range on Hyperliquid testnet.</div>`;
+          return;
+        }
+        const change = ((candles[candles.length - 1].close - candles[0].open) / candles[0].open) * 100;
+        hlChartChange.textContent = `${pct(change)} this range`;
+        hlChartChange.className = `chart-change ${changeClass(change)}`;
+        drawCandleChart(candles);
+      }
+
+      function renderTicket() {
+        const market = selectedMarket;
+        const exchange = getExchange();
+        ticketTitle.textContent = market ? `Order · ${market.symbol}` : "Order";
+        ticketPerp.hidden = market?.kind !== "perp";
+        if (market) ticketLeverage.max = String(market.maxLeverage);
+        const price = Number(ticketPrice.value);
+        const notional = Number(ticketNotional.value);
+        ticketSize.textContent =
+          market && price > 0 && notional > 0
+            ? `≈ ${(notional / price).toFixed(market.szDecimals)} ${market.symbol} · min $${minNotionalUsd}, max $${maxOrderNotionalUsd}`
+            : `Min $${minNotionalUsd}, max $${maxOrderNotionalUsd} per order`;
+        ticket
+          .querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLButtonElement>("input, select, button")
+          .forEach((el) => (el.disabled = !exchange || !market));
+        ticketSubmit.textContent = exchange ? "Place order" : "Connect wallet to trade";
+      }
+
+      function selectMarket(coin: string) {
+        const market = marketFor(coin);
+        if (!market) return;
+        selectedMarket = market;
+        ticketPrice.value = String(market.markPx);
+        ticketLeverage.value = String(Math.min(Number(ticketLeverage.value) || 1, market.maxLeverage));
+        say(ticketStatus, "");
+        renderHlAssets();
+        renderHlTicker();
+        renderTicket();
+        void renderHlChart();
+      }
+
+      function actionButton(label: string, data: string): string {
+        return `<button type="button" class="chip" ${data} ${getExchange() ? "" : "disabled"}>${label}</button>`;
+      }
+
+      function deskTable(head: string[], rows: string[]): string {
+        return `
           <table class="data-table">
-            <thead><tr><th>Symbol</th><th>Name</th><th style="text-align:right">Price</th></tr></thead>
-            <tbody>${rows}</tbody>
+            <thead><tr>${head.map((h, i) => `<th${i > 0 ? ' style="text-align:right"' : ""}>${h}</th>`).join("")}</tr></thead>
+            <tbody>${rows.join("")}</tbody>
           </table>
         `;
-        listEl.querySelectorAll<HTMLTableRowElement>("tbody tr").forEach((row) => {
-          const asset = filtered.find((a) => a.token.symbol === row.dataset.symbol);
-          if (asset) row.addEventListener("click", () => openAssetView(asset));
+      }
+
+      function assetCell(coin: string): string {
+        const market = marketFor(coin);
+        return `<td><div class="cell-identity">${marketMark(coin)}<span>${esc(market?.symbol ?? coin)}<span class="hl-asset__detail">${esc(market?.detail ?? coin)}</span></span></div></td>`;
+      }
+
+      function renderDesk() {
+        if (!desk) return;
+        const empty = (message: string) => {
+          hlDesk.className = "empty";
+          hlDesk.textContent = message;
+        };
+        if (deskTab === "positions") {
+          if (desk.positions.length === 0) return empty("No open positions on Hyperliquid testnet for this address.");
+          hlDesk.className = "table-wrap";
+          hlDesk.innerHTML = deskTable(
+            ["Asset", "Size", "Entry", "Value", "uPnL", "Liq.", "Margin", ""],
+            desk.positions.map(
+              (p) => `
+                <tr>
+                  ${assetCell(p.coin)}
+                  <td class="cell-value ${changeClass(p.size)}">${p.size > 0 ? "Long" : "Short"} ${Math.abs(p.size)}</td>
+                  <td class="cell-value hl-mono">${px(p.entryPx)}</td>
+                  <td class="cell-value hl-mono">${usd(p.positionValue)}</td>
+                  <td class="cell-value hl-mono ${changeClass(p.unrealizedPnl)}">${usd(p.unrealizedPnl)}</td>
+                  <td class="cell-value hl-mono">${p.liquidationPx === null ? "—" : px(p.liquidationPx)}</td>
+                  <td class="cell-value">${usd(p.marginUsed)} · ${p.leverage}x ${p.leverageType}</td>
+                  <td><div class="hl-actions">${
+                    p.leverageType === "isolated"
+                      ? actionButton("+ Margin", `data-margin="add" data-coin="${esc(p.coin)}"`) +
+                        actionButton("− Margin", `data-margin="remove" data-coin="${esc(p.coin)}"`)
+                      : ""
+                  }</div></td>
+                </tr>
+              `,
+            ),
+          );
+        } else if (deskTab === "orders") {
+          if (desk.orders.length === 0) return empty("No open orders.");
+          hlDesk.className = "table-wrap";
+          hlDesk.innerHTML = deskTable(
+            ["Asset", "Side", "Price", "Size", "Notional", "Type", ""],
+            desk.orders.map(
+              (o) => `
+                <tr>
+                  ${assetCell(o.coin)}
+                  <td class="cell-value ${o.isBuy ? "change-up" : "change-down"}">${o.isBuy ? "Buy" : "Sell"}</td>
+                  <td class="cell-value hl-mono">${px(o.price)}</td>
+                  <td class="cell-value hl-mono">${o.size}</td>
+                  <td class="cell-value hl-mono">${usd(o.price * o.size)}</td>
+                  <td class="cell-value cell-muted">${o.tif ?? "—"}${o.reduceOnly ? " · RO" : ""}</td>
+                  <td><div class="hl-actions">${actionButton("Edit", `data-edit="${o.oid}"`)}${actionButton("Cancel", `data-cancel="${o.oid}"`)}</div></td>
+                </tr>
+              `,
+            ),
+          );
+        } else {
+          if (desk.fills.length === 0) return empty("No fills yet.");
+          hlDesk.className = "table-wrap";
+          hlDesk.innerHTML = deskTable(
+            ["Asset", "Time", "Direction", "Price", "Size", "Fee", "Closed PnL"],
+            desk.fills.map(
+              (f) => `
+                <tr>
+                  ${assetCell(f.coin)}
+                  <td class="cell-value cell-muted">${new Date(f.time).toLocaleString()}</td>
+                  <td class="cell-value">${esc(f.dir)}</td>
+                  <td class="cell-value hl-mono">${px(f.price)}</td>
+                  <td class="cell-value hl-mono">${f.size}</td>
+                  <td class="cell-value hl-mono">${usd(f.fee)}</td>
+                  <td class="cell-value hl-mono ${changeClass(f.closedPnl)}">${usd(f.closedPnl)}</td>
+                </tr>
+              `,
+            ),
+          );
+        }
+        hlDesk.querySelectorAll<HTMLButtonElement>("[data-cancel]").forEach((button) =>
+          button.addEventListener("click", () => cancelDeskOrder(Number(button.dataset.cancel))),
+        );
+        hlDesk.querySelectorAll<HTMLButtonElement>("[data-edit]").forEach((button) =>
+          button.addEventListener("click", () => openEditOrder(Number(button.dataset.edit))),
+        );
+        hlDesk.querySelectorAll<HTMLButtonElement>("[data-margin]").forEach((button) =>
+          button.addEventListener("click", () => openMarginModal(button.dataset.coin!, button.dataset.margin === "add")),
+        );
+      }
+
+      async function refreshDesk() {
+        if (!trader) return;
+        try {
+          desk = await loadDesk(trader.address);
+          hlBalance.textContent = `$${desk.equity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          hlUpdated.textContent = desk.updatedAt.toLocaleTimeString();
+          renderDesk();
+        } catch (error) {
+          desk = null;
+          hlBalance.textContent = "—";
+          hlDesk.className = "error-text";
+          hlDesk.textContent = errorText(error);
+        }
+      }
+
+      async function runWrite(status: HTMLElement, pending: string, action: () => Promise<unknown>, done: string) {
+        say(status, pending);
+        try {
+          await action();
+          say(status, done);
+          await refreshDesk();
+          return true;
+        } catch (error) {
+          say(status, errorText(error), "error");
+          return false;
+        }
+      }
+
+      function cancelDeskOrder(oid: number) {
+        const exchange = getExchange();
+        const order = desk?.orders.find((o) => o.oid === oid);
+        const market = order && marketFor(order.coin);
+        if (!exchange || !market) return;
+        void runWrite(hlDeskStatus, "Cancelling…", () => cancelOrder(exchange, market.assetId, oid), "Order cancelled.");
+      }
+
+      function modalForm(title: string, fields: string, submit: string): HTMLElement {
+        return openModal(`
+          <div class="modal__head">
+            <span class="modal__title">${title}</span>
+            <button type="button" class="modal__close" data-close>×</button>
+          </div>
+          <div class="hl-ticket">${fields}</div>
+          <button type="button" class="btn btn--primary" style="margin-top:16px" data-modal-submit>${submit}</button>
+          <p class="status-line" data-modal-status></p>
+        `);
+      }
+
+      function onModalSubmit(panel: HTMLElement, run: (status: HTMLElement) => Promise<boolean>) {
+        const button = panel.querySelector<HTMLButtonElement>("[data-modal-submit]")!;
+        const status = panel.querySelector<HTMLElement>("[data-modal-status]")!;
+        button.addEventListener("click", async () => {
+          button.disabled = true;
+          if (await run(status)) closeModal();
+          else button.disabled = false;
         });
       }
 
-      const buyPresets = [10, 25, 50, 100];
-      const sellPresetFractions = [0.25, 0.5, 0.75, 1];
-
-      const assetBackButton = document.querySelector<HTMLButtonElement>("[data-asset-back]")!;
-      const tradeListView = document.querySelector<HTMLElement>("[data-trade-list-view]")!;
-      const assetView = document.querySelector<HTMLElement>("[data-asset-view]")!;
-      assetBackButton.addEventListener("click", closeAssetView);
-
-      function closeAssetView() {
-        assetView.hidden = true;
-        tradeListView.hidden = false;
+      function openEditOrder(oid: number) {
+        const exchange = getExchange();
+        const order = desk?.orders.find((o) => o.oid === oid);
+        const market = order && marketFor(order.coin);
+        if (!exchange || !order || !market) return;
+        const panel = modalForm(
+          `Edit ${esc(market.symbol)} ${order.isBuy ? "buy" : "sell"}`,
+          `<label class="field"><span>Limit price</span><input type="number" step="any" value="${order.price}" data-edit-price /></label>
+           <label class="field"><span>Size (${esc(market.symbol)})</span><input type="number" step="any" value="${order.size}" data-edit-size /></label>`,
+          "Save changes",
+        );
+        onModalSubmit(panel, (status) => {
+          const price = Number(panel.querySelector<HTMLInputElement>("[data-edit-price]")!.value);
+          const size = Number(panel.querySelector<HTMLInputElement>("[data-edit-size]")!.value);
+          const tif: HlTif = order.tif === "Alo" || order.tif === "Ioc" ? order.tif : "Gtc";
+          return runWrite(
+            status,
+            "Updating order…",
+            () =>
+              modifyOrder(exchange, oid, {
+                assetId: market.assetId,
+                isBuy: order.isBuy,
+                price,
+                size,
+                szDecimals: market.szDecimals,
+                kind: market.kind,
+                tif,
+                reduceOnly: order.reduceOnly,
+                maxNotionalUsd: maxOrderNotionalUsd,
+              }),
+            "Order updated.",
+          );
+        });
       }
 
-      async function openAssetView(asset: TradeAsset) {
-        tradeListView.hidden = true;
-        assetView.hidden = false;
-
-        const headerEl = document.querySelector<HTMLElement>("[data-asset-header]")!;
-        const priceEl = document.querySelector<HTMLElement>("[data-asset-price]")!;
-        const changeEl = document.querySelector<HTMLElement>("[data-asset-change]")!;
-        const chartEl = document.querySelector<HTMLElement>("[data-asset-chart]")!;
-        const statsEl = document.querySelector<HTMLElement>("[data-asset-stats]")!;
-        const rangeButtons = Array.from(
-          document.querySelectorAll<HTMLButtonElement>("[data-asset-range] [data-range]"),
+      function openMarginModal(coin: string, add: boolean) {
+        const exchange = getExchange();
+        const position = desk?.positions.find((p) => p.coin === coin);
+        const market = marketFor(coin);
+        if (!exchange || !position || !market) return;
+        const panel = modalForm(
+          `${add ? "Add" : "Remove"} ${esc(market.symbol)} margin`,
+          `<p class="quote-line">Isolated margin now ${usd(position.marginUsed)}.</p>
+           <label class="field"><span>Amount (USD)</span><input type="number" min="0" step="any" data-margin-amount /></label>`,
+          add ? "Add margin" : "Remove margin",
         );
-        const holdingLine = document.querySelector<HTMLElement>("[data-asset-holding]")!;
-        const status = document.querySelector<HTMLElement>("[data-asset-status]")!;
-        const modeBody = document.querySelector<HTMLElement>("[data-asset-mode-body]")!;
-        const modeButtons = Array.from(
-          document.querySelectorAll<HTMLButtonElement>(".card--trade-panel [data-mode]"),
-        );
-
-        headerEl.innerHTML = `<div class="modal__identity">${markHtml(stockLogoUrl(asset.token.symbol), asset.token.symbol)}<span class="modal__title">${asset.token.symbol} · ${asset.token.name}</span></div>`;
-        priceEl.textContent = asset.price === null ? "—" : usd(asset.price);
-        changeEl.textContent = "";
-        statsEl.innerHTML = "";
-        chartEl.innerHTML = "";
-        holdingLine.textContent = "";
-        status.textContent = "";
-        status.className = "status-line";
-
-        let mode: "buy" | "sell" = "buy";
-        let pool: unknown = "checking";
-        let holding = { raw: 0n, shares: 0 };
-        let currentRange: ChartRange = "5d";
-
-        if (!trader) return;
-
-        checkTradable(asset.token)
-          .then((found) => (pool = found))
-          .catch(() => (pool = null));
-        loadTokenHolding(trader.address, asset.token)
-          .then((next) => {
-            holding = next;
-            if (holding.shares > 0) {
-              holdingLine.textContent = `You hold ${holding.shares.toLocaleString(undefined, { maximumFractionDigits: 6 })} ${asset.token.symbol}`;
-            }
-          })
-          .catch(() => {});
-
-        async function loadChart(range: ChartRange) {
-          chartEl.innerHTML = `<div class="chart-empty">Loading…</div>`;
-          try {
-            const chart = await fetchMarketChart(asset.token.symbol, range);
-            renderLineChart(
-              chartEl,
-              chart.points.map((p) => p.close),
-              "No chart history for this range.",
-            );
-            changeEl.textContent = `${pct(chart.changePercent)} today`;
-            changeEl.className = `asset-price-change ${changeClass(chart.changePercent)}`;
-            statsEl.innerHTML = `
-              <div class="stat-card"><span class="stat-card__label">Volume</span><span class="stat-card__value" style="font-size:18px">${chart.volume.toLocaleString()}</span></div>
-              <div class="stat-card"><span class="stat-card__label">Previous close</span><span class="stat-card__value" style="font-size:18px">${usd(chart.previousClose)}</span></div>
-              <div class="stat-card"><span class="stat-card__label">You hold</span><span class="stat-card__value" style="font-size:18px">${holding.shares > 0 ? holding.shares.toLocaleString(undefined, { maximumFractionDigits: 4 }) : "—"}</span></div>
-            `;
-          } catch {
-            chartEl.innerHTML = `<div class="chart-empty">Chart unavailable right now.</div>`;
+        onModalSubmit(panel, (status) => {
+          const amount = Number(panel.querySelector<HTMLInputElement>("[data-margin-amount]")!.value);
+          if (!(amount > 0)) {
+            say(status, "Enter an amount greater than 0.", "error");
+            return Promise.resolve(false);
           }
-        }
-        rangeButtons.forEach((button) =>
+          return runWrite(
+            status,
+            "Updating margin…",
+            () => updateIsolatedMargin(exchange, market.assetId, position.size > 0, add ? amount : -amount),
+            "Margin updated.",
+          );
+        });
+      }
+
+      function openUsdModal(kind: "withdraw" | "transfer") {
+        const exchange = getExchange();
+        if (!exchange || !trader) return;
+        const account = trader.address;
+        const panel = modalForm(
+          kind === "withdraw" ? "Withdraw USDC" : "Transfer USDC",
+          `<label class="field"><span>Amount (USD)</span><input type="number" min="0" step="any" data-usd-amount /></label>
+           ${
+             kind === "withdraw"
+               ? `<p class="quote-line">Withdraws to your own address only.</p>`
+               : `<label class="field"><span>Direction</span><select data-usd-direction><option value="perp">Spot → Perp</option><option value="spot">Perp → Spot</option></select></label>`
+           }`,
+          kind === "withdraw" ? "Withdraw" : "Transfer",
+        );
+        onModalSubmit(panel, (status) => {
+          const amount = Number(panel.querySelector<HTMLInputElement>("[data-usd-amount]")!.value);
+          if (!(amount > 0)) {
+            say(status, "Enter an amount greater than 0.", "error");
+            return Promise.resolve(false);
+          }
+          if (kind === "withdraw") {
+            return runWrite(status, "Withdrawing…", () => withdrawUsd(exchange, amount, account, [account]), "Withdrawal sent.");
+          }
+          const toPerp = panel.querySelector<HTMLSelectElement>("[data-usd-direction]")!.value === "perp";
+          return runWrite(status, "Transferring…", () => moveUsd(exchange, amount, toPerp), "Transfer done.");
+        });
+      }
+
+      async function submitTicket() {
+        const exchange = getExchange();
+        const market = selectedMarket;
+        if (!exchange || !market) return;
+        const price = Number(ticketPrice.value);
+        const notional = Number(ticketNotional.value);
+        const reduceOnly = ticketReduce.checked;
+        if (!(price > 0) || !(notional > 0)) return say(ticketStatus, "Enter a price and notional.", "error");
+        if (notional > maxOrderNotionalUsd) return say(ticketStatus, `Max $${maxOrderNotionalUsd} per order.`, "error");
+        if (notional < minNotionalUsd && !reduceOnly) return say(ticketStatus, `Hyperliquid minimum is $${minNotionalUsd}.`, "error");
+        ticketSubmit.disabled = true;
+        await runWrite(
+          ticketStatus,
+          "Placing order…",
+          async () => {
+            if (market.kind === "perp" && !reduceOnly) {
+              await setLeverage(exchange, market.assetId, Number(ticketLeverage.value), ticketMargin.value === "cross");
+            }
+            return placeLimitOrder(exchange, {
+              assetId: market.assetId,
+              isBuy: ticketSide === "buy",
+              price,
+              size: notional / price,
+              szDecimals: market.szDecimals,
+              kind: market.kind,
+              tif: ticketTif.value as HlTif,
+              reduceOnly,
+              maxNotionalUsd: maxOrderNotionalUsd,
+            });
+          },
+          "Order placed.",
+        );
+        ticketSubmit.disabled = false;
+      }
+
+      async function initTrade() {
+        const exchange = getExchange();
+        hlWalletNote.textContent = exchange
+          ? "Trading on Hyperliquid testnet."
+          : "Connect wallet to trade. Showing this address read-only on Hyperliquid testnet.";
+        document.querySelectorAll<HTMLButtonElement>("[data-hl-action]").forEach((button) => {
+          const action = button.dataset.hlAction;
+          if (action === "deposit") return;
+          if (action !== "swap") button.disabled = !exchange;
           button.addEventListener("click", () => {
-            currentRange = button.dataset.range as ChartRange;
-            rangeButtons.forEach((b) => b.classList.toggle("chip--active", b === button));
-            void loadChart(currentRange);
-          }),
-        );
-        void loadChart(currentRange);
-
-        function renderMode() {
-          if (mode === "buy") {
-            modeBody.innerHTML = `
-              <div class="amount-row"><span>$</span><input type="number" min="0" step="any" placeholder="0" data-amount /></div>
-              <div class="chip-row">${buyPresets.map((p) => `<button type="button" class="chip" data-preset="${p}">$${p}</button>`).join("")}</div>
-              <button type="button" class="btn btn--primary" style="margin-top:12px" data-submit>Buy ${asset.token.symbol}</button>
-            `;
-          } else {
-            modeBody.innerHTML = `
-              <div class="amount-row"><input type="number" min="0" step="any" placeholder="0" data-amount /><span>${asset.token.symbol}</span></div>
-              <div class="chip-row">${sellPresetFractions.map((f) => `<button type="button" class="chip" data-preset-fraction="${f}">${f === 1 ? "Max" : `${f * 100}%`}</button>`).join("")}</div>
-              <button type="button" class="btn btn--primary" style="margin-top:12px" data-submit>Sell ${asset.token.symbol}</button>
-            `;
-          }
-          wireMode();
-        }
-
-        function wireMode() {
-          const amountInput = modeBody.querySelector<HTMLInputElement>("[data-amount]")!;
-          modeBody.querySelectorAll<HTMLButtonElement>("[data-preset]").forEach((button) =>
-            button.addEventListener("click", () => (amountInput.value = button.dataset.preset!)),
-          );
-          modeBody.querySelectorAll<HTMLButtonElement>("[data-preset-fraction]").forEach((button) =>
-            button.addEventListener("click", () => {
-              const fraction = Number(button.dataset.presetFraction);
-              amountInput.value = String(holding.shares * fraction);
-            }),
-          );
-          modeBody.querySelector<HTMLButtonElement>("[data-submit]")!.addEventListener("click", async () => {
-            const amount = Number(amountInput.value);
-            if (!(amount > 0)) {
-              status.dataset.tone = "error";
-              status.textContent = "Enter an amount greater than 0.";
-              return;
-            }
-            if (pool === null) {
-              status.dataset.tone = "error";
-              status.textContent = "No onchain market for this token yet.";
-              return;
-            }
-            const button = modeBody.querySelector<HTMLButtonElement>("[data-submit]")!;
-            button.disabled = true;
-            status.dataset.tone = "";
-            try {
-              if (mode === "buy") {
-                status.textContent = "Pricing…";
-                const quote = await quoteTrade(asset.token, amount);
-                if (!quote) throw new Error("No quote available.");
-                status.textContent = "Waiting for your passkey…";
-                await buyToken(trader!, asset.token, amount, quote, (step) => (status.textContent = stepLabels[step]));
-                status.textContent = `Bought ${asset.token.symbol}.`;
-              } else {
-                if (amount > holding.shares) throw new Error("More than you hold.");
-                status.textContent = "Pricing…";
-                const quote = await quoteSell(asset.token, amount);
-                if (!quote) throw new Error("No quote available.");
-                const amountInRaw =
-                  holding.shares > 0
-                    ? (holding.raw * BigInt(Math.round((amount / holding.shares) * 1_000_000))) / 1_000_000n
-                    : 0n;
-                status.textContent = "Waiting for your passkey…";
-                await sellToken(trader!, asset.token, amountInRaw, quote, (step) => (status.textContent = stepLabels[step]));
-                status.textContent = `Sold ${asset.token.symbol}.`;
-              }
-              holding = await loadTokenHolding(trader!.address, asset.token);
-              if (holding.shares > 0) {
-                holdingLine.textContent = `You hold ${holding.shares.toLocaleString(undefined, { maximumFractionDigits: 6 })} ${asset.token.symbol}`;
-              }
-              await getPositions(true);
-              void initHome();
-            } catch (error) {
-              status.dataset.tone = "error";
-              status.textContent = error instanceof Error ? error.message : String(error);
-            } finally {
-              button.disabled = false;
+            if (action === "swap") {
+              const spot = tradeMarkets.find((m) => m.kind === "spot");
+              if (spot) selectMarket(spot.coin);
+              ticketPrice.scrollIntoView({ behavior: "smooth", block: "center" });
+            } else {
+              openUsdModal(action as "withdraw" | "transfer");
             }
           });
-        }
-
-        modeButtons.forEach((button) =>
+        });
+        document.querySelector<HTMLButtonElement>("[data-hl-refresh]")!.addEventListener("click", () => void refreshDesk());
+        const rangeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-hl-range] [data-range]"));
+        rangeButtons.forEach((button) =>
           button.addEventListener("click", () => {
-            mode = button.dataset.mode as "buy" | "sell";
-            modeButtons.forEach((b) => b.classList.toggle("chip--active", b === button));
-            status.textContent = "";
-            renderMode();
+            chartRange = button.dataset.range as ChartRangeKey;
+            rangeButtons.forEach((b) => b.classList.toggle("chip--active", b === button));
+            void renderHlChart();
           }),
         );
-        renderMode();
+        const deskButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-hl-desk-tabs] [data-desk]"));
+        deskButtons.forEach((button) =>
+          button.addEventListener("click", () => {
+            deskTab = button.dataset.desk as typeof deskTab;
+            deskButtons.forEach((b) => b.classList.toggle("chip--active", b === button));
+            renderDesk();
+          }),
+        );
+        const sideButtons = Array.from(ticket.querySelectorAll<HTMLButtonElement>("[data-side]"));
+        sideButtons.forEach((button) =>
+          button.addEventListener("click", () => {
+            ticketSide = button.dataset.side as typeof ticketSide;
+            sideButtons.forEach((b) => b.classList.toggle("chip--active", b === button));
+          }),
+        );
+        ticketPrice.addEventListener("input", renderTicket);
+        ticketNotional.addEventListener("input", renderTicket);
+        ticketSubmit.addEventListener("click", () => void submitTicket());
+        renderTicket();
+
+        void refreshDesk();
+        try {
+          tradeMarkets = (await loadTradeMarkets()).sort((a, b) => b.dayNtlVlm - a.dayNtlVlm);
+          selectMarket(marketFor("BTC")?.coin ?? tradeMarkets[0].coin);
+          renderDesk();
+        } catch (error) {
+          hlAssets.className = "error-text";
+          hlAssets.textContent = errorText(error);
+          hlTicker.className = "error-text";
+          hlTicker.textContent = errorText(error);
+        }
       }
 
       // ---- Account ----
@@ -1969,13 +2577,7 @@ import "../styles/landing.css";
           saveProfile({ name: profile?.name ?? "", email: profile?.email ?? "", variant });
           void paint();
         });
-        signOutButton.addEventListener("click", () => {
-          trader?.end();
-          trader = null;
-          dash.hidden = true;
-          gate.hidden = false;
-          sayGate("Signed out. The derived key was zeroed.");
-        });
+        signOutButton.addEventListener("click", disconnect);
 
         document.querySelector<HTMLButtonElement>("[data-copy]")?.addEventListener("click", async () => {
           if (!trader) return;

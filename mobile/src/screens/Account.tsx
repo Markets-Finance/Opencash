@@ -11,11 +11,11 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { hood, isDevAuth, type TradingAccount } from "shared";
+import { isDevAuth, type TradingAccount } from "shared";
 import { PassCard } from "../components/PassCard";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { createAccount, revealPhrase, signIn } from "../lib/mera";
-import { family, space, track } from "../theme";
+import { dark, family, space, track } from "../theme";
 
 const profileKey = "opencash.profile";
 
@@ -273,7 +273,7 @@ export function Account({
             email={profile?.email}
             tier={isDevAuth ? "Dev account" : "Passkey pass"}
             variant={variant}
-            network={`${hood.name} · ${hood.id}`}
+            network="Hyperliquid Testnet"
             value={portfolio}
             copied={copied}
             onCopyAddress={() => void copyAddress()}
@@ -352,7 +352,7 @@ export function Account({
                   {panel === "wallets" && (
                     <View style={styles.card}>
                       <Text style={styles.note}>
-                        One passkey, one address. {hood.name} · {hood.id}
+                        One passkey, one address. Hyperliquid Testnet
                       </Text>
                       <Text style={styles.walletAddress}>{account.address}</Text>
                     </View>
@@ -384,7 +384,7 @@ export function Account({
                 value={name}
                 onChangeText={setName}
                 placeholder="Ada Lovelace"
-                placeholderTextColor="#b3b3b6"
+                placeholderTextColor={dark.muted}
                 autoComplete="name"
                 style={styles.input}
               />
@@ -393,7 +393,7 @@ export function Account({
                 value={email}
                 onChangeText={setEmail}
                 placeholder="ada@example.com"
-                placeholderTextColor="#b3b3b6"
+                placeholderTextColor={dark.muted}
                 autoComplete="email"
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -425,7 +425,7 @@ export function Account({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#ededed" },
+  screen: { flex: 1, backgroundColor: dark.paper },
   header: {
     paddingHorizontal: space.lg,
     flexDirection: "row",
@@ -436,23 +436,23 @@ const styles = StyleSheet.create({
     fontFamily: family.semibold,
     fontSize: 19,
     letterSpacing: track(19, -0.03),
-    color: "#0c0c0c",
+    color: dark.ink,
   },
   iconButton: {
     width: 54,
     height: 54,
     borderRadius: 27,
-    backgroundColor: "#f8f8f8",
+    backgroundColor: dark.surface,
     alignItems: "center",
     justifyContent: "center",
   },
-  back: { fontFamily: family.regular, fontSize: 22, color: "#55555a" },
+  back: { fontFamily: family.regular, fontSize: 22, color: dark.muted },
   content: { padding: space.lg, gap: space.lg },
   lede: {
     fontFamily: family.regular,
     fontSize: 14,
     lineHeight: 14 * 1.6,
-    color: "#77777a",
+    color: dark.muted,
   },
   actions: { gap: space.md },
   options: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
@@ -461,63 +461,63 @@ const styles = StyleSheet.create({
     flexBasis: "46%",
     minHeight: 52,
     borderRadius: 16,
-    backgroundColor: "#fafafa",
+    backgroundColor: dark.surface,
     alignItems: "center",
     justifyContent: "center",
   },
-  optionActive: { backgroundColor: "#090909" },
-  optionLabel: { fontFamily: family.medium, fontSize: 14, color: "#131315" },
-  optionLabelActive: { color: "#fff" },
-  card: { padding: space.lg, borderRadius: 18, backgroundColor: "#fafafa", gap: space.sm },
-  walletAddress: { fontFamily: family.regular, fontSize: 12, color: "#131315" },
+  optionActive: { backgroundColor: dark.accent },
+  optionLabel: { fontFamily: family.medium, fontSize: 14, color: dark.ink },
+  optionLabelActive: { color: dark.onAccent },
+  card: { padding: space.lg, borderRadius: 18, backgroundColor: dark.surface, gap: space.sm },
+  walletAddress: { fontFamily: family.regular, fontSize: 12, color: dark.ink },
   action: {
     minHeight: 56,
     borderRadius: 28,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: dark.surfaceHover,
     alignItems: "center",
     justifyContent: "center",
   },
-  actionPrimary: { backgroundColor: "#050505" },
+  actionPrimary: { backgroundColor: dark.accent },
   actionQuiet: { backgroundColor: "transparent" },
   actionPressed: { opacity: 0.8 },
-  actionLabel: { fontFamily: family.medium, fontSize: 14, color: "#131315" },
-  actionLabelPrimary: { color: "#fff" },
-  actionLabelQuiet: { color: "#858589" },
+  actionLabel: { fontFamily: family.medium, fontSize: 14, color: dark.ink },
+  actionLabelPrimary: { color: dark.onAccent },
+  actionLabelQuiet: { color: dark.muted },
   field: {
     fontFamily: family.medium,
     fontSize: 11,
     letterSpacing: track(11, 0.12),
-    color: "#858589",
+    color: dark.muted,
   },
   input: {
     paddingVertical: space.md,
     paddingHorizontal: space.lg,
     borderRadius: 14,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: dark.surfaceHover,
     fontFamily: family.regular,
     fontSize: 15,
-    color: "#131315",
+    color: dark.ink,
     marginBottom: space.sm,
   },
   note: {
     fontFamily: family.regular,
     fontSize: 12,
     lineHeight: 12 * 1.6,
-    color: "#77777a",
+    color: dark.muted,
   },
   status: {
     fontFamily: family.regular,
     fontSize: 13,
     lineHeight: 13 * 1.6,
-    color: "#4e4e51",
+    color: dark.ink,
   },
-  statusFailed: { color: "#a5382a" },
-  devBanner: { padding: space.md, borderRadius: 14, backgroundColor: "#090909" },
+  statusFailed: { color: dark.red },
+  devBanner: { padding: space.md, borderRadius: 14, backgroundColor: dark.accent },
   devBannerText: {
     fontFamily: family.medium,
     fontSize: 11,
     letterSpacing: track(11, 0.08),
-    color: "#fff",
+    color: dark.onAccent,
     textAlign: "center",
   },
   phraseWords: {
@@ -525,6 +525,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 15 * 1.7,
     letterSpacing: track(15, 0.02),
-    color: "#131315",
+    color: dark.ink,
   },
 });

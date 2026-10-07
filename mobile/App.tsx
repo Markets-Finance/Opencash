@@ -5,6 +5,7 @@ import {
   DMSans_600SemiBold,
   useFonts,
 } from "@expo-google-fonts/dm-sans";
+import { DelaGothicOne_400Regular } from "@expo-google-fonts/dela-gothic-one";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { View } from "react-native";
@@ -14,18 +15,17 @@ import { Account, type Profile } from "./src/screens/Account";
 import { BinDetail } from "./src/screens/BinDetail";
 import { Bins } from "./src/screens/Bins";
 import { Trade } from "./src/screens/Trade";
-import { TradeDetail } from "./src/screens/TradeDetail";
 import type { TabKey } from "./src/components/TabBar";
 import { Home } from "./src/screens/Home";
 import { Landing } from "./src/screens/Landing";
+import { MarkIntro } from "./src/components/MarkIntro";
 import {
   loadPositions,
   loadTokens,
   loadUsdgBalance,
   type HoodData,
-  type TradeAsset,
 } from "./src/lib/hood";
-import { color } from "./src/theme";
+import { dark } from "./src/theme";
 
 type Screen =
   | "landing"
@@ -33,13 +33,11 @@ type Screen =
   | "bins"
   | "bin"
   | "home"
-  | "trade"
-  | "tradeAsset";
+  | "trade";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("landing");
   const [bin, setBin] = useState<Bin | null>(null);
-  const [tradeAsset, setTradeAsset] = useState<TradeAsset | null>(null);
   const [markets, setMarkets] = useState<HoodData | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
   const [trader, setTrader] = useState<TradingAccount | null>(null);
@@ -50,8 +48,10 @@ export default function App() {
     DMSans_400Regular,
     DMSans_500Medium,
     DMSans_600SemiBold,
+    DelaGothicOne_400Regular,
   });
   const [fontTimedOut, setFontTimedOut] = useState(false);
+  const [intro, setIntro] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => setFontTimedOut(true), 4000);
@@ -59,7 +59,7 @@ export default function App() {
   }, []);
 
   if (!loaded && !error && !fontTimedOut) {
-    return <View style={{ flex: 1, backgroundColor: color.paper }} />;
+    return <View style={{ flex: 1, backgroundColor: dark.paper }} />;
   }
 
 
@@ -91,7 +91,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       {screen === "landing" ? (
         <Landing onSignIn={() => setScreen("account")} />
       ) : screen === "account" ? (
@@ -117,23 +117,7 @@ export default function App() {
         />
       ) : screen === "trade" ? (
         trader !== null ? (
-          <Trade
-            trader={trader}
-            onSelectTab={goTab}
-            onOpenAsset={(asset) => {
-              setTradeAsset(asset);
-              setScreen("tradeAsset");
-            }}
-          />
-        ) : null
-      ) : screen === "tradeAsset" ? (
-        tradeAsset !== null && trader !== null ? (
-          <TradeDetail
-            asset={tradeAsset}
-            balance={balance}
-            trader={trader}
-            onBack={() => setScreen("trade")}
-          />
+          <Trade trader={trader} onSelectTab={goTab} />
         ) : null
       ) : screen === "home" ? (
         trader !== null ? <Home trader={trader} onSelectTab={goTab} /> : null
@@ -146,6 +130,7 @@ export default function App() {
           onBack={() => setScreen("bins")}
         />
       ) : null}
+      {intro && <MarkIntro onDone={() => setIntro(false)} />}
     </SafeAreaProvider>
   );
 }

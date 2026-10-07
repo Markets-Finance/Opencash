@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { stockLogoUrl } from "shared";
-import { family } from "../theme";
+import { dark, family } from "../theme";
 
 type AssetMarkProps = {
   symbol: string;
   size?: number;
+  uri?: string;
 };
 
 // Robinhood's own registry logoUrl turned out to be a red herring — every
@@ -14,8 +15,8 @@ type AssetMarkProps = {
 // Financial Modeling Prep's image CDN is free, unauthenticated, and keyed
 // directly by ticker, so this needs no registry lookup at all — just falls
 // back to a letter mark on a failed image load.
-export function AssetMark({ symbol, size = 32 }: AssetMarkProps) {
-  const logoUrl = stockLogoUrl(symbol);
+export function AssetMark({ symbol, size = 32, uri }: AssetMarkProps) {
+  const logoUrl = uri ?? stockLogoUrl(symbol);
   const [failed, setFailed] = useState(false);
   const showLogo = !failed;
 
@@ -67,7 +68,7 @@ export function LegStack({ symbols, size = 26 }: LegStackProps) {
 
 const styles = StyleSheet.create({
   mark: {
-    backgroundColor: "#090909",
+    backgroundColor: dark.surfaceLine,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
@@ -79,5 +80,5 @@ const styles = StyleSheet.create({
   },
   markText: { fontFamily: family.semibold, color: "#fff" },
   stack: { flexDirection: "row" },
-  stackItem: { borderWidth: 2, borderColor: "#fafafa" },
+  stackItem: { borderWidth: 2, borderColor: dark.surface },
 });

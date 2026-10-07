@@ -7,13 +7,7 @@
 }
 :root {
   font-family: "DM Sans", sans-serif;
-  color: #252527;
-  background: #f7f6f2;
   font-synthesis: none;
-  --paper: #f7f6f2;
-  --purple: #7165ed;
-  --ink: #252527;
-  --line: #d7d5d1;
   --gutter: clamp(24px, 5vw, 88px);
 }
 * {
@@ -590,7 +584,7 @@ svg.arrow {
 .tech-strip > span:first-child {
   font-size: 10px;
   letter-spacing: 0.12em;
-  color: #6d6870;
+  color: var(--muted);
 }
 .chain-mark {
   font-size: 32px;
@@ -729,7 +723,7 @@ svg.arrow {
   font-size: 12px;
 }
 .application-content dt {
-  color: #706976;
+  color: var(--muted);
 }
 .application-content dd {
   margin: 0;
@@ -747,11 +741,11 @@ svg.arrow {
   margin-top: auto;
 }
 .text-link:hover {
-  color: #25167a;
+  color: var(--ink);
 }
 .section-footnote {
   font-size: 11px;
-  color: #716b74;
+  color: var(--muted);
   margin-top: 20px;
   text-align: right;
 }
@@ -764,7 +758,7 @@ svg.arrow {
   border: 1px solid var(--line);
   display: grid;
   grid-template-columns: 0.8fr 1.2fr;
-  background: #faf9f6;
+  background: var(--surface);
 }
 .demo-summary {
   padding: 35px;
@@ -846,8 +840,8 @@ svg.arrow {
   justify-content: space-between;
   padding: 14px 20px;
   font-size: 13px;
-  background: #252527;
-  color: #fff;
+  background: var(--ink);
+  color: var(--paper);
   border-radius: 3px;
   margin-top: 15px;
 }
@@ -858,7 +852,7 @@ svg.arrow {
   background: none;
   padding: 15px;
   font-size: 11px;
-  color: #6d6870;
+  color: var(--muted);
   text-decoration: underline;
 }
 .light-button {
@@ -890,7 +884,7 @@ svg.arrow {
 .access-columns p {
   max-width: 400px;
   font-size: 14px;
-  color: #716b74;
+  color: var(--muted);
   margin-block: 25px;
 }
 .access-columns .text-link {
@@ -989,7 +983,7 @@ svg.arrow {
 }
 .footer-top > p {
   font-size: 13px;
-  color: #706976;
+  color: var(--muted);
   max-width: 190px;
   margin-right: auto;
 }
@@ -1019,7 +1013,7 @@ svg.arrow {
   border-top: 1px solid var(--line);
   padding-top: 25px;
   font-size: 10px;
-  color: #706976;
+  color: var(--muted);
 }
 @keyframes flow {
   to {

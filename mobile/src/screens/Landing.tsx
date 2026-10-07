@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Mark } from "../components/Mark";
-import { family, space, track } from "../theme";
+import { dark, family, space, track } from "../theme";
 
 export function Landing({ onSignIn }: { onSignIn: () => void }) {
   const insets = useSafeAreaInsets();
@@ -18,22 +18,22 @@ export function Landing({ onSignIn }: { onSignIn: () => void }) {
     >
       <View style={styles.content}>
         <View style={styles.mark}>
-          <Mark size={40} tint="#fff" />
+          <Mark size={40} tint={dark.onAccent} />
         </View>
 
         <View style={styles.copy}>
           <Text style={styles.eyebrow}>OPENCASH</Text>
-          <Text style={styles.title}>Take a framing{"\n"}in one tap.</Text>
+          <Text style={styles.title}>Trade the narrative.{"\n"}With leverage.</Text>
           <Text style={styles.subtitle}>
-            A bin pools a whole theme into one position. Every leg prices on its
-            own market, and your passkey signs every call.
+            A bin groups Hyperliquid markets that move together into one
+            position. Set the size and leverage; your passkey signs every order.
           </Text>
         </View>
 
         <View style={styles.facts}>
           {[
-            ["Composition", "Pooled around one theme"],
-            ["Pricing", "Each leg on its own venue"],
+            ["Composition", "Markets that move together"],
+            ["Leverage", "Capped by your deposit"],
             ["Custody", "OpenCash never holds withdrawal power"],
           ].map(([label, value]) => (
             <View key={label} style={styles.fact}>
@@ -57,7 +57,7 @@ export function Landing({ onSignIn }: { onSignIn: () => void }) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#ededed",
+    backgroundColor: dark.paper,
     paddingHorizontal: space.xl,
   },
   content: { flex: 1, justifyContent: "center", gap: space.xl },
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 20,
-    backgroundColor: "#090909",
+    backgroundColor: dark.accent,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -74,29 +74,28 @@ const styles = StyleSheet.create({
     fontFamily: family.medium,
     fontSize: 11,
     letterSpacing: track(11, 0.14),
-    color: "#858589",
+    color: dark.muted,
   },
   title: {
-    fontFamily: family.semibold,
+    fontFamily: family.display,
     fontSize: 38,
     lineHeight: 38 * 1.14,
-    letterSpacing: track(38, -0.04),
-    color: "#0c0c0c",
+    color: dark.ink,
   },
   subtitle: {
     fontFamily: family.regular,
     fontSize: 15,
     lineHeight: 15 * 1.6,
-    color: "#77777a",
+    color: dark.muted,
     maxWidth: 320,
   },
-  facts: { gap: space.md, padding: space.lg, borderRadius: 18, backgroundColor: "#fafafa" },
+  facts: { gap: space.md, padding: space.lg, borderRadius: 18, backgroundColor: dark.surface, borderWidth: 1, borderColor: dark.surfaceLine },
   fact: { flexDirection: "row", alignItems: "baseline", gap: space.md },
   factLabel: {
     fontFamily: family.medium,
     fontSize: 11,
     letterSpacing: track(11, 0.12),
-    color: "#858589",
+    color: dark.muted,
     width: 96,
   },
   factValue: {
@@ -104,15 +103,15 @@ const styles = StyleSheet.create({
     fontFamily: family.regular,
     fontSize: 13,
     lineHeight: 13 * 1.55,
-    color: "#131315",
+    color: dark.ink,
   },
   button: {
     alignItems: "center",
     justifyContent: "center",
     minHeight: 64,
     borderRadius: 33,
-    backgroundColor: "#050505",
+    backgroundColor: dark.accent,
   },
-  buttonLabel: { fontFamily: family.medium, fontSize: 16, color: "#fff" },
+  buttonLabel: { fontFamily: family.medium, fontSize: 16, color: dark.onAccent },
   pressed: { opacity: 0.85 },
 });

@@ -16,11 +16,34 @@ export const color = {
   onDarkFaint: "#d5d3dc",
 } as const;
 
+export const dark = {
+  paper: "#0b0f0e",
+  ink: "#e8ece9",
+  muted: "#858589",
+  line: "#2a3330",
+  surface: "#131917",
+  surfaceHover: "#1b2220",
+  surfaceLine: "#222a27",
+  green: "#3ddc84",
+  red: "#ff6b6b",
+  redSoft: "rgba(255, 107, 107, 0.12)",
+  accent: "#7165ed",
+  onAccent: "#ffffff",
+  scrim: "rgba(0, 0, 0, 0.5)",
+  lime: "#b4f58c",
+  limeInk: "#2d6a1e",
+  wallet: "#0c0c0c",
+  onWallet: "#ffffff",
+} as const;
+
+export const touch = 44;
+
 export const family = {
   light: "DMSans_300Light",
   regular: "DMSans_400Regular",
   medium: "DMSans_500Medium",
   semibold: "DMSans_600SemiBold",
+  display: "DelaGothicOne_400Regular",
 } as const;
 
 export const space = {
