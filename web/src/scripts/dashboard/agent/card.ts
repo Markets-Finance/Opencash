@@ -1,6 +1,7 @@
-import { binFromCard, sizeBinFor, type StrategyCard, type StrategyLeg } from "../../perpl";
+import { binFromCard, sizeBinFor, type BotMode, type StrategyCard, type StrategyLeg } from "../../perpl";
 import type { StrategyPreview } from "shared";
 import { errorText, esc, markForSymbol, px, query, say, usd } from "../dom";
+import { addBotFromCard } from "../bots";
 import { initHome } from "../home";
 import { getMarketData, getPositions } from "../market";
 import { requireTrader } from "../state";
@@ -180,4 +181,15 @@ export function initCard() {
     setCard(card);
   });
   ui.approve.addEventListener("click", () => void approve());
+  query<HTMLButtonElement>("[data-card-bot]").addEventListener("click", async () => {
+    if (!card) return;
+    readFields();
+    const mode = query<HTMLSelectElement>("[data-card-mode]").value as BotMode;
+    try {
+      await addBotFromCard(structuredClone(card), mode);
+      say(ui.status, "Bot added under Your bots. Press Start there to run it.");
+    } catch (error) {
+      say(ui.status, errorText(error), "error");
+    }
+  });
 }

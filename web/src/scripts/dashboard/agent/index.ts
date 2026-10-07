@@ -1,6 +1,7 @@
 import { bins, cardFromBin, ruleDrafter } from "../../perpl";
 import { esc, query } from "../dom";
 import { addLeg, initCard, setCard } from "./card";
+import { initLab } from "../lab";
 import { onAddLeg, pushOutcome } from "./feed";
 import { run, toolbox } from "./session";
 
@@ -23,6 +24,7 @@ function readArgs(tool: string): Record<string, unknown> {
 }
 
 export function initAgent() {
+  void initLab();
   initCard();
   onAddLeg(addLeg);
 

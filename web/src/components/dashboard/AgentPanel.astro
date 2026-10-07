@@ -1,4 +1,9 @@
+---
+import StrategyLab from "./StrategyLab.astro";
+---
 <section class="panel" data-panel="agent" hidden>
+  <StrategyLab />
+  <h3 class="lab__sub">Ask the agent</h3>
   <div class="agent">
     <div class="agent__main">
       <form class="agent__composer" data-agent-form>
@@ -37,22 +42,44 @@
       </div>
     </div>
 
-    <aside class="agent__card card" data-agent-card>
-      <span class="card__label">Strategy card</span>
-      <p class="empty" data-card-empty>Draft a trade or pick an idea to build a card.</p>
-      <div data-card-body hidden>
-        <label class="field"><span>Name</span><input data-card-name /></label>
-        <div class="agent__row">
-          <label class="field"><span>Margin $</span><input data-card-margin type="number" min="0" step="any" /></label>
-          <label class="field"><span>Stop %</span><input data-card-stop type="number" min="0" step="any" /></label>
-          <label class="field"><span>Target %</span><input data-card-tp type="number" min="0" step="any" /></label>
+    <div class="agent__side">
+      <aside class="agent__card card" data-agent-card>
+        <span class="card__label">Strategy card</span>
+        <p class="empty" data-card-empty>Draft a trade or pick an idea to build a card.</p>
+        <div data-card-body hidden>
+          <label class="field"><span>Name</span><input data-card-name /></label>
+          <div class="agent__row">
+            <label class="field"><span>Margin $</span><input data-card-margin type="number" min="0" step="any" /></label>
+            <label class="field"><span>Stop %</span><input data-card-stop type="number" min="0" step="any" /></label>
+            <label class="field"><span>Target %</span><input data-card-tp type="number" min="0" step="any" /></label>
+          </div>
+          <div data-card-legs class="agent__legs"></div>
+          <button type="button" class="link-btn" data-card-add>+ Add leg</button>
+          <div data-card-preview class="agent__preview"></div>
+          <button type="button" class="btn btn--primary" data-card-approve disabled>Open now with passkey</button>
+          <div class="agent__botrow">
+            <select data-card-mode aria-label="Bot mode">
+              <option value="guard">Guard an open position</option>
+              <option value="auto">Auto open and guard</option>
+            </select>
+            <button type="button" class="btn" data-card-bot>Run as bot</button>
+          </div>
+          <p class="status-line" data-card-status></p>
         </div>
-        <div data-card-legs class="agent__legs"></div>
-        <button type="button" class="link-btn" data-card-add>+ Add leg</button>
-        <div data-card-preview class="agent__preview"></div>
-        <button type="button" class="btn btn--primary" data-card-approve disabled>Approve with passkey</button>
-        <p class="status-line" data-card-status></p>
-      </div>
-    </aside>
+      </aside>
+
+      <section class="card agent__bots">
+        <span class="card__label">Your bots</span>
+        <p class="bots__note">
+          Bots run in this tab while you are signed in. Close it and they stop. Every action is logged with its
+          transaction.
+        </p>
+        <p class="agent__hint" data-bot-hint></p>
+        <div class="bots__list" data-paper-list></div>
+        <div class="bots__list" data-bot-list>
+          <p class="empty">No bots yet.</p>
+        </div>
+      </section>
+    </div>
   </div>
 </section>

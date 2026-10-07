@@ -125,3 +125,6 @@
   gap: var(--sp-sm);
   padding: var(--sp-lg);
 }
+.bots--wide {
+  max-width: 1200px;
+}

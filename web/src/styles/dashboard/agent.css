@@ -9,10 +9,31 @@
   display: grid;
   gap: var(--sp-md);
 }
+.agent__side {
+  display: grid;
+  gap: var(--sp-md);
+}
 .agent__card {
-  position: sticky;
-  top: var(--sp-md);
   padding: var(--sp-lg);
+}
+.agent__bots {
+  display: grid;
+  gap: var(--sp-sm);
+  padding: var(--sp-lg);
+}
+.agent__botrow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--sp-sm);
+}
+.agent__botrow select {
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
 }
 .agent__card [data-card-body]:not([hidden]) {
   display: grid;
@@ -230,8 +251,7 @@
   .agent {
     grid-template-columns: 1fr;
   }
-  .agent__card {
-    position: static;
+  .agent__side {
     order: -1;
   }
   .agent__card:has([data-card-body][hidden]) {

@@ -2,6 +2,10 @@ import { createTerminal, perpl } from "shared";
 import { publicClient, walletClientFor } from "./chain";
 
 export {
+  cardDigestInput,
+  followMessage,
+  publishMessage,
+  unfollowMessage,
   createBot,
   createBotRuntime,
   type Bot,

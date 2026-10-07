@@ -20,7 +20,24 @@ import AccountCard from "../AccountCard.astro";
           <button type="button" class="btn" data-shuffle>Shuffle avatar</button>
         </div>
       </div>
-      <button type="button" class="btn btn--quiet" data-sign-out>Sign out</button>
+      <div class="card" data-x-card>
+      <span class="card__label">Verified X account</span>
+      <p class="agent__hint" data-x-status>Prove this address is yours on X. It adds your handle to leaderboards.</p>
+      <form class="bots__form" data-x-form>
+        <input type="text" data-x-handle autocomplete="off" placeholder="@yourhandle" />
+        <button type="submit" class="btn btn--primary">Get proof</button>
+      </form>
+      <div data-x-step hidden>
+        <p class="bots__note">1. Post this exactly as it is. 2. Paste the link to your post.</p>
+        <textarea data-x-text readonly rows="5"></textarea>
+        <div class="bots__form">
+          <a class="btn" data-x-post target="_blank" rel="noreferrer">Post on X</a>
+          <input type="text" data-x-url autocomplete="off" placeholder="https://x.com/you/status/…" />
+          <button type="button" class="btn btn--primary" data-x-verify>Verify</button>
+        </div>
+      </div>
+    </div>
+    <button type="button" class="btn btn--quiet" data-sign-out>Sign out</button>
       <p class="account-status" data-account-status role="status"></p>
     </div>
   </div>
