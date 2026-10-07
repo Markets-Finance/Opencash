@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
-import { stockLogoUrl } from "shared";
 import { dark, family } from "../theme";
 
 type AssetMarkProps = {
@@ -9,16 +8,9 @@ type AssetMarkProps = {
   uri?: string;
 };
 
-// Robinhood's own registry logoUrl turned out to be a red herring — every
-// token returns the same generic Robinhood brand mark, not a real
-// per-company logo (verified: identical bytes across several symbols).
-// Financial Modeling Prep's image CDN is free, unauthenticated, and keyed
-// directly by ticker, so this needs no registry lookup at all — just falls
-// back to a letter mark on a failed image load.
 export function AssetMark({ symbol, size = 32, uri }: AssetMarkProps) {
-  const logoUrl = uri ?? stockLogoUrl(symbol);
   const [failed, setFailed] = useState(false);
-  const showLogo = !failed;
+  const showLogo = uri !== undefined && !failed;
 
   return (
     <View
@@ -30,7 +22,7 @@ export function AssetMark({ symbol, size = 32, uri }: AssetMarkProps) {
     >
       {showLogo ? (
         <Image
-          source={{ uri: logoUrl }}
+          source={{ uri }}
           style={{ width: size, height: size, borderRadius: size / 2 }}
           onError={() => setFailed(true)}
         />

@@ -1,9 +1,10 @@
-import type { HoodQuote } from "../hood/quote.js";
-import type { StockTokenEntry } from "../hood/registry.js";
+export type BinDirection = "long" | "short";
 
 export type BinLeg = {
   symbol: string;
+  direction: BinDirection;
   weightBps: number;
+  leverage: number;
 };
 
 export type Bin = {
@@ -15,19 +16,23 @@ export type Bin = {
 
 export type SizedLeg = {
   leg: BinLeg;
-  token: StockTokenEntry;
-  usdgIn: number;
-  quote: HoodQuote;
+  perpId: number;
+  margin: number;
+  notional: number;
+  lots: number;
+  mark: number;
+  leverage: number;
 };
 
 export type SizedBin = {
   bin: Bin;
   legs: SizedLeg[];
-  usdgIn: number;
+  margin: number;
+  notional: number;
 };
 
 export type BinSizingIssue = {
   symbol: string;
-  reason: "unknown-token" | "no-liquidity" | "below-minimum" | "price-deviation";
+  reason: "unknown-market" | "no-liquidity" | "leverage-capped" | "below-minimum";
   detail: string;
 };

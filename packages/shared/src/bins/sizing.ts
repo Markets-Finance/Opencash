@@ -1,8 +1,4 @@
-import type { PublicClient } from "viem";
-import { isSafePremium, premiumBps, referenceMid } from "../hood/liquidity.js";
-import { fetchOfficialPrices, type OfficialQuote } from "../hood/prices.js";
-import { quoteUsdgToToken } from "../hood/quote.js";
-import type { StockTokenEntry } from "../hood/registry.js";
+import type { PerpMarket } from "../perpl/markets.js";
 import type { Bin, BinSizingIssue, SizedBin, SizedLeg } from "./types.js";
 
 export const totalWeightBps = 10000;
@@ -16,87 +12,78 @@ export function validateBin(bin: Bin): void {
   }
 }
 
-export async function sizeBin(
-  client: PublicClient,
+export function sizeBin(
   bin: Bin,
-  usdgAmount: number,
-  tokens: Map<string, StockTokenEntry>,
-  // Browsers can't call api.robinhood.com directly (no CORS headers) — web
-  // callers inject a backend-proxied fetcher here. Node callers (mobile,
-  // the backend itself) are fine with the default direct call. Either way,
-  // a failure here degrades to skipping the price-deviation check rather
-  // than blocking sizing entirely — a quote is still validated for
-  // liquidity below, just not cross-checked against a reference price.
-  fetchPrices: (symbols: string[]) => Promise<Map<string, OfficialQuote>> = fetchOfficialPrices,
-): Promise<{ sized: SizedBin; issues: BinSizingIssue[] }> {
+  margin: number,
+  markets: Map<string, PerpMarket>,
+  maxLeverageBySymbol: Map<string, number>,
+): { sized: SizedBin; issues: BinSizingIssue[] } {
   validateBin(bin);
 
   const issues: BinSizingIssue[] = [];
   const legs: SizedLeg[] = [];
-  const references = await fetchPrices(bin.legs.map((leg) => leg.symbol)).catch(
-    () => new Map<string, OfficialQuote>(),
-  );
 
-  await Promise.all(
-    bin.legs.map(async (leg) => {
-      const token = tokens.get(leg.symbol);
-      if (!token) {
-        issues.push({
-          symbol: leg.symbol,
-          reason: "unknown-token",
-          detail: `${leg.symbol} is not in the Robinhood Chain stock-token registry`,
-        });
-        return;
-      }
+  for (const leg of bin.legs) {
+    const market = markets.get(leg.symbol);
+    if (!market) {
+      issues.push({
+        symbol: leg.symbol,
+        reason: "unknown-market",
+        detail: `${leg.symbol} is not listed on this deployment`,
+      });
+      continue;
+    }
 
-      const legUsdg = (usdgAmount * leg.weightBps) / totalWeightBps;
-      const quote = await quoteUsdgToToken(
-        client,
-        token.tokenAddress,
-        legUsdg,
-        token.tokenDecimals,
-      );
+    if (market.numOrders === 0) {
+      issues.push({
+        symbol: leg.symbol,
+        reason: "no-liquidity",
+        detail: `${leg.symbol} has no resting orders`,
+      });
+      continue;
+    }
 
-      if (!quote) {
-        issues.push({
-          symbol: leg.symbol,
-          reason: "no-liquidity",
-          detail: `${leg.symbol} has no USDG pool on Uniswap`,
-        });
-        return;
-      }
+    const cap = maxLeverageBySymbol.get(leg.symbol) ?? leg.leverage;
+    const leverage = Math.min(leg.leverage, cap);
+    if (leverage < leg.leverage) {
+      issues.push({
+        symbol: leg.symbol,
+        reason: "leverage-capped",
+        detail: `${leg.symbol} capped from ${leg.leverage}x to ${leverage}x`,
+      });
+    }
 
-      if (quote.tokensOut <= 0) {
-        issues.push({
-          symbol: leg.symbol,
-          reason: "below-minimum",
-          detail: `$${legUsdg.toFixed(2)} quotes to zero ${leg.symbol}`,
-        });
-        return;
-      }
+    const legMargin = (margin * leg.weightBps) / totalWeightBps;
+    const lotUnit = 10 ** market.lotDecimals;
+    const units = Math.floor(((legMargin * leverage) / market.mark) * lotUnit);
+    const lots = units / lotUnit;
 
-      const official = references.get(leg.symbol);
-      if (official) {
-        const bps = premiumBps(quote.price, referenceMid(official.bid, official.ask));
-        if (!isSafePremium(bps)) {
-          issues.push({
-            symbol: leg.symbol,
-            reason: "price-deviation",
-            detail: `${leg.symbol}'s pool is too thin to trust — its quote is ${bps === null ? "far" : `${(bps / 100).toFixed(1)}%`} from the reference price`,
-          });
-          return;
-        }
-      }
+    if (units <= 0) {
+      issues.push({
+        symbol: leg.symbol,
+        reason: "below-minimum",
+        detail: `$${legMargin.toFixed(2)} at ${leverage}x is under one lot of ${leg.symbol}`,
+      });
+      continue;
+    }
 
-      legs.push({ leg, token, usdgIn: legUsdg, quote });
-    }),
-  );
+    legs.push({
+      leg,
+      perpId: market.perpId,
+      margin: legMargin,
+      notional: lots * market.mark,
+      lots,
+      mark: market.mark,
+      leverage,
+    });
+  }
 
   return {
     sized: {
       bin,
       legs,
-      usdgIn: legs.reduce((sum, leg) => sum + leg.usdgIn, 0),
+      margin: legs.reduce((sum, leg) => sum + leg.margin, 0),
+      notional: legs.reduce((sum, leg) => sum + leg.notional, 0),
     },
     issues,
   };

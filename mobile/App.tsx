@@ -20,11 +20,11 @@ import { Home } from "./src/screens/Home";
 import { Landing } from "./src/screens/Landing";
 import { MarkIntro } from "./src/components/MarkIntro";
 import {
-  loadPositions,
-  loadTokens,
-  loadUsdgBalance,
-  type HoodData,
-} from "./src/lib/hood";
+  loadCollateralBalance,
+  loadMarkets,
+  loadSummary,
+  type MarketData,
+} from "./src/lib/perpl";
 import { dark } from "./src/theme";
 
 type Screen =
@@ -38,7 +38,7 @@ type Screen =
 export default function App() {
   const [screen, setScreen] = useState<Screen>("landing");
   const [bin, setBin] = useState<Bin | null>(null);
-  const [markets, setMarkets] = useState<HoodData | null>(null);
+  const [markets, setMarkets] = useState<MarketData | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
   const [trader, setTrader] = useState<TradingAccount | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -69,15 +69,13 @@ export default function App() {
     setPortfolio(null);
     if (account === null) return;
 
-    loadUsdgBalance(account.address)
-      .then((usdg) => setBalance(usdg))
+    loadCollateralBalance(account.address)
+      .then((ausd) => setBalance(ausd))
       .catch(() => setBalance(null));
 
-    loadTokens()
-      .then((data) => loadPositions(account.address, data.tokens))
-      .then((held) =>
-        setPortfolio(held.reduce((sum, position) => sum + position.valueUsdg, 0)),
-      )
+    loadMarkets()
+      .then((data) => loadSummary(account.address, data))
+      .then((summary) => setPortfolio(summary.total))
       .catch(() => setPortfolio(null));
   }
 

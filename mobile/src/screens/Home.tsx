@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { bins, type BinPosition, type MarketChart, type TradingAccount } from "shared";
+import { bins, type BinPosition, type TradingAccount } from "shared";
 import { AssetMark, LegStack } from "../components/AssetMark";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
-import { fetchMarketCharts, snapshotPortfolio } from "../lib/backend";
-import { coinLogoUrl, fallbackCoins, loadHlSummary, type HlSummary } from "../lib/hl";
-import { loadPositions, loadTokens, loadUsdgBalance } from "../lib/hood";
+import { loadMarkets, loadPositions, loadSummary, type MarketData, type PortfolioSummary } from "../lib/perpl";
 import { dark, family, space, touch, track } from "../theme";
 
 const featuredSymbols = [...new Set(bins.flatMap((bin) => bin.legs.map((leg) => leg.symbol)))];
@@ -19,9 +17,6 @@ type HomeProps = {
 function usd(value: number): string {
   return `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
-function pct(value: number): string {
-  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
-}
 function money(value: number): { whole: string; cents: string } {
   const [whole, cents] = Math.abs(value)
     .toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -31,43 +26,28 @@ function money(value: number): { whole: string; cents: string } {
 
 export function Home({ trader, onSelectTab }: HomeProps) {
   const insets = useSafeAreaInsets();
-  const [balance, setBalance] = useState<number | null>(null);
-  const [hl, setHl] = useState<HlSummary | null>(null);
+  const [summary, setSummary] = useState<PortfolioSummary | null>(null);
   const [positions, setPositions] = useState<BinPosition[] | null>(null);
+  const [data, setData] = useState<MarketData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [charts, setCharts] = useState<Record<string, MarketChart> | null>(null);
-
-  useEffect(() => {
-    loadUsdgBalance(trader.address)
-      .then(setBalance)
-      .catch(() => setBalance(null));
-  }, [trader.address]);
 
   useEffect(() => {
     let live = true;
-    loadTokens()
-      .then((data) => loadPositions(trader.address, data.tokens))
+    loadMarkets()
+      .then((markets) => {
+        if (live) setData(markets);
+        loadSummary(trader.address, markets).then((next) => live && setSummary(next)).catch(() => live && setSummary(null));
+        return loadPositions(trader.address, markets);
+      })
       .then((held) => live && setPositions(held))
       .catch((cause) => live && setError(String(cause)));
-    fetchMarketCharts(featuredSymbols)
-      .then((next) => live && setCharts(next))
-      .catch(() => {});
-    loadHlSummary(trader.address)
-      .then((next) => live && setHl(next))
-      .catch(() => live && setHl(null));
     return () => {
       live = false;
     };
   }, [trader.address]);
 
-  useEffect(() => {
-    if (balance === null || positions === null) return;
-    const positionsValue = positions.reduce((sum, p) => sum + p.valueUsdg, 0);
-    void snapshotPortfolio({ owner: trader.address, usdgBalance: balance, positionsValue }).catch(() => {});
-  }, [balance, positions, trader.address]);
-
-  const total = money(hl?.total ?? 0);
-  const pnl = hl?.unrealizedPnl ?? 0;
+  const total = money(summary?.total ?? 0);
+  const pnl = summary?.unrealizedPnl ?? 0;
   const change = money(Math.abs(pnl));
 
   return (
@@ -91,7 +71,7 @@ export function Home({ trader, onSelectTab }: HomeProps) {
             <View style={[styles.dot, styles.dotBottomLeft]} />
             <View style={[styles.dot, styles.dotBottomRight]} />
             <View style={styles.coinStack}>
-              {(hl?.coins ?? fallbackCoins).map((coin, index) => (
+              {(summary?.symbols.length ? summary.symbols : featuredSymbols).slice(0, 4).map((coin, index) => (
                 <CoinMark key={coin} coin={coin} first={index === 0} />
               ))}
             </View>
@@ -129,24 +109,16 @@ export function Home({ trader, onSelectTab }: HomeProps) {
           </Pressable>
         </View>
 
-        <Text style={styles.sectionTitle}>Top Assets</Text>
+        <Text style={styles.sectionTitle}>Markets</Text>
         <View style={styles.card}>
           {featuredSymbols.map((symbol) => {
-            const chart = charts?.[symbol];
+            const mark = data?.markets.get(symbol)?.mark;
             return (
               <View key={symbol} style={styles.assetRow}>
                 <AssetMark symbol={symbol} size={32} />
                 <Text style={styles.assetSymbol}>{symbol}</Text>
                 <View style={styles.spacer} />
-                <Text style={styles.assetPrice}>{chart ? usd(chart.price) : "—"}</Text>
-                <Text
-                  style={[
-                    styles.assetChange,
-                    chart ? (chart.changePercent >= 0 ? styles.changeUp : styles.changeDown) : null,
-                  ]}
-                >
-                  {chart ? pct(chart.changePercent) : "—"}
-                </Text>
+                <Text style={styles.assetPrice}>{mark === undefined ? "—" : usd(mark)}</Text>
               </View>
             );
           })}
@@ -159,22 +131,14 @@ export function Home({ trader, onSelectTab }: HomeProps) {
           contentContainerStyle={styles.tickerRow}
         >
           {featuredSymbols.slice(0, 4).map((symbol) => {
-            const chart = charts?.[symbol];
+            const mark = data?.markets.get(symbol)?.mark;
             return (
               <View key={symbol} style={styles.tickerCard}>
                 <View style={styles.tickerHead}>
                   <AssetMark symbol={symbol} size={22} />
                   <Text style={styles.tickerSymbol}>{symbol}</Text>
                 </View>
-                <Text style={styles.tickerPrice}>{chart ? usd(chart.price) : "—"}</Text>
-                <Text
-                  style={[
-                    styles.tickerChange,
-                    chart ? (chart.changePercent >= 0 ? styles.changeUp : styles.changeDown) : null,
-                  ]}
-                >
-                  {chart ? `${pct(chart.changePercent)} today` : "—"}
-                </Text>
+                <Text style={styles.tickerPrice}>{mark === undefined ? "—" : usd(mark)}</Text>
               </View>
             );
           })}
@@ -196,7 +160,7 @@ export function Home({ trader, onSelectTab }: HomeProps) {
                   <Text style={styles.assetSymbol}>{position.bin.name}</Text>
                   <Text style={styles.muted}>{position.legs.map((leg) => leg.symbol).join(", ")}</Text>
                 </View>
-                <Text style={styles.assetPrice}>{usd(position.valueUsdg)}</Text>
+                <Text style={styles.assetPrice}>{usd(position.deposit + position.pnl)}</Text>
               </View>
             ))}
           </View>
@@ -211,14 +175,9 @@ export function Home({ trader, onSelectTab }: HomeProps) {
 type CoinMarkProps = { coin: string; first: boolean };
 
 function CoinMark({ coin, first }: CoinMarkProps) {
-  const [failed, setFailed] = useState(false);
   return (
     <View style={[styles.coin, !first && styles.coinOverlap]}>
-      {failed ? (
-        <Text style={styles.coinLetter}>{coin.slice(0, 1)}</Text>
-      ) : (
-        <Image source={{ uri: coinLogoUrl(coin) }} style={styles.coinImage} onError={() => setFailed(true)} />
-      )}
+      <Text style={styles.coinLetter}>{coin.slice(0, 1)}</Text>
     </View>
   );
 }

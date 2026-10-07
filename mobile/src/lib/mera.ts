@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { reactNativeWebAuthnClient } from "@category-labs/mera/react-native-webauthn-client";
 import {
   createTradingAccount,
-  hood,
+  monadTestnetChain,
   relyingPartyId,
   relyingPartyName,
   revealRecoveryPhrase,
@@ -47,14 +47,14 @@ export function revealPhrase(): Promise<string> {
 }
 
 export const publicClient = createPublicClient({
-  chain: hood,
+  chain: monadTestnetChain,
   transport: http(),
 });
 
 export function walletClientFor(tradingAccount: TradingAccount) {
   return createWalletClient({
     account: tradingAccount.account,
-    chain: hood,
+    chain: monadTestnetChain,
     transport: http(),
   });
 }

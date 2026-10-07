@@ -4,24 +4,24 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { bins, type Bin } from "shared";
 import { AssetMark } from "../components/AssetMark";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
-import { loadTokens, type HoodData } from "../lib/hood";
+import { loadMarkets, type MarketData } from "../lib/perpl";
 import { dark, family, space, touch, track } from "../theme";
 
 type BinsProps = {
-  onOpen: (bin: Bin, data: HoodData) => void;
+  onOpen: (bin: Bin, data: MarketData) => void;
   onComplete: () => void;
   onSelectTab: (key: TabKey) => void;
 };
 
 export function Bins({ onOpen, onComplete, onSelectTab }: BinsProps) {
   const insets = useSafeAreaInsets();
-  const [data, setData] = useState<HoodData | null>(null);
+  const [data, setData] = useState<MarketData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([bins[0].id, bins[1].id]);
 
   useEffect(() => {
     let live = true;
-    loadTokens().then((result) => live && setData(result)).catch(() => live && setError("Markets are unavailable right now."));
+    loadMarkets().then((result) => live && setData(result)).catch(() => live && setError("Markets are unavailable right now."));
     return () => { live = false; };
   }, []);
 
@@ -38,7 +38,7 @@ export function Bins({ onOpen, onComplete, onSelectTab }: BinsProps) {
       </View>
 
       <View style={styles.tabs}>
-        {['Picks', 'Stocks', 'Futures', 'RWA', 'Ranks'].map((tab, index) => <View key={tab} style={[styles.tab, index === 0 && styles.activeTab]}><Text style={[styles.tabLabel, index === 0 && styles.activeTabLabel]}>{tab}</Text></View>)}
+        {['Picks', 'Majors', 'Layer ones', 'Spreads'].map((tab, index) => <View key={tab} style={[styles.tab, index === 0 && styles.activeTab]}><Text style={[styles.tabLabel, index === 0 && styles.activeTabLabel]}>{tab}</Text></View>)}
       </View>
 
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + tabBarHeight + 112 }]} showsVerticalScrollIndicator={false}>
@@ -47,10 +47,10 @@ export function Bins({ onOpen, onComplete, onSelectTab }: BinsProps) {
           {bins.map((bin) => {
             const active = selected.includes(bin.id);
             const lead = bin.legs[0];
-            const price = data.price.get(lead.symbol);
+            const price = data.markets.get(lead.symbol)?.mark;
             return <Pressable key={bin.id} onPress={() => toggle(bin)} onLongPress={() => onOpen(bin, data)} style={({ pressed }) => [styles.card, active && styles.cardActive, pressed && styles.cardPressed]}>
               <View style={styles.assetMark}><AssetMark symbol={lead.symbol} size={48} /></View>
-              <Text style={styles.symbol}>{lead.symbol}<Text style={styles.quote}> / USDG</Text></Text>
+              <Text style={styles.symbol}>{lead.symbol}<Text style={styles.quote}> / AUSD</Text></Text>
               <Text style={styles.marketName}>{bin.name}</Text>
               <Text style={styles.price}>{price === undefined ? 'Market price' : `$${price.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}</Text>
               <View style={[styles.add, active && styles.addActive]}><Text style={[styles.addLabel, active && styles.addLabelActive]}>{active ? '✓' : '+'}</Text></View>
