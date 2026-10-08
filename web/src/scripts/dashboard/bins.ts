@@ -41,6 +41,7 @@ export function initBins() {
   build.type = "button";
   build.className = "tile-card";
   build.innerHTML = `
+    <div class="leg-stack"><span class="tile-plus">+</span></div>
     <span class="tile-card__name">Build your own</span>
     <span class="tile-card__thesis">${customBase.thesis}</span>
     <div class="tile-card__legs"><div class="tile-leg"><span>Pick assets</span><span>+</span></div></div>`;

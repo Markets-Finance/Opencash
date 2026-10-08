@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { parseNet } from "./context.js";
+import { leaderboardView, parseSort } from "./leaderboard.js";
 import { protocolView } from "./protocol.js";
 import { storeFor } from "./store.js";
 import { walletView } from "./wallet.js";
@@ -10,6 +11,14 @@ export function registerAnalyticsRoute(app: FastifyInstance): void {
   app.get<{ Querystring: { network?: string } }>("/analytics/protocol", async (request, reply) => {
     try {
       return await protocolView(parseNet(request.query.network));
+    } catch (error) {
+      return reply.status(502).send({ error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  app.get<{ Querystring: { network?: string; sort?: string; limit?: string } }>("/analytics/leaderboard", async (request, reply) => {
+    try {
+      return await leaderboardView(parseNet(request.query.network), parseSort(request.query.sort), Math.min(Math.max(Number(request.query.limit) || 10, 1), 50));
     } catch (error) {
       return reply.status(502).send({ error: error instanceof Error ? error.message : String(error) });
     }

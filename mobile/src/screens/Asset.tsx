@@ -131,12 +131,12 @@ export function Asset({ symbol, trader, onBack, onSelectTab, onStrategies }: Ass
   const stats: { label: string; value: string }[] = [
     { label: "24h volume", value: snapshot ? compact(snapshot.volume24hUsd) : "—" },
     { label: "Open interest", value: snapshot ? compact(snapshot.openInterestUsd) : "—" },
-    { label: "Max leverage", value: cap ? `${cap}x` : "—" },
     { label: "Spread", value: snapshot ? `${snapshot.spreadBps.toFixed(1)} bps` : "—" },
     { label: "Funding now", value: snapshot ? `${snapshot.funding.nowAprPct.toFixed(1)}% a year` : "—" },
     { label: "Funding avg 7d", value: snapshot ? `${snapshot.funding.meanAprPct.toFixed(1)}% a year` : "—" },
     { label: "Fees maker · taker", value: snapshot ? `${snapshot.makerFeeBps.toFixed(1)} · ${snapshot.takerFeeBps.toFixed(1)} bps` : "—" },
-    { label: "Book within 25 bps", value: depth ? `${compact(depth.bidUsdWithin25Bps)} bid · ${compact(depth.askUsdWithin25Bps)} ask` : "—" },
+    { label: "Bids within 25 bps", value: depth ? compact(depth.bidUsdWithin25Bps) : "—" },
+    { label: "Asks within 25 bps", value: depth ? compact(depth.askUsdWithin25Bps) : "—" },
   ];
 
   return (
@@ -153,7 +153,7 @@ export function Asset({ symbol, trader, onBack, onSelectTab, onStrategies }: Ass
 
         {error !== null && <Text style={styles.error}>{error}</Text>}
 
-        <ToneCard fill={tone.violet}>
+        <ToneCard>
           <View style={styles.head}>
             <AssetMark symbol={symbol} size={48} />
             <View style={styles.flex}>
@@ -165,14 +165,14 @@ export function Asset({ symbol, trader, onBack, onSelectTab, onStrategies }: Ass
           <View style={styles.tags}>
             {dayChange !== null && (
               <View style={styles.changeTag}>
-                <Text style={styles.changeText}>
+                <Text style={[styles.changeText, { color: dayChange >= 0 ? dark.green : dark.red }]}>
                   {dayChange >= 0 ? "▲" : "▼"} {Math.abs(dayChange).toFixed(2)}% today
                 </Text>
               </View>
             )}
             {rangeChange !== null && (
               <View style={styles.changeTag}>
-                <Text style={styles.changeText}>
+                <Text style={[styles.changeText, { color: rangeChange >= 0 ? dark.green : dark.red }]}>
                   {rangeChange >= 0 ? "▲" : "▼"} {Math.abs(rangeChange).toFixed(2)}% over {range.toUpperCase()}
                 </Text>
               </View>
@@ -187,7 +187,7 @@ export function Asset({ symbol, trader, onBack, onSelectTab, onStrategies }: Ass
               <Text style={styles.onColorMuted}>No trades in this range yet.</Text>
             </View>
           ) : (
-            <LineChart values={candles.map((c) => c.close)} height={180} color={tone.ink} label={(i) => `${stamp(candles[i].time, range)} · ${px(candles[i].close)}`} />
+            <LineChart values={candles.map((c) => c.close)} height={200} color={candles[candles.length - 1].close >= candles[0].open ? dark.green : dark.red} label={(i) => `${stamp(candles[i].time, range)} · ${px(candles[i].close)}`} />
           )}
           <View style={styles.ranges}>
             {rangeKeys.map((key) => (
@@ -256,18 +256,18 @@ const styles = StyleSheet.create({
   title: { flex: 1, fontFamily: family.semibold, fontSize: 30, letterSpacing: -1.2, color: dark.ink },
   error: { fontFamily: family.regular, fontSize: 13, color: dark.red },
   head: { flexDirection: "row", alignItems: "center", gap: space.md },
-  name: { fontFamily: family.semibold, fontSize: 20, letterSpacing: -0.6, color: tone.ink },
-  onColorMuted: { fontFamily: family.regular, fontSize: 12, color: "rgba(20, 24, 26, 0.7)" },
-  price: { fontFamily: family.medium, fontSize: 26, letterSpacing: -1, color: tone.ink },
+  name: { fontFamily: family.semibold, fontSize: 20, letterSpacing: -0.6, color: dark.ink },
+  onColorMuted: { fontFamily: family.regular, fontSize: 12, color: dark.muted },
+  price: { fontFamily: family.medium, fontSize: 26, letterSpacing: -1, color: dark.ink },
   tags: { flexDirection: "row", flexWrap: "wrap", gap: space.xs },
-  changeTag: { paddingVertical: 4, paddingHorizontal: space.sm, borderRadius: 999, backgroundColor: tone.ink },
-  changeText: { fontFamily: family.medium, fontSize: 12, color: tone.paper },
-  chartEmpty: { height: 180, alignItems: "center", justifyContent: "center" },
+  changeTag: { paddingVertical: 4, paddingHorizontal: space.sm, borderRadius: 999, backgroundColor: tone.raised },
+  changeText: { fontFamily: family.medium, fontSize: 12, color: dark.ink },
+  chartEmpty: { height: 200, alignItems: "center", justifyContent: "center" },
   ranges: { flexDirection: "row", gap: space.xs },
-  range: { flex: 1, minHeight: touch, borderRadius: 999, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(255, 255, 255, 0.35)" },
-  rangeActive: { backgroundColor: tone.ink },
-  rangeLabel: { fontFamily: family.medium, fontSize: 12, color: tone.ink },
-  rangeLabelActive: { color: tone.paper },
+  range: { flex: 1, minHeight: touch, borderRadius: 999, alignItems: "center", justifyContent: "center", backgroundColor: tone.raised },
+  rangeActive: { backgroundColor: tone.paper },
+  rangeLabel: { fontFamily: family.medium, fontSize: 12, color: dark.muted },
+  rangeLabelActive: { color: tone.ink },
   actions: { flexDirection: "row", gap: space.md },
   action: { flex: 1, minHeight: 56, borderRadius: 999, alignItems: "center", justifyContent: "center" },
   actionLabel: { fontFamily: family.semibold, fontSize: 16, color: tone.ink },

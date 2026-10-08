@@ -130,7 +130,7 @@ export function Trade({ trader, onOpenAsset, onSelectTab }: TradeProps) {
         </View>
 
         <Text style={styles.muted}>
-          Tap an asset to see its chart, funding and details, and to open a position. The dot is liquidity for a $1,000 order: green deep, yellow okay, red thin.
+          Tap an asset to see its chart, funding and details, and to open a position. Dot: liquidity for a $1,000 order (green deep, yellow okay, red thin).
         </Text>
 
         {loadError !== null && <Text style={styles.error}>{loadError}</Text>}
@@ -146,9 +146,13 @@ export function Trade({ trader, onOpenAsset, onSelectTab }: TradeProps) {
               style={({ pressed }) => [styles.assetCell, pressed && styles.pressed]}
             >
               <AssetMark symbol={m.symbol} size={28} />
-              <Text style={styles.assetCellLabel}>{m.symbol}</Text>
-              <Text style={styles.assetCellPrice}>{px(m.mark)}</Text>
-              {grades[m.symbol] !== undefined && <View style={[styles.grade, { backgroundColor: gradeColor[grades[m.symbol]] }]} />}
+              <View style={styles.assetCellText}>
+                <View style={styles.assetCellTop}>
+                  <Text style={styles.assetCellLabel} numberOfLines={1}>{m.symbol}</Text>
+                  {grades[m.symbol] !== undefined && <View style={[styles.grade, { backgroundColor: gradeColor[grades[m.symbol]] }]} />}
+                </View>
+                <Text style={styles.assetCellPrice} numberOfLines={1}>{px(m.mark)}</Text>
+              </View>
             </Pressable>
           ))}
           {data !== null && shown.length === 0 && <Text style={styles.muted}>No asset matches “{query}”.</Text>}
@@ -201,7 +205,9 @@ const styles = StyleSheet.create({
   searchClear: { fontFamily: family.medium, fontSize: 24, color: dark.muted },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
   assetCell: { width: "48%", flexGrow: 1, flexDirection: "row", alignItems: "center", gap: space.sm, minHeight: 64, paddingHorizontal: space.md, borderRadius: 20, backgroundColor: tone.card },
-  assetCellLabel: { flex: 1, fontFamily: family.semibold, fontSize: 15, color: dark.ink },
+  assetCellText: { flex: 1, minWidth: 0, gap: 2 },
+  assetCellTop: { flexDirection: "row", alignItems: "center", gap: space.xs },
+  assetCellLabel: { fontFamily: family.semibold, fontSize: 15, color: dark.ink },
   grade: { width: 8, height: 8, borderRadius: 4 },
   assetCellPrice: { fontFamily: family.medium, fontSize: 12, color: dark.muted },
   positionHead: { flexDirection: "row", alignItems: "center", gap: space.md },

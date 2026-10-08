@@ -28,13 +28,19 @@ type Stats = {
   profitFactor: number | null;
   maxDrawdownUsd: number;
   liquidations: number;
+  streak: number;
+  bestWinStreak: number;
+  worstLossStreak: number;
+  bestTradeUsd: number;
+  worstTradeUsd: number;
+  avgHoldSec: number | null;
 };
 
 type Activity = { t: number; kind: "fill" | "pnl"; symbol: string | null; volumeUsd: number | null; feeUsd: number | null; maker: boolean | null; pnlUsd: number | null; closed: boolean | null; liquidated: boolean | null };
 
 export type Wallet =
   | { found: false; address: string }
-  | { found: true; network: string; address: string; accountId: number; balanceUsd: number; equityUsd: number; unrealizedPnlUsd: number; badges: { equity: string; pnl: string }; positions: Position[]; stats: Stats | null; activity: Activity[]; indexedHours: number };
+  | { found: true; network: string; address: string; accountId: number; balanceUsd: number; equityUsd: number; unrealizedPnlUsd: number; badges: { equity: string; pnl: string }; positions: Position[]; stats: Stats | null; activity: Activity[]; indexedHours: number; backfilling: boolean; bySymbol: { symbol: string; pnlUsd: number; closes: number; winRate: number }[] };
 
 const watchKey = "opencash.watch";
 const explorers: Record<string, string> = { mainnet: "https://monadscan.com/address/", testnet: "https://testnet.monadexplorer.com/address/" };
@@ -78,7 +84,7 @@ function stat(label: string, value: string, sub = "", cls = ""): string {
 
 function metrics(wallet: Extract<Wallet, { found: true }>): string {
   const s = wallet.stats;
-  const hold = wallet.indexedHours > 0 ? `last ${wallet.indexedHours}h indexed` : "nothing indexed yet";
+  const hold = wallet.indexedHours > 0 ? `last ${wallet.indexedHours}h indexed${wallet.backfilling ? ", still filling" : ""}` : "nothing indexed yet";
   return [
     stat("Equity", compact(wallet.equityUsd), `free ${compact(wallet.balanceUsd)}`),
     stat("Unrealised PnL", signedUsd(wallet.unrealizedPnlUsd), `${wallet.positions.length} open`, `delta-text--${tone(wallet.unrealizedPnlUsd)}`),
@@ -89,7 +95,25 @@ function metrics(wallet: Extract<Wallet, { found: true }>): string {
     stat("Volume", s ? compact(s.volumeUsd) : "—", `${s?.closedTrades ?? 0} closed trades`),
     stat("Fees paid", s ? compact(s.feesUsd) : "—", s ? `funding ${signedUsd(s.fundingUsd)}` : hold),
     stat("Liquidations", String(s?.liquidations ?? 0), hold),
+    stat("Streak", s && s.closedTrades > 0 ? `${s.streak >= 0 ? "+" : "−"}${Math.abs(s.streak)}` : "—", s ? `best ${s.bestWinStreak} wins · worst ${s.worstLossStreak} losses` : hold, s ? `delta-text--${tone(s.streak)}` : ""),
+    stat("Avg hold (approx.)", s?.avgHoldSec ? duration(s.avgHoldSec) : "—", "open to close, indexed trades"),
+    stat("Best · worst trade", s && s.closedTrades > 0 ? `${signedUsd(s.bestTradeUsd)} · ${signedUsd(s.worstTradeUsd)}` : "—", "after funding"),
   ].join("");
+}
+
+function duration(seconds: number): string {
+  if (seconds < 90) return `${Math.round(seconds)}s`;
+  if (seconds < 5400) return `${Math.round(seconds / 60)}m`;
+  if (seconds < 172_800) return `${(seconds / 3600).toFixed(1)}h`;
+  return `${(seconds / 86_400).toFixed(1)}d`;
+}
+
+function marketsTable(rows: { symbol: string; pnlUsd: number; closes: number; winRate: number }[]): string {
+  if (rows.length === 0) return `<p class="empty">No closed trades indexed yet.</p>`;
+  const body = rows
+    .map((row) => `<tr><td><div class="cell-identity">${markForSymbol(row.symbol)}<b>${esc(row.symbol)}</b></div></td><td class="is-right"><span class="delta delta--${tone(row.pnlUsd)}">${signedUsd(row.pnlUsd)}</span></td><td class="is-right">${row.closes}</td><td class="is-right">${(row.winRate * 100).toFixed(0)}%</td></tr>`)
+    .join("");
+  return `<div class="table-wrap"><table class="data-table"><thead><tr><th>Market</th><th class="is-right">Realised PnL</th><th class="is-right">Closed</th><th class="is-right">Win rate</th></tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
 function positionsTable(positions: Position[]): string {
@@ -146,6 +170,7 @@ async function paintProfile(wallet: Wallet) {
       <div class="stat-grid stat-grid--wide">${metrics(wallet)}</div>
     </div>
     <div class="card"><span class="panel__label">Open positions</span>${positionsTable(wallet.positions)}</div>
+    <div class="card"><span class="panel__label">Performance by market</span>${marketsTable(wallet.bySymbol)}</div>
     <div class="card"><span class="panel__label">Recent activity</span>${activityList(wallet.activity, wallet.indexedHours)}</div>`;
   host.querySelector("[data-an-watch-toggle]")!.addEventListener("click", () => {
     const list = watchList();
@@ -201,6 +226,57 @@ function paintCompare(wallets: Wallet[]) {
   host.innerHTML = `<div class="card"><span class="panel__label">Compare</span><div class="table-wrap"><table class="data-table"><thead><tr><th></th>${picked.map((w) => `<th class="is-right">${esc(shortAddress(w.address))}</th>`).join("")}</tr></thead><tbody>${rows.map(([label, fn]) => `<tr><td class="cell-muted">${label}</td>${picked.map((w) => `<td class="is-right">${fn(w)}</td>`).join("")}</tr>`).join("")}</tbody></table></div></div>`;
 }
 
+type BoardRow = { rank: number; accountId: number; address: string | null; netPnlUsd: number; volumeUsd: number; winRate: number; profitFactor: number | null; closedTrades: number; maxDrawdownUsd: number; liquidations: number; tier: string };
+type Board = { rows: BoardRow[]; indexedHours: number; targetHours: number; backfilling: boolean; ranked: number; syncedAt: number };
+
+const boardSorts = [
+  { key: "pnl", label: "Realised PnL" },
+  { key: "volume", label: "Volume" },
+  { key: "winRate", label: "Win rate" },
+];
+let boardSort = "pnl";
+
+export async function showBoard() {
+  current = null;
+  const host = query("[data-an-wallet]");
+  host.innerHTML = `<div class="card"><p class="empty">Loading the leaderboard…</p></div>`;
+  try {
+    const response = await fetch(`${backend}/analytics/leaderboard?network=${network}&sort=${boardSort}&limit=10`);
+    const board = (await response.json()) as Board & { error?: string };
+    if (!response.ok) throw new Error(board.error ?? `Leaderboard failed (${response.status})`);
+    const span = (hours: number) => (hours >= 48 ? `${(hours / 24).toFixed(1)} days` : `${hours.toFixed(1)} hours`);
+    const note = board.backfilling ? `Backfilling history, ${span(board.indexedHours)} of ${span(board.targetHours)} indexed.` : `Ranked from the last ${span(board.indexedHours)} of on-chain trades.`;
+    const body = board.rows
+      .map(
+        (row) => `<tr class="board-row" ${row.address ? `data-an-open="${esc(row.address)}" tabindex="0"` : ""}>
+          <td class="cell-muted">#${row.rank}</td>
+          <td><b>${row.address ? esc(shortAddress(row.address)) : `account ${row.accountId}`}</b></td>
+          <td><i class="badge badge--size">${esc(row.tier)}</i></td>
+          <td class="is-right"><span class="delta delta--${tone(row.netPnlUsd)}">${signedUsd(row.netPnlUsd)}</span></td>
+          <td class="is-right">${(row.winRate * 100).toFixed(0)}%</td>
+          <td class="is-right">${row.profitFactor === null ? "—" : row.profitFactor.toFixed(2)}</td>
+          <td class="is-right">${row.closedTrades}</td>
+          <td class="is-right">${compact(row.volumeUsd)}</td>
+          <td class="is-right">${compact(row.maxDrawdownUsd)}</td>
+          <td class="is-right">${row.liquidations}</td>
+        </tr>`,
+      )
+      .join("");
+    host.innerHTML = `<div class="card">
+      <div class="board-head"><span class="panel__label">Wallet leaderboard</span>
+        <div class="chip-row">${boardSorts.map((item) => `<button type="button" class="chip${item.key === boardSort ? " chip--active" : ""}" data-an-board-sort="${item.key}">${item.label}</button>`).join("")}</div>
+      </div>
+      <p class="panel__lede">${note} Top 10 shown. Tap a wallet to open it.</p>
+      <div class="table-wrap">${
+        board.rows.length === 0
+          ? `<p class="empty">No wallet qualifies yet. The index is still filling.</p>`
+          : `<table class="data-table"><thead><tr><th>#</th><th>Wallet</th><th>Tier</th><th class="is-right">Realised PnL</th><th class="is-right">Win rate</th><th class="is-right">Profit factor</th><th class="is-right">Trades</th><th class="is-right">Volume</th><th class="is-right">Max drawdown</th><th class="is-right">Liq.</th></tr></thead><tbody>${body}</tbody></table>`
+      }</div></div>`;
+  } catch (error) {
+    host.innerHTML = `<div class="card"><p class="status-line" data-tone="error">${esc(errorText(error))}</p></div>`;
+  }
+}
+
 export async function lookup(address: string) {
   const host = query("[data-an-wallet]");
   host.innerHTML = `<div class="card"><p class="empty">Reading ${esc(shortAddress(address))} on ${network}…</p></div>`;
@@ -223,6 +299,25 @@ export function initWallet(backendUrl: string, getNetwork: () => string) {
     event.preventDefault();
     network = getNetwork();
     if (input.value.trim()) void lookup(input.value.trim());
+    else void showBoard();
+  });
+  query("[data-an-board-btn]").addEventListener("click", () => {
+    input.value = "";
+    void showBoard();
+  });
+  query("[data-an-wallet]").addEventListener("click", (event) => {
+    const target = event.target as HTMLElement;
+    const sort = target.closest<HTMLElement>("[data-an-board-sort]");
+    if (sort) {
+      boardSort = sort.dataset.anBoardSort!;
+      void showBoard();
+      return;
+    }
+    const open = target.closest<HTMLElement>("[data-an-open]");
+    if (open) {
+      input.value = open.dataset.anOpen!;
+      void lookup(open.dataset.anOpen!);
+    }
   });
   query("[data-an-watch]").addEventListener("click", (event) => {
     const open = (event.target as HTMLElement).closest<HTMLElement>("[data-an-open]");
@@ -243,12 +338,12 @@ export function initWallet(backendUrl: string, getNetwork: () => string) {
     void paintWatch();
   });
   void paintWatch();
+  void showBoard();
 }
 
 export function setNetwork(next: string) {
   network = next;
   cache.clear();
-  current = null;
-  query("[data-an-wallet]").innerHTML = `<p class="empty">Search any address to see its Perpl positions, risk and trading record.</p>`;
+  void showBoard();
   void paintWatch();
 }

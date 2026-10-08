@@ -8,14 +8,14 @@ import {
 } from "lightweight-charts";
 import type { Candle } from "../perpl";
 
-const palette = { text: "#9aa39f", grid: "rgba(255,255,255,0.06)", up: "#3ecf8e", down: "#ef5b5b", line: "#7165ed" };
+const palette = { text: "#c3cbc7", grid: "rgba(255,255,255,0.05)", up: "#3ecf8e", down: "#ef5b5b", line: "#7165ed" };
 
 function baseChart(container: HTMLElement): IChartApi {
   return createChart(container, {
     autoSize: true,
-    layout: { background: { type: ColorType.Solid, color: "transparent" }, textColor: palette.text },
+    layout: { background: { type: ColorType.Solid, color: "transparent" }, textColor: palette.text, fontFamily: "DM Sans, system-ui, sans-serif", fontSize: 12 },
     grid: { vertLines: { color: palette.grid }, horzLines: { color: palette.grid } },
-    rightPriceScale: { borderVisible: false },
+    rightPriceScale: { borderVisible: false, scaleMargins: { top: 0.1, bottom: 0.1 } },
     timeScale: { borderVisible: false, timeVisible: true },
   });
 }

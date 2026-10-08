@@ -17,7 +17,7 @@ function equityTier(equity: number): string {
   return tiers.find((tier) => equity < tier.max)!.name;
 }
 
-function pnlTier(pnl: number): string {
+export function pnlTier(pnl: number): string {
   if (pnl <= -1_000) return "Rekt";
   if (pnl <= -100) return "Bleeding";
   if (pnl < 100) return "Flat";
@@ -93,7 +93,7 @@ export async function walletView(net: Net, input: string) {
       liquidated: e.kind === "pnl" ? e.liquidated : null,
     }));
 
-  const windowHours = saved.startBlock > 0 ? Math.round(((saved.syncedAt - store.timeOf(saved.startBlock)) / 3_600_000) * 10) / 10 : 0;
+  const windowHours = store.coveredHours();
 
   return {
     found: true as const,

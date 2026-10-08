@@ -1,4 +1,4 @@
-import { estimateExecution, summarizeDepth, perpl, slippageWarnBps, type ExecutionEstimate } from "shared";
+import { estimateExecution, liquidationDistancePct, summarizeDepth, perpl, slippageWarnBps, type ExecutionEstimate } from "shared";
 import { singleLegBin, sizeBinFor, terminal, type CandleRangeKey, type OpenPosition } from "../perpl";
 import { drawCandles } from "./charts";
 import { loadCandles } from "../perplApi";
@@ -20,6 +20,8 @@ let rerender: () => void = () => {};
 let openHook: ((next: string) => void) | null = null;
 let pendingAsset = false;
 let accepted = false;
+let availableUsd = 0;
+let maintenance: number | null = null;
 let costRun = 0;
 
 export function openAsset(next: string) {
@@ -51,9 +53,16 @@ function elements() {
     leverage: query<HTMLInputElement>("[data-ticket-leverage]"),
     size: query("[data-ticket-size]"),
     cost: query("[data-ticket-cost]"),
+    levLabel: query("[data-ticket-leverage-label]"),
+    levBox: query(".lev"),
+    ticks: query("[data-ticket-ticks]"),
+    risk: query("[data-ticket-risk]"),
+    available: query("[data-ticket-available]"),
+    quick: query("[data-ticket-quick]"),
     submit: query<HTMLButtonElement>("[data-ticket-submit]"),
     status: query("[data-ticket-status]"),
     stats: query("[data-trade-stats]"),
+    depth: query("[data-trade-depth]"),
     list: query("[data-trade-list]"),
     asset: query("[data-trade-asset]"),
     search: query<HTMLInputElement>("[data-trade-search]"),
@@ -77,7 +86,7 @@ export async function initTrade() {
 
   function setSide(next: Side) {
     side = next;
-    document.querySelectorAll<HTMLButtonElement>("[data-side]").forEach((b) => b.classList.toggle("chip--active", b.dataset.side === next));
+    document.querySelectorAll<HTMLButtonElement>("[data-side]").forEach((b) => b.classList.toggle("is-on", b.dataset.side === next));
   }
 
   function renderMarketHead() {
@@ -86,6 +95,35 @@ export async function initTrade() {
     ui.price.textContent = market ? px(market.mark) : "—";
     ui.meta.textContent = market ? `max ${data.maxLeverage.get(symbol) ?? "—"}x · ${market.numOrders} resting orders` : "";
     ui.title.textContent = `${side === "long" ? "Long" : "Short"} ${symbol}`;
+    syncLeverageRange();
+    maintenance = null;
+    const shown = symbol;
+    void toolbox.getMarket(shown).then((market) => {
+      if (shown !== symbol) return;
+      maintenance = market.maintenanceLeverage;
+      paintLeverage();
+    }).catch(() => {});
+  }
+
+  function syncLeverageRange() {
+    const max = Math.max(1, data.maxLeverage.get(symbol) ?? 1);
+    ui.leverage.max = String(max);
+    if (Number(ui.leverage.value) > max) ui.leverage.value = String(max);
+    const marks = [...new Set([1, Math.round(max / 3), Math.round((max * 2) / 3), max])].filter((value) => value >= 1);
+    ui.ticks.innerHTML = marks.map((value) => `<button type="button" data-lev-tick="${value}">${value}x</button>`).join("");
+    paintLeverage();
+  }
+
+  function paintLeverage() {
+    const max = Number(ui.leverage.max) || 1;
+    const value = Number(ui.leverage.value) || 1;
+    ui.levLabel.textContent = `${value}x`;
+    ui.leverage.style.setProperty("--fill", `${max > 1 ? ((value - 1) / (max - 1)) * 100 : 100}%`);
+    const ratio = max > 1 ? (value - 1) / (max - 1) : 0;
+    ui.levBox.dataset.levRisk = ratio < 0.34 ? "low" : ratio < 0.67 ? "mid" : "high";
+    ui.risk.textContent = maintenance
+      ? `About a ${liquidationDistancePct(value, maintenance).toFixed(1)}% move against you liquidates this position.`
+      : "";
   }
 
   async function renderChart() {
@@ -160,7 +198,8 @@ export async function initTrade() {
       ? `${leg.lots} ${symbol} · ${usd(leg.notional)} notional · ${leg.leverage}x`
       : (sizing?.issues[0]?.detail ?? "");
     accepted = false;
-    ui.submit.textContent = "Place order";
+    ui.submit.textContent = `${side === "long" ? "Long" : "Short"} ${symbol}`;
+    ui.submit.dataset.side = side;
     void renderCost();
   }
 
@@ -213,6 +252,8 @@ export async function initTrade() {
     ]);
     positions = open;
     ui.balance.textContent = usd(account?.balance ?? 0);
+    availableUsd = collateral + (account?.balance ?? 0);
+    ui.available.textContent = `Available ${usd(availableUsd)}`;
     ui.note.textContent = `Wallet AUSD ${usd(collateral)}${account ? "" : " · no Perpl account yet, the first order creates one"}`;
     ui.updated.textContent = new Date().toLocaleTimeString();
     renderDesk();
@@ -238,6 +279,7 @@ export async function initTrade() {
   async function loadStats() {
     const shown = symbol;
     ui.stats.innerHTML = `<p class="empty">Loading…</p>`;
+    ui.depth.innerHTML = "";
     try {
       const [{ snapshot }, book] = await Promise.all([toolbox.getSnapshot(shown), toolbox.getBook(shown).catch(() => null)]);
       if (shown !== symbol) return;
@@ -247,19 +289,24 @@ export async function initTrade() {
         ["24h volume", compact(snapshot.volume24hUsd)],
         ["Open interest", compact(snapshot.openInterestUsd)],
         ["Max leverage", `${snapshot.maxLeverage}x`],
+        ["Today", `${snapshot.change24hPct >= 0 ? "▲" : "▼"} ${Math.abs(snapshot.change24hPct).toFixed(2)}%`],
         ["Spread", `${snapshot.spreadBps.toFixed(1)} bps`],
         ["Funding now", `${snapshot.funding.nowAprPct.toFixed(1)}% a year`],
         ["Funding avg 7d", `${snapshot.funding.meanAprPct.toFixed(1)}% a year`],
         ["Fees maker · taker", `${snapshot.makerFeeBps.toFixed(1)} · ${snapshot.takerFeeBps.toFixed(1)} bps`],
-        ...(depth
-          ? ([
-              ["Book within 10 bps", `${compact(depth.bidUsdWithin10Bps)} bid · ${compact(depth.askUsdWithin10Bps)} ask`],
-              ["Book within 25 bps", `${compact(depth.bidUsdWithin25Bps)} bid · ${compact(depth.askUsdWithin25Bps)} ask`],
-              ["Book within 50 bps", `${compact(depth.bidUsdWithin50Bps)} bid · ${compact(depth.askUsdWithin50Bps)} ask`],
-            ] as [string, string][])
-          : []),
-        ["Today", `${snapshot.change24hPct >= 0 ? "▲" : "▼"} ${Math.abs(snapshot.change24hPct).toFixed(2)}%`],
       ];
+      ui.depth.innerHTML = depth
+        ? ([
+            ["10 bps", depth.bidUsdWithin10Bps, depth.askUsdWithin10Bps],
+            ["25 bps", depth.bidUsdWithin25Bps, depth.askUsdWithin25Bps],
+            ["50 bps", depth.bidUsdWithin50Bps, depth.askUsdWithin50Bps],
+          ] as [string, number, number][])
+            .map(([label, bid, ask]) => {
+              const share = bid + ask > 0 ? Math.round((bid / (bid + ask)) * 100) : 50;
+              return `<div class="depth__row"><span class="depth__label">Within ${label}</span><b class="depth__bid">${compact(bid)}</b><div class="depth__bar" style="--bid:${share}%"><i></i></div><b class="depth__ask">${compact(ask)}</b></div>`;
+            })
+            .join("")
+        : `<p class="empty">Book unavailable.</p>`;
       ui.stats.innerHTML = cells.map(([label, value]) => `<div class="stat"><small>${label}</small><b>${value}</b></div>`).join("");
     } catch (error) {
       ui.stats.innerHTML = `<p class="empty">${errorText(error)}</p>`;
@@ -294,13 +341,29 @@ export async function initTrade() {
       side = button.dataset.side as Side;
       document
         .querySelectorAll<HTMLButtonElement>("[data-side]")
-        .forEach((b) => b.classList.toggle("chip--active", b === button));
+        .forEach((b) => b.classList.toggle("is-on", b === button));
       renderMarketHead();
       renderTicketSize();
     }),
   );
   ui.margin.addEventListener("input", renderTicketSize);
-  ui.leverage.addEventListener("input", renderTicketSize);
+  ui.leverage.addEventListener("input", () => {
+    paintLeverage();
+    renderTicketSize();
+  });
+  ui.ticks.addEventListener("click", (event) => {
+    const tick = (event.target as HTMLElement).closest<HTMLElement>("[data-lev-tick]");
+    if (!tick) return;
+    ui.leverage.value = tick.dataset.levTick!;
+    paintLeverage();
+    renderTicketSize();
+  });
+  ui.quick.addEventListener("click", (event) => {
+    const button = (event.target as HTMLElement).closest<HTMLElement>("[data-quick]");
+    if (!button || !(availableUsd > 0)) return;
+    ui.margin.value = (Math.floor(availableUsd * Number(button.dataset.quick) * 100) / 100).toString();
+    renderTicketSize();
+  });
   query<HTMLButtonElement>("[data-trade-refresh]").addEventListener("click", () => void refresh().catch(() => {}));
 
   ui.submit.addEventListener("click", async () => {

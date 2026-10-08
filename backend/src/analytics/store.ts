@@ -132,6 +132,17 @@ class Store {
     }
   }
 
+  coveredHours(): number {
+    const { startBlock, lastBlock, syncedAt } = this.saved;
+    if (startBlock === 0 || syncedAt === 0) return 0;
+    return Math.max(0, Math.round(((lastBlock - startBlock) * blockSec * 10) / 3600) / 10);
+  }
+
+  targetHours(): number {
+    const { startBlock, headBlock } = this.saved;
+    return startBlock === 0 ? 0 : Math.round(((headBlock - startBlock) * blockSec * 10) / 3600) / 10;
+  }
+
   get progress(): { startBlock: number; lastBlock: number; headBlock: number; done: boolean } {
     const { startBlock, lastBlock, headBlock } = this.saved;
     return { startBlock, lastBlock, headBlock, done: headBlock - lastBlock < segmentBlocks };
@@ -139,7 +150,7 @@ class Store {
 
   private async ingestRange(from: number, to: number, head: number, decimals: Map<number, { price: number; lot: number }>) {
     const { client, deployment } = contextFor(this.net);
-    const logs = await fetchLedgerLogs(client, deployment.exchange, BigInt(from), BigInt(to));
+    const logs = await fetchLedgerLogs(client, deployment.exchange, BigInt(from), BigInt(to), { concurrency: 4 });
     const { events } = decodeLogs(logs as never, decimals);
 
     this.saved.headBlock = head;
