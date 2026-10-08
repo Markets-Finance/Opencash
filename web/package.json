@@ -15,6 +15,7 @@
     "@dicebear/styles": "^10.6.0",
     "astro": "^5.14.3",
     "lightweight-charts": "^5.2.1",
+    "qrcode-generator": "^2.0.4",
     "shared": "workspace:^",
     "viem": "^2.28.0"
   },

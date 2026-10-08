@@ -13,6 +13,7 @@
     "expo-clipboard": "~57.0.2",
     "expo-font": "~57.0.4",
     "expo-status-bar": "~57.0.1",
+    "qrcode-generator": "^2.0.4",
     "react": "19.2.3",
     "react-native": "0.86.3",
     "react-native-get-random-values": "^2.0.0",

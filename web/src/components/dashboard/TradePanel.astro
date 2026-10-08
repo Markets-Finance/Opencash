@@ -1,28 +1,45 @@
 <section class="panel" data-panel="trade" hidden>
-  <div class="trade-trade">
-    <div class="home-grid">
-      <div class="home-left">
-        <div class="card card--balance">
-          <div class="balance-head">
-            <span class="card__label">Perpl account</span>
-            <span class="chain-badge">Monad Testnet</span>
-          </div>
-          <span class="stat-card__value stat-card__value--lg trade-mono" data-trade-balance>—</span>
-          <div class="balance-meta">
-            <span class="trade-mono" data-trade-updated>—</span>
-            <button type="button" class="link-btn" data-trade-refresh>⟳ Refresh</button>
-          </div>
-          <p class="trade-note" data-trade-wallet-note></p>
-        </div>
 
-        <div class="card">
-          <div class="section-row"><span class="panel__label">Markets</span></div>
-          <div data-trade-assets class="asset-list asset-list--loading">Loading…</div>
+  <div data-trade-list>
+    <div class="board-widgets">
+      <div class="card card--balance widget widget--account">
+        <div class="balance-head">
+          <span class="card__label">Perpl account</span>
+          <span class="chain-badge">Monad Testnet</span>
         </div>
+        <span class="stat-card__value stat-card__value--lg trade-mono" data-trade-balance>—</span>
+        <div class="balance-meta">
+          <span class="trade-mono" data-trade-updated>—</span>
+          <button type="button" class="link-btn" data-trade-refresh>⟳ Refresh</button>
+        </div>
+        <p class="trade-note" data-trade-wallet-note></p>
       </div>
+      <div class="card widget" data-widget-volume><small class="widget__sub">Loading…</small></div>
+      <div class="card widget" data-widget-funding><small class="widget__sub">Loading…</small></div>
+      <div class="card widget widget--list" data-widget-gainers><small class="widget__sub">Loading…</small></div>
+      <div class="card widget widget--list" data-widget-carry><small class="widget__sub">Loading…</small></div>
+    </div>
 
-      <div class="home-right">
-        <div class="card card--chart">
+    <div class="card board">
+      <div class="board-bar">
+        <div class="chip-row" data-board-filters></div>
+        <input type="search" class="search-field board-search" data-trade-search placeholder="Search assets" autocomplete="off" />
+      </div>
+      <div class="table-wrap board-wrap" data-board-table><p class="empty">Loading markets…</p></div>
+    </div>
+
+    <div class="card">
+      <span class="panel__label">Open positions</span>
+      <div data-trade-desk class="table-wrap table-wrap--loading">Loading…</div>
+      <p class="status-line" data-trade-desk-status></p>
+    </div>
+  </div>
+
+  <div data-trade-asset hidden>
+    <button type="button" class="back-btn" data-trade-back><span aria-hidden="true">←</span> All assets</button>
+    <div class="trade-asset-grid">
+      <div class="trade-asset-main">
+        <div class="card card--chart card--violet">
           <span class="card__label" data-trade-market-label>—</span>
           <div class="chart-value-row">
             <span class="stat-card__value trade-mono" data-trade-market-price>—</span>
@@ -37,13 +54,10 @@
           </div>
           <div class="chart-area" data-trade-chart></div>
         </div>
-
-        <div class="trade-desk">
-          <div class="card">
-            <div class="section-row"><span class="panel__label">Positions</span></div>
-            <div data-trade-desk class="table-wrap table-wrap--loading">Loading…</div>
-            <p class="status-line" data-trade-desk-status></p>
-          </div>
+        <div class="card">
+          <span class="panel__label">Market details</span>
+          <div class="stat-grid" data-trade-stats><p class="empty">Loading…</p></div>
+          <p class="panel__lede">Positive funding means longs pay shorts. Figures come from Perpl on Monad testnet.</p>
         </div>
       </div>
 

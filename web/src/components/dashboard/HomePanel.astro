@@ -1,19 +1,19 @@
 <section class="panel" data-panel="home">
   <div class="home-grid">
     <div class="home-left">
-      <div class="card card--balance">
-        <div class="balance-head">
-          <span class="card__label">Wallet AUSD</span>
-          <span class="chain-badge">Monad Testnet</span>
+      <div class="wallet">
+        <div class="wallet__face">
+          <i class="wallet__dot wallet__dot--tl"></i><i class="wallet__dot wallet__dot--tr"></i>
+          <i class="wallet__dot wallet__dot--bl"></i><i class="wallet__dot wallet__dot--br"></i>
+          <div class="wallet__coins" data-wallet-coins></div>
+          <span class="wallet__balance" data-home-balance>$0<small>.00</small></span>
+          <span class="wallet__change" data-wallet-change>+ $0.00</span>
+          <span class="wallet__meta"><span data-home-updated>—</span><button type="button" class="link-btn" data-home-refresh>⟳ Refresh</button></span>
         </div>
-        <span class="stat-card__value stat-card__value--lg" data-home-balance>—</span>
-        <div class="balance-meta">
-          <span data-home-updated>—</span>
-          <button type="button" class="link-btn" data-home-refresh>⟳ Refresh</button>
-        </div>
-        <div class="action-grid">
-          <button type="button" class="action-btn" data-goto="trade">Trade</button>
-          <button type="button" class="action-btn" data-goto="bins">Bins</button>
+        <div class="wallet__actions">
+          <button type="button" class="wallet__action" data-open-deposit><span aria-hidden="true">↓</span> Deposit</button>
+          <i class="wallet__divider"></i>
+          <button type="button" class="wallet__action" data-open-send><span aria-hidden="true">↑</span> Send</button>
         </div>
       </div>
 

@@ -2,8 +2,12 @@
 import StrategyLab from "./StrategyLab.astro";
 ---
 <section class="panel" data-panel="agent" hidden>
-  <StrategyLab />
-  <h3 class="lab__sub">Ask the agent</h3>
+  <div class="switcher" data-switcher="agent" role="tablist">
+    <button type="button" data-switch="strategies" aria-pressed="true"><i class="switcher__dot switcher__dot--butter"></i>Strategies</button>
+    <button type="button" data-switch="agent" aria-pressed="false"><i class="switcher__dot switcher__dot--violet"></i>Agent</button>
+  </div>
+  <div data-pane="agent:strategies"><StrategyLab /></div>
+  <div data-pane="agent:agent" hidden>
   <div class="agent">
     <div class="agent__main">
       <form class="agent__composer" data-agent-form>
@@ -81,5 +85,6 @@ import StrategyLab from "./StrategyLab.astro";
         </div>
       </section>
     </div>
+  </div>
   </div>
 </section>

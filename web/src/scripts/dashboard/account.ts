@@ -47,6 +47,25 @@ export function initAccount() {
   void paint();
   void initIdentity();
 
+  const rows = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-acct-open]"));
+  const panes = Array.from(document.querySelectorAll<HTMLElement>("[data-acct-pane]"));
+  rows.forEach((row) =>
+    row.addEventListener("click", () => {
+      const key = row.dataset.acctOpen!;
+      const opening = panes.find((pane) => pane.dataset.acctPane === key)?.hidden ?? true;
+      panes.forEach((pane) => (pane.hidden = !(opening && pane.dataset.acctPane === key)));
+      rows.forEach((other) => other.setAttribute("aria-expanded", String(opening && other === row)));
+    }),
+  );
+  const addressEl = document.querySelector<HTMLElement>("[data-wallet-address]");
+  if (addressEl) addressEl.textContent = trader.address;
+  document.querySelector<HTMLButtonElement>("[data-copy-address]")?.addEventListener("click", async (event) => {
+    await navigator.clipboard.writeText(trader.address);
+    const button = event.currentTarget as HTMLButtonElement;
+    button.textContent = "Copied";
+    setTimeout(() => (button.textContent = "Copy address"), 1400);
+  });
+
   query<HTMLButtonElement>("[data-save-profile]").addEventListener("click", () => {
     saveProfile({ name: nameInput.value.trim(), email: emailInput.value.trim(), variant });
     status.textContent = "Saved on this device, encrypted with a key only your passkey derives.";
@@ -58,7 +77,7 @@ export function initAccount() {
     saveProfile({ name: profile?.name ?? "", email: profile?.email ?? "", variant });
     void paint();
   });
-  query<HTMLButtonElement>("[data-sign-out]").addEventListener("click", disconnect);
+  document.querySelectorAll<HTMLButtonElement>("[data-sign-out]").forEach((button) => button.addEventListener("click", disconnect));
 
   document.querySelector<HTMLButtonElement>("[data-copy]")?.addEventListener("click", async () => {
     await navigator.clipboard.writeText(trader.address);

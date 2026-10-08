@@ -17,6 +17,8 @@ import { Bins } from "./src/screens/Bins";
 import { Bots } from "./src/screens/Bots";
 import { startBots, stopBots } from "./src/lib/bots";
 import { Asset } from "./src/screens/Asset";
+import { Deposit } from "./src/screens/Deposit";
+import { Send } from "./src/screens/Send";
 import { Trade } from "./src/screens/Trade";
 import type { TabKey } from "./src/components/TabBar";
 import { Home } from "./src/screens/Home";
@@ -38,6 +40,8 @@ type Screen =
   | "home"
   | "trade"
   | "asset"
+  | "deposit"
+  | "send"
   | "bots";
 
 export default function App() {
@@ -140,6 +144,10 @@ export default function App() {
         trader !== null ? (
           <Trade trader={trader} onOpenAsset={openAsset} onSelectTab={goTab} />
         ) : null
+      ) : screen === "deposit" ? (
+        trader !== null ? <Deposit trader={trader} onBack={() => setScreen("home")} onSelectTab={goTab} /> : null
+      ) : screen === "send" ? (
+        trader !== null ? <Send trader={trader} onBack={() => setScreen("home")} onSelectTab={goTab} /> : null
       ) : screen === "asset" ? (
         trader !== null && asset !== null ? (
           <Asset
@@ -153,7 +161,7 @@ export default function App() {
       ) : screen === "bots" ? (
         <Bots name={profile?.name} labSymbol={labSymbol} onSelectTab={goTab} onOpenAsset={openAsset} />
       ) : screen === "home" ? (
-        trader !== null ? <Home trader={trader} name={profile?.name} onSelectTab={goTab} onOpenAsset={openAsset} /> : null
+        trader !== null ? <Home trader={trader} name={profile?.name} onSelectTab={goTab} onOpenAsset={openAsset} onDeposit={() => setScreen("deposit")} onSend={() => setScreen("send")} /> : null
       ) : bin !== null && markets !== null && trader !== null ? (
         <BinDetail
           bin={bin}

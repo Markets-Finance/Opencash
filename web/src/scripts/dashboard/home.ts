@@ -97,14 +97,24 @@ export async function initHome() {
   );
   paintHistory();
 
-  async function refreshBalance() {
-    balanceEl.textContent = usd(await terminal.loadCollateralBalance(trader.address));
+  const changeEl = query("[data-wallet-change]");
+  const coinsEl = query("[data-wallet-coins]");
+
+  function paintTotal(total: number, pnl: number, symbols: string[]) {
+    const [whole, cents] = Math.abs(total).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).split(".");
+    balanceEl.innerHTML = `${total < 0 ? "−" : ""}$${whole}<small>.${cents}</small>`;
+    changeEl.textContent = `${pnl >= 0 ? "+" : "−"} ${usd(Math.abs(pnl))}`;
+    coinsEl.innerHTML = symbols.slice(0, 4).map(markForSymbol).join("");
     updatedEl.textContent = new Date().toLocaleTimeString();
   }
+
+  async function refreshBalance() {
+    const data = await getMarketData();
+    const summary = await terminal.loadSummary(trader.address, data);
+    paintTotal(summary.total, summary.unrealizedPnl, summary.symbols.length ? summary.symbols : listedSymbols(data));
+  }
   query<HTMLButtonElement>("[data-home-refresh]").addEventListener("click", () => void refreshBalance().catch(() => {}));
-  void refreshBalance().catch(() => {
-    balanceEl.textContent = "—";
-  });
+  void refreshBalance().catch(() => {});
 
   try {
     const data = await getMarketData();

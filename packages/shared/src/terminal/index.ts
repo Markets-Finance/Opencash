@@ -1,3 +1,4 @@
+import { erc20Abi, formatEther, isAddress, parseEther, zeroAddress } from "viem";
 import type { Account, Address, Chain, Hash, PublicClient, Transport, WalletClient } from "viem";
 import { binEntryOrders, binExitOrders, execOrdersRequest } from "../bins/execute.js";
 import { bins } from "../bins/catalog.js";
@@ -9,8 +10,9 @@ import { fetchAccount, fetchPosition } from "../perpl/account.js";
 import type { PerplAccount, PerpPosition } from "../perpl/account.js";
 import { fetchMarginTerms, fetchMarkets, marketsBySymbol } from "../perpl/markets.js";
 import type { PerpMarket } from "../perpl/markets.js";
-import { fromScaled } from "../perpl/scale.js";
+import { fromScaled, toCNS, toScaled } from "../perpl/scale.js";
 import type { PerplDeployment } from "../perpl/addresses.js";
+import { withdrawCollateralRequest } from "../perpl/write.js";
 import {
   allowanceRequest,
   approveCollateralRequest,
@@ -194,6 +196,67 @@ export function createTerminal(config: TerminalConfig) {
     return hash;
   }
 
+  async function loadNativeBalance(owner: Address): Promise<number> {
+    return Number(formatEther(await client.getBalance({ address: owner })));
+  }
+
+  function checkRecipient(to: string, owner: Address): Address {
+    if (!isAddress(to) || to === zeroAddress) throw new Error("Enter a valid Monad address.");
+    if (to.toLowerCase() === owner.toLowerCase()) throw new Error("That is your own address.");
+    return to;
+  }
+
+  async function sendAsset(
+    account: TradingAccount,
+    input: { asset: "AUSD" | "MON"; to: string; amount: number },
+  ): Promise<Hash> {
+    const owner = account.address as Address;
+    const to = checkRecipient(input.to, owner);
+    if (!(input.amount > 0)) throw new Error("Enter an amount.");
+    const wallet = walletFor(account);
+    const signer = { chain: wallet.chain, account: account.account };
+    const gasMon = await loadNativeBalance(owner);
+    if (gasMon <= 0) throw new Error("You need a little MON for network fees.");
+    let hash: Hash;
+    if (input.asset === "AUSD") {
+      const have = await loadCollateralBalance(owner);
+      if (input.amount > have) throw new Error(`You only have ${have} AUSD in your wallet.`);
+      hash = await wallet.writeContract({
+        address: deployment.collateral,
+        abi: erc20Abi,
+        functionName: "transfer",
+        args: [to, toScaled(input.amount, deployment.collateralDecimals)],
+        ...signer,
+      });
+    } else {
+      if (input.amount > gasMon) throw new Error(`You only have ${gasMon} MON in your wallet.`);
+      hash = await wallet.sendTransaction({ to, value: parseEther(String(input.amount)), ...signer });
+    }
+    await client.waitForTransactionReceipt({ hash });
+    return hash;
+  }
+
+  async function withdrawFromPerpl(
+    account: TradingAccount,
+    input: { to: string; amount: number },
+    onStep?: (step: "withdraw" | "send", hash: Hash) => void,
+  ): Promise<Hash> {
+    const owner = account.address as Address;
+    const to = checkRecipient(input.to, owner);
+    if (!(input.amount > 0)) throw new Error("Enter an amount.");
+    const existing = await fetchAccount(client, deployment.exchange, owner);
+    if (existing === null) throw new Error("You have no Perpl account yet.");
+    if (input.amount > existing.balance) throw new Error(`Only ${existing.balance} AUSD is free to withdraw.`);
+    const wallet = walletFor(account);
+    const signer = { chain: wallet.chain, account: account.account };
+    const withdrawHash = await wallet.writeContract({ ...withdrawCollateralRequest(deployment.exchange, toCNS(input.amount)), ...signer });
+    onStep?.("withdraw", withdrawHash);
+    await client.waitForTransactionReceipt({ hash: withdrawHash });
+    const sendHash = await sendAsset(account, { asset: "AUSD", to, amount: input.amount });
+    onStep?.("send", sendHash);
+    return sendHash;
+  }
+
   return {
     deployment,
     loadMarkets,
@@ -204,5 +267,8 @@ export function createTerminal(config: TerminalConfig) {
     loadSummary,
     openBin,
     closePosition,
+    loadNativeBalance,
+    sendAsset,
+    withdrawFromPerpl,
   };
 }

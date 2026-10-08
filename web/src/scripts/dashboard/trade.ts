@@ -4,6 +4,8 @@ import { drawCandles } from "./charts";
 import { loadCandles } from "../perplApi";
 import { changeClass, errorText, markForSymbol, px, query, say, usd } from "./dom";
 import { getMarketData } from "./market";
+import { initBoard } from "./board";
+import { toolbox } from "./agent/session";
 import { requireTrader } from "./state";
 import { activateTab } from "./tabs";
 
@@ -15,11 +17,14 @@ let side: Side = "long";
 let positions: OpenPosition[] = [];
 let range: CandleRangeKey = "1d";
 let rerender: () => void = () => {};
+let openHook: ((next: string) => void) | null = null;
+let pendingAsset = false;
 
 export function openAsset(next: string) {
   symbol = next;
   searchTerm = "";
-  rerender();
+  if (openHook) openHook(next);
+  else pendingAsset = true;
   activateTab("trade");
 }
 
@@ -33,7 +38,6 @@ function elements() {
     balance: query("[data-trade-balance]"),
     updated: query("[data-trade-updated]"),
     note: query("[data-trade-wallet-note]"),
-    assets: query("[data-trade-assets]"),
     label: query("[data-trade-market-label]"),
     price: query("[data-trade-market-price]"),
     meta: query("[data-trade-market-meta]"),
@@ -46,6 +50,10 @@ function elements() {
     size: query("[data-ticket-size]"),
     submit: query<HTMLButtonElement>("[data-ticket-submit]"),
     status: query("[data-ticket-status]"),
+    stats: query("[data-trade-stats]"),
+    list: query("[data-trade-list]"),
+    asset: query("[data-trade-asset]"),
+    search: query<HTMLInputElement>("[data-trade-search]"),
   };
 }
 
@@ -55,28 +63,18 @@ export async function initTrade() {
   const data = await getMarketData();
   if (!data.markets.has(symbol)) symbol = [...data.markets.keys()][0] ?? symbol;
 
+  const board = initBoard(data, (next, chosen) => {
+    if (chosen) setSide(chosen);
+    showAsset(next);
+  });
+
   function renderMarkets() {
-    const list = [...data.markets.values()].filter(
-      (m) => m.numOrders > 0 && (searchTerm === "" || m.symbol.toLowerCase().includes(searchTerm)),
-    );
-    ui.assets.className = "asset-list";
-    ui.assets.innerHTML = list
-      .map(
-        (m) => `
-          <div class="asset-row" data-symbol="${m.symbol}" style="cursor:pointer">
-            ${markForSymbol(m.symbol)}
-            <span class="asset-row__identity">${m.symbol}</span>
-            <span class="asset-row__price">${px(m.mark)}</span>
-            <span class="asset-row__change">max ${data.maxLeverage.get(m.symbol) ?? "—"}x</span>
-          </div>`,
-      )
-      .join("");
-    ui.assets.querySelectorAll<HTMLElement>("[data-symbol]").forEach((row) =>
-      row.addEventListener("click", () => {
-        symbol = row.dataset.symbol!;
-        renderAll();
-      }),
-    );
+    board.setSearch(searchTerm);
+  }
+
+  function setSide(next: Side) {
+    side = next;
+    document.querySelectorAll<HTMLButtonElement>("[data-side]").forEach((b) => b.classList.toggle("chip--active", b.dataset.side === next));
   }
 
   function renderMarketHead() {
@@ -168,6 +166,45 @@ export async function initTrade() {
     renderDesk();
   }
 
+  function showAsset(next: string) {
+    symbol = next;
+    ui.list.hidden = true;
+    ui.asset.hidden = false;
+    renderAll();
+    void loadStats();
+    window.scrollTo({ top: 0 });
+  }
+
+  function showList() {
+    ui.asset.hidden = true;
+    ui.list.hidden = false;
+    renderMarkets();
+  }
+
+  const compact = (value: number) => (value >= 1e6 ? `$${(value / 1e6).toFixed(2)}M` : value >= 1e3 ? `$${(value / 1e3).toFixed(1)}K` : `$${value.toFixed(0)}`);
+
+  async function loadStats() {
+    const shown = symbol;
+    ui.stats.innerHTML = `<p class="empty">Loading…</p>`;
+    try {
+      const { snapshot } = await toolbox.getSnapshot(shown);
+      if (shown !== symbol) return;
+      const cells: [string, string][] = [
+        ["24h volume", compact(snapshot.volume24hUsd)],
+        ["Open interest", compact(snapshot.openInterestUsd)],
+        ["Max leverage", `${snapshot.maxLeverage}x`],
+        ["Spread", `${snapshot.spreadBps.toFixed(1)} bps`],
+        ["Funding now", `${snapshot.funding.nowAprPct.toFixed(1)}% a year`],
+        ["Funding avg 7d", `${snapshot.funding.meanAprPct.toFixed(1)}% a year`],
+        ["Fees maker · taker", `${snapshot.makerFeeBps.toFixed(1)} · ${snapshot.takerFeeBps.toFixed(1)} bps`],
+        ["Today", `${snapshot.change24hPct >= 0 ? "▲" : "▼"} ${Math.abs(snapshot.change24hPct).toFixed(2)}%`],
+      ];
+      ui.stats.innerHTML = cells.map(([label, value]) => `<div class="stat"><small>${label}</small><b>${value}</b></div>`).join("");
+    } catch (error) {
+      ui.stats.innerHTML = `<p class="empty">${errorText(error)}</p>`;
+    }
+  }
+
   function renderAll() {
     renderMarkets();
     renderMarketHead();
@@ -175,6 +212,12 @@ export async function initTrade() {
     void renderChart();
   }
   rerender = renderMarkets;
+  openHook = (next) => showAsset(next);
+  ui.search.addEventListener("input", () => {
+    searchTerm = ui.search.value.trim().toLowerCase();
+    renderMarkets();
+  });
+  query<HTMLButtonElement>("[data-trade-back]").addEventListener("click", showList);
 
   const rangeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-trade-range] [data-range]"));
   rangeButtons.forEach((button) =>
@@ -223,5 +266,10 @@ export async function initTrade() {
   });
 
   renderAll();
+  renderMarkets();
+  if (pendingAsset) {
+    pendingAsset = false;
+    showAsset(symbol);
+  }
   await refresh().catch((error) => say(ui.deskStatus, errorText(error), "error"));
 }

@@ -16,6 +16,8 @@ type HomeProps = {
   name?: string;
   onSelectTab: (key: TabKey) => void;
   onOpenAsset: (symbol: string) => void;
+  onDeposit: () => void;
+  onSend: () => void;
 };
 
 function usd(value: number): string {
@@ -34,7 +36,7 @@ function money(value: number): { whole: string; cents: string } {
   return { whole: `${value < 0 ? "−" : ""}$${whole}`, cents: `.${cents}` };
 }
 
-export function Home({ trader, name, onSelectTab, onOpenAsset }: HomeProps) {
+export function Home({ trader, name, onSelectTab, onOpenAsset, onDeposit, onSend }: HomeProps) {
   const insets = useSafeAreaInsets();
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
   const [positions, setPositions] = useState<BinPosition[] | null>(null);
@@ -101,12 +103,12 @@ export function Home({ trader, name, onSelectTab, onOpenAsset }: HomeProps) {
             </Text>
           </View>
           <View style={styles.walletActions}>
-            <Pressable style={styles.walletAction} onPress={() => onSelectTab("trade")} accessibilityRole="button">
-              <Text style={styles.walletIcon}>⟳</Text>
-              <Text style={styles.walletActionLabel}>Swap</Text>
+            <Pressable style={styles.walletAction} onPress={onDeposit} accessibilityRole="button">
+              <Text style={styles.walletIcon}>↓</Text>
+              <Text style={styles.walletActionLabel}>Deposit</Text>
             </Pressable>
             <View style={styles.walletDivider} />
-            <Pressable style={styles.walletAction} onPress={() => onSelectTab("trade")} accessibilityRole="button">
+            <Pressable style={styles.walletAction} onPress={onSend} accessibilityRole="button">
               <View style={styles.sendIcon}>
                 <Text style={styles.walletIcon}>↑</Text>
                 <View style={styles.sendBar} />

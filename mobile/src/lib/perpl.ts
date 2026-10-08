@@ -27,6 +27,9 @@ export const {
   loadSummary,
   openBin,
   closePosition,
+  loadNativeBalance,
+  sendAsset,
+  withdrawFromPerpl,
 } = terminal;
 
 export const loadCandles = (market: perpl.PerpMarket, range: CandleRangeKey) =>
