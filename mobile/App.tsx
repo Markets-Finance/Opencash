@@ -49,7 +49,6 @@ export default function App() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [portfolio, setPortfolio] = useState<number | null>(null);
   const [asset, setAsset] = useState<string | null>(null);
-  const [side, setSide] = useState<"long" | "short">("long");
   const [cameFrom, setCameFrom] = useState<Screen>("home");
   const [labSymbol, setLabSymbol] = useState<string | null>(null);
   const [loaded, error] = useFonts({
@@ -96,12 +95,6 @@ export default function App() {
     setScreen("asset");
   }
 
-  function tradeAsset(symbol: string, direction: "long" | "short") {
-    setAsset(symbol);
-    setSide(direction);
-    setScreen("trade");
-  }
-
   function strategiesFor(symbol: string) {
     setLabSymbol(symbol);
     setScreen("bots");
@@ -145,7 +138,7 @@ export default function App() {
         />
       ) : screen === "trade" ? (
         trader !== null ? (
-          <Trade trader={trader} initialSymbol={asset} initialDirection={side} onOpenAsset={openAsset} onSelectTab={goTab} />
+          <Trade trader={trader} onOpenAsset={openAsset} onSelectTab={goTab} />
         ) : null
       ) : screen === "asset" ? (
         trader !== null && asset !== null ? (
@@ -154,7 +147,6 @@ export default function App() {
             trader={trader}
             onBack={() => setScreen(cameFrom === "asset" ? "home" : cameFrom)}
             onSelectTab={goTab}
-            onTrade={tradeAsset}
             onStrategies={strategiesFor}
           />
         ) : null

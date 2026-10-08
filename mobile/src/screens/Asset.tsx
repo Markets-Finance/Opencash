@@ -5,11 +5,13 @@ import { perpl, summarizeDepth, type DepthSummary, type MarketSnapshot, type Tra
 import { AssetMark } from "../components/AssetMark";
 import { LineChart } from "../components/LineChart";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
+import { OrderTicket } from "../components/OrderTicket";
 import { RoundButton, Tag, ToneCard, tone } from "../components/ui";
 import { toolbox } from "../lib/bots";
 import {
   candleRanges,
   loadCandles,
+  closePosition,
   loadMarkets,
   loadOpenPositions,
   type Candle,
@@ -48,11 +50,10 @@ type AssetProps = {
   trader: TradingAccount;
   onBack: () => void;
   onSelectTab: (key: TabKey) => void;
-  onTrade: (symbol: string, side: "long" | "short") => void;
   onStrategies: (symbol: string) => void;
 };
 
-export function Asset({ symbol, trader, onBack, onSelectTab, onTrade, onStrategies }: AssetProps) {
+export function Asset({ symbol, trader, onBack, onSelectTab, onStrategies }: AssetProps) {
   const insets = useSafeAreaInsets();
   const [data, setData] = useState<MarketData | null>(null);
   const [range, setRange] = useState<CandleRangeKey>("1d");
@@ -61,6 +62,26 @@ export function Asset({ symbol, trader, onBack, onSelectTab, onTrade, onStrategi
   const [depth, setDepth] = useState<DepthSummary | null>(null);
   const [positions, setPositions] = useState<OpenPosition[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  function refreshPositions(markets: MarketData) {
+    loadOpenPositions(trader.address, markets)
+      .then((held) => setPositions(held.filter((p) => p.market.symbol === symbol)))
+      .catch(() => {});
+  }
+
+  async function close(entry: OpenPosition) {
+    if (!data) return;
+    setBusy(true);
+    try {
+      await closePosition(trader, entry);
+      refreshPositions(data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   useEffect(() => {
     let live = true;
@@ -177,14 +198,7 @@ export function Asset({ symbol, trader, onBack, onSelectTab, onTrade, onStrategi
           </View>
         </ToneCard>
 
-        <View style={styles.actions}>
-          <Pressable onPress={() => onTrade(symbol, "long")} style={({ pressed }) => [styles.action, { backgroundColor: dark.green }, pressed && styles.pressed]}>
-            <Text style={styles.actionLabel}>Long {symbol}</Text>
-          </Pressable>
-          <Pressable onPress={() => onTrade(symbol, "short")} style={({ pressed }) => [styles.action, { backgroundColor: tone.coral }, pressed && styles.pressed]}>
-            <Text style={styles.actionLabel}>Short {symbol}</Text>
-          </Pressable>
-        </View>
+        {data !== null && <OrderTicket trader={trader} data={data} symbol={symbol} onOpened={() => refreshPositions(data)} />}
 
         {positions.map((entry) => {
           const long = entry.position.positionType === perpl.OrderType.OpenLong;
@@ -199,8 +213,8 @@ export function Asset({ symbol, trader, onBack, onSelectTab, onTrade, onStrategi
                 </View>
                 <Text style={[styles.pnl, { color: entry.position.pnl >= 0 ? dark.green : dark.red }]}>{usd(entry.position.pnl)}</Text>
               </View>
-              <Pressable onPress={() => onTrade(symbol, long ? "long" : "short")} style={({ pressed }) => [styles.manage, pressed && styles.pressed]}>
-                <Text style={styles.manageLabel}>Manage in Trade</Text>
+              <Pressable disabled={busy} onPress={() => void close(entry)} style={({ pressed }) => [styles.manage, pressed && styles.pressed]}>
+                <Text style={styles.manageLabel}>Close position</Text>
               </Pressable>
             </ToneCard>
           );
