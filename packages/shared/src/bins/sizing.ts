@@ -17,6 +17,7 @@ export function sizeBin(
   margin: number,
   markets: Map<string, PerpMarket>,
   maxLeverageBySymbol: Map<string, number>,
+  depthCapUsd: Map<string, number> = new Map(),
 ): { sized: SizedBin; issues: BinSizingIssue[] } {
   validateBin(bin);
 
@@ -55,7 +56,16 @@ export function sizeBin(
 
     const legMargin = (margin * leg.weightBps) / totalWeightBps;
     const lotUnit = 10 ** market.lotDecimals;
-    const units = Math.floor(((legMargin * leverage) / market.mark) * lotUnit);
+    let units = Math.floor(((legMargin * leverage) / market.mark) * lotUnit);
+    const depthCap = depthCapUsd.get(leg.symbol);
+    if (depthCap !== undefined && (units / lotUnit) * market.mark > depthCap) {
+      units = Math.floor((depthCap / market.mark) * lotUnit);
+      issues.push({
+        symbol: leg.symbol,
+        reason: "depth-limited",
+        detail: `${leg.symbol} limited to $${depthCap.toFixed(0)} by book depth`,
+      });
+    }
     const lots = units / lotUnit;
 
     if (units <= 0) {
@@ -70,7 +80,7 @@ export function sizeBin(
     legs.push({
       leg,
       perpId: market.perpId,
-      margin: legMargin,
+      margin: Math.min(legMargin, (lots * market.mark) / leverage),
       notional: lots * market.mark,
       lots,
       mark: market.mark,

@@ -1,3 +1,5 @@
+import type { WeightMode } from "./weights.js";
+
 export type BinDirection = "long" | "short";
 
 export type BinLeg = {
@@ -12,6 +14,7 @@ export type Bin = {
   name: string;
   thesis: string;
   legs: BinLeg[];
+  mode?: WeightMode;
 };
 
 export type SizedLeg = {
@@ -33,6 +36,6 @@ export type SizedBin = {
 
 export type BinSizingIssue = {
   symbol: string;
-  reason: "unknown-market" | "no-liquidity" | "leverage-capped" | "below-minimum";
+  reason: "unknown-market" | "no-liquidity" | "leverage-capped" | "below-minimum" | "depth-limited";
   detail: string;
 };

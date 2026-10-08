@@ -9,9 +9,11 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { Bin, BinSizingIssue, SizedBin, TradingAccount } from "shared";
+import { planBin, weightModes, type Bin, type BinSizingIssue, type SizedBin, type TradingAccount, type WeightMode } from "shared";
+import { toolbox } from "../lib/bots";
+import { SelectPill } from "../components/ui";
 import { AssetMark, LegStack } from "../components/AssetMark";
-import { openBin, sizeBinFor, type EntryStep, type MarketData } from "../lib/perpl";
+import { openBin, type EntryStep, type MarketData } from "../lib/perpl";
 import { dark, family, space, track } from "../theme";
 
 type BinDetailProps = {
@@ -37,7 +39,8 @@ export function BinDetail({ bin, data, balance, trader, onBack }: BinDetailProps
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const [sizing, setSizing] = useState(false);
-  const [result, setResult] = useState<{ sized: SizedBin; issues: BinSizingIssue[] } | null>(null);
+  const [mode, setMode] = useState<WeightMode>(bin.mode ?? "fixed");
+  const [result, setResult] = useState<{ sized: SizedBin; issues: BinSizingIssue[]; usedMode: WeightMode } | null>(null);
 
   const marginAmount = Number(amount) || 0;
 
@@ -48,14 +51,14 @@ export function BinDetail({ bin, data, balance, trader, onBack }: BinDetailProps
     }
     let live = true;
     setSizing(true);
-    Promise.resolve(sizeBinFor(bin, marginAmount, data))
+    planBin(toolbox, bin, marginAmount, data, mode)
       .then((next) => live && setResult(next))
       .catch(() => live && setResult(null))
       .finally(() => live && setSizing(false));
     return () => {
       live = false;
     };
-  }, [bin, marginAmount, data]);
+  }, [bin, marginAmount, data, mode]);
 
   async function submit() {
     if (!result) return;
@@ -136,6 +139,18 @@ export function BinDetail({ bin, data, balance, trader, onBack }: BinDetailProps
           ) : null}
         </View>
 
+        <View style={styles.modes}>
+          {weightModes.map((item) => (
+            <SelectPill key={item.key} label={item.label} active={mode === item.key} onPress={() => setMode(item.key)} />
+          ))}
+        </View>
+        <Text style={styles.modeHint}>{weightModes.find((item) => item.key === mode)?.hint}</Text>
+        {result !== null && result.usedMode !== mode && (
+          <View style={styles.warnCard}>
+            <Text style={styles.warnText}>Not enough data for {mode} weights, using fixed.</Text>
+          </View>
+        )}
+
         {(result?.sized.legs.length ?? 0) > 0 && (
           <View style={styles.legsCard}>
             <Text style={styles.fieldLabel}>Legs</Text>
@@ -144,7 +159,7 @@ export function BinDetail({ bin, data, balance, trader, onBack }: BinDetailProps
                 <AssetMark symbol={leg.leg.symbol} size={34} />
                 <View style={styles.legIdentity}>
                   <Text style={styles.legSymbol}>
-                    {leg.leg.direction === "long" ? "Long" : "Short"} {leg.leg.symbol} · {leg.leverage}x
+                    {leg.leg.direction === "long" ? "Long" : "Short"} {leg.leg.symbol} · {leg.leverage}x · {(leg.leg.weightBps / 100).toFixed(1)}%
                   </Text>
                   <Text style={styles.legStat}>
                     ${leg.margin.toFixed(2)} margin · ${leg.notional.toFixed(2)} notional
@@ -229,6 +244,8 @@ const styles = StyleSheet.create({
   },
   back: { fontFamily: family.medium, fontSize: 22, color: "#14181a" },
   content: { padding: space.lg, gap: space.lg },
+  modes: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
+  modeHint: { fontFamily: family.regular, fontSize: 12, color: dark.muted },
   identityRow: { flexDirection: "row", alignItems: "center", gap: space.md },
   thesis: {
     flex: 1,

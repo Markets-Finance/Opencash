@@ -1,6 +1,7 @@
 import cors from "@fastify/cors";
 import Fastify from "fastify";
 import { hoodMainnet } from "shared";
+import { registerAnalyticsRoute } from "./analytics/route.js";
 import { registerBoardsRoute } from "./boards/route.js";
 import { registerLeaderboardRoute } from "./leaderboard/route.js";
 import { registerMarketRoute } from "./market/route.js";
@@ -32,6 +33,7 @@ registerIdentityRoute(app);
 registerLeaderboardRoute(app);
 registerStrategyRoute(app);
 registerIntentsRoute(app);
+registerAnalyticsRoute(app);
 
 app.listen({ port, host: "0.0.0.0" }).catch((err) => {
   app.log.error(err);

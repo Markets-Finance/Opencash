@@ -16,3 +16,10 @@ export type {
   SizedBin,
   SizedLeg,
 } from "./types.js";
+export { allocate, weightModes } from "./weights.js";
+export type { LegInputs, WeightMode } from "./weights.js";
+export { loadBinInputs } from "./inputs.js";
+export type { BinInputSource } from "./inputs.js";
+export { customBin } from "./custom.js";
+export { planBin } from "./plan.js";
+export type { BinPlan } from "./plan.js";

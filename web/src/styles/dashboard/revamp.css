@@ -772,3 +772,20 @@
   gap: var(--sp-md);
   align-content: start;
 }
+
+.cost { display: grid; gap: 6px; }
+.cost__row { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+.cost__row b { font-weight: 500; color: var(--ink); }
+.cost__row--warn b { color: var(--tone-coral); }
+.cost__warn { margin: 0; font-size: 12px; line-height: 1.5; color: var(--tone-coral); }
+
+.grade { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; text-transform: capitalize; color: var(--tone-ink); }
+.grade--deep { background: var(--tone-lime); }
+.grade--okay { background: var(--tone-butter); }
+.grade--thin { background: var(--tone-coral); }
+
+.pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; max-height: 220px; overflow-y: auto; }
+.pick { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 14px; background: var(--raised); }
+.pick b { flex: 1; font-weight: 500; }
+
+.modal .chip--active { background: var(--chip); color: var(--tone-ink); }

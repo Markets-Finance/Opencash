@@ -1,4 +1,5 @@
 import { initAccount } from "./account";
+import { initAnalytics } from "./analytics";
 import { initAgent } from "./agent";
 import { initBins } from "./bins";
 import { initBots, startBots } from "./bots";
@@ -11,7 +12,7 @@ import { initSwitchers } from "./switcher";
 import { initAccountMenu, initTabs } from "./tabs";
 import { initTrade, openAsset, setTradeQuery } from "./trade";
 
-initTabs({ agent: initAgent, bins: initBins, trade: initTrade, account: initAccount });
+initTabs({ analytics: initAnalytics, agent: initAgent, bins: initBins, trade: initTrade, account: initAccount });
 initSwitchers();
 initFunds();
 let ranksStarted = false;

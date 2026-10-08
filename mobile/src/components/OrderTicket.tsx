@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import type { TradingAccount } from "shared";
+import { estimateExecution, slippageWarnBps, type MarketSnapshot, type perpl, type TradingAccount } from "shared";
+import { toolbox } from "../lib/bots";
 import { openBin, singleLegBin, sizeBinFor, type MarketData } from "../lib/perpl";
 import { dark, family, space, touch, track } from "../theme";
 import { CardTitle, SelectPill, Switcher, Tag, ToneCard, tone } from "./ui";
@@ -18,6 +19,15 @@ function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+function CostRow({ label, value, warn }: { label: string; value: string; warn?: boolean }) {
+  return (
+    <View style={styles.costRow}>
+      <Text style={styles.costLabel}>{label}</Text>
+      <Text style={[styles.costValue, warn === true && styles.costWarn]}>{value}</Text>
+    </View>
+  );
+}
+
 type OrderTicketProps = {
   trader: TradingAccount;
   data: MarketData;
@@ -32,6 +42,20 @@ export function OrderTicket({ trader, data, symbol, initialDirection, onOpened }
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<Status>(null);
+  const [book, setBook] = useState<perpl.Book | null>(null);
+  const [snapshot, setSnapshot] = useState<MarketSnapshot | null>(null);
+  const [confirmed, setConfirmed] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    setBook(null);
+    setSnapshot(null);
+    toolbox.getBook(symbol).then((next) => live && setBook(next)).catch(() => {});
+    toolbox.getSnapshot(symbol).then(({ snapshot: next }) => live && setSnapshot(next)).catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [symbol]);
 
   const market = data.markets.get(symbol) ?? null;
   const cap = data.maxLeverage.get(symbol) ?? leverage;
@@ -44,8 +68,27 @@ export function OrderTicket({ trader, data, symbol, initialDirection, onOpened }
 
   const leg = preview?.sized.legs[0] ?? null;
 
+  const estimate = useMemo(() => {
+    if (!book || !snapshot || !leg) return null;
+    return estimateExecution({
+      book,
+      side: direction === "long" ? "buy" : "sell",
+      notionalUsd: leg.notional,
+      takerFeeBps: snapshot.takerFeeBps,
+      fundingAprPct: snapshot.funding.nowAprPct,
+    });
+  }, [book, snapshot, leg, direction]);
+
+  const risky = estimate !== null && (estimate.slippageBps === null || estimate.slippageBps > slippageWarnBps);
+
+  useEffect(() => setConfirmed(false), [symbol, direction, amount, leverage]);
+
   async function submit() {
     if (!preview || !leg) return;
+    if (risky && !confirmed) {
+      setConfirmed(true);
+      return;
+    }
     setBusy(true);
     setStatus({ text: "Sending…", failed: false });
     try {
@@ -96,6 +139,19 @@ export function OrderTicket({ trader, data, symbol, initialDirection, onOpened }
           <SelectPill key={value} label={`${value}x`} active={leverage === value} onPress={() => setLeverage(value)} />
         ))}
       </View>
+      {estimate !== null && (
+        <View style={styles.cost}>
+          <CostRow label="Slippage" value={estimate.slippageBps === null ? "Beyond the book" : `${estimate.slippageBps.toFixed(1)} bps · ${usd(estimate.slippageUsd ?? 0)}`} warn={risky} />
+          <CostRow label="Spread" value={`${estimate.spreadBps.toFixed(1)} bps`} />
+          <CostRow label="Taker fee" value={usd(estimate.feeUsd)} />
+          <CostRow label="Funding a day" value={`${estimate.fundingDailyUsd >= 0 ? "pay" : "earn"} ${usd(Math.abs(estimate.fundingDailyUsd))}`} />
+          {risky && (
+            <Text style={styles.warn}>
+              Thin book for this size. Up to {usd(estimate.maxSizeUsd)} fills within {slippageWarnBps} bps.
+            </Text>
+          )}
+        </View>
+      )}
       {leg !== null && (
         <View style={styles.tags}>
           <Tag label={`${leg.lots} ${symbol}`} />
@@ -113,7 +169,9 @@ export function OrderTicket({ trader, data, symbol, initialDirection, onOpened }
           pressed && styles.pressed,
         ]}
       >
-        <Text style={styles.primaryLabel}>{blocked ?? `${direction === "long" ? "Long" : "Short"} ${symbol}`}</Text>
+        <Text style={styles.primaryLabel}>
+          {blocked ?? (risky && confirmed ? "Tap again to accept slippage" : `${direction === "long" ? "Long" : "Short"} ${symbol}`)}
+        </Text>
       </Pressable>
       {status !== null && <Text style={status.failed ? styles.error : styles.muted}>{status.text}</Text>}
     </ToneCard>
@@ -122,6 +180,12 @@ export function OrderTicket({ trader, data, symbol, initialDirection, onOpened }
 
 const styles = StyleSheet.create({
   row: { flexDirection: "row", gap: space.sm },
+  cost: { gap: space.xs },
+  costRow: { flexDirection: "row", justifyContent: "space-between" },
+  costLabel: { fontFamily: family.regular, fontSize: 13, color: dark.muted },
+  costValue: { fontFamily: family.medium, fontSize: 13, color: dark.ink },
+  costWarn: { color: dark.red },
+  warn: { fontFamily: family.regular, fontSize: 12, lineHeight: 18, color: dark.red },
   tags: { flexDirection: "row", flexWrap: "wrap", gap: space.xs },
   fieldLabel: { fontFamily: family.medium, fontSize: 11, letterSpacing: track(11, 0.12), color: dark.muted },
   input: { fontFamily: family.light, fontSize: 40, letterSpacing: track(40, -0.04), color: dark.ink, padding: 0 },

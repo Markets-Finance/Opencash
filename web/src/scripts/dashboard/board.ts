@@ -1,3 +1,4 @@
+import { liquidityGrade, slippageBps, summarizeDepth, type LiquidityGrade } from "shared";
 import { toolbox } from "./agent/session";
 import { errorText, esc, markForSymbol, px, query } from "./dom";
 import type { MarketData } from "../perpl";
@@ -12,10 +13,14 @@ type Row = {
   spreadBps: number;
   maxLeverage: number;
   fundingApr: number | null;
+  depth25: number | null;
+  grade: LiquidityGrade | null;
 };
 
-type SortKey = "symbol" | "mark" | "changePct" | "volume" | "openInterest" | "fundingApr" | "spreadBps" | "maxLeverage";
-type Filter = "all" | "gainers" | "losers" | "volume" | "funding" | "tight";
+type SortKey = "symbol" | "mark" | "changePct" | "volume" | "openInterest" | "fundingApr" | "spreadBps" | "maxLeverage" | "depth25";
+type Filter = "all" | "gainers" | "losers" | "volume" | "funding" | "tight" | "deep";
+
+const referenceUsd = 1000;
 
 const filters: { key: Filter; label: string; sort: SortKey; dir: 1 | -1 }[] = [
   { key: "all", label: "All markets", sort: "volume", dir: -1 },
@@ -24,9 +29,10 @@ const filters: { key: Filter; label: string; sort: SortKey; dir: 1 | -1 }[] = [
   { key: "volume", label: "Most volume", sort: "volume", dir: -1 },
   { key: "funding", label: "Highest funding", sort: "fundingApr", dir: -1 },
   { key: "tight", label: "Tightest spread", sort: "spreadBps", dir: 1 },
+  { key: "deep", label: "Deepest book", sort: "depth25", dir: -1 },
 ];
 
-const columns: { key: SortKey; label: string; align?: "right" }[] = [
+const columns: { key: SortKey; label: string; align?: "right"; hint?: string }[] = [
   { key: "symbol", label: "Asset" },
   { key: "mark", label: "Price", align: "right" },
   { key: "changePct", label: "24h", align: "right" },
@@ -34,6 +40,7 @@ const columns: { key: SortKey; label: string; align?: "right" }[] = [
   { key: "openInterest", label: "Open interest", align: "right" },
   { key: "fundingApr", label: "Funding a year", align: "right" },
   { key: "spreadBps", label: "Spread", align: "right" },
+  { key: "depth25", label: "Liquidity", align: "right", hint: "Grade: cost of a $1,000 market order. Amount: book within 25 bps, smaller side." },
   { key: "maxLeverage", label: "Max lev", align: "right" },
 ];
 
@@ -112,7 +119,7 @@ export function initBoard(data: MarketData, onOpen: (symbol: string, side?: "lon
     const head = columns
       .map((c) => {
         const active = c.key === sort;
-        return `<th class="${c.align === "right" ? "is-right" : ""}"><button type="button" class="sort-btn${active ? " sort-btn--on" : ""}" data-sort="${c.key}">${c.label}<span aria-hidden="true">${active ? (dir === 1 ? " ↑" : " ↓") : ""}</span></button></th>`;
+        return `<th class="${c.align === "right" ? "is-right" : ""}"${c.hint ? ` title="${c.hint}"` : ""}><button type="button" class="sort-btn${active ? " sort-btn--on" : ""}" data-sort="${c.key}">${c.label}<span aria-hidden="true">${active ? (dir === 1 ? " ↑" : " ↓") : ""}</span></button></th>`;
       })
       .join("");
     const body = list
@@ -126,12 +133,13 @@ export function initBoard(data: MarketData, onOpen: (symbol: string, side?: "lon
           <td class="is-right">${compact(row.openInterest)}</td>
           <td class="is-right">${row.fundingApr === null ? "…" : `<span class="delta delta--${tone(-row.fundingApr)}">${pct(row.fundingApr, 1)}</span>`}</td>
           <td class="is-right">${row.spreadBps.toFixed(1)} bps</td>
+          <td class="is-right">${row.depth25 === null || row.grade === null ? "…" : `<span class="grade grade--${row.grade}">${row.grade}</span> ${compact(row.depth25)}`}</td>
           <td class="is-right">${row.maxLeverage}x</td>
           <td class="is-right"><span class="board-actions"><button type="button" class="mini-btn mini-btn--long" data-board-side="long">Long</button><button type="button" class="mini-btn mini-btn--short" data-board-side="short">Short</button></span></td>
         </tr>`,
       )
       .join("");
-    table.innerHTML = `<table class="data-table board-table"><thead><tr>${head}<th></th></tr></thead><tbody>${body || `<tr><td colspan="9" class="empty">No asset matches “${esc(needle)}”.</td></tr>`}</tbody></table>`;
+    table.innerHTML = `<table class="data-table board-table"><thead><tr>${head}<th></th></tr></thead><tbody>${body || `<tr><td colspan="10" class="empty">No asset matches “${esc(needle)}”.</td></tr>`}</tbody></table>`;
   }
 
   function list(items: Row[], value: (row: Row) => string, toneOf: (row: Row) => string): string {
@@ -196,6 +204,8 @@ export function initBoard(data: MarketData, onOpen: (symbol: string, side?: "lon
             spreadBps: ticker.mid > 0 ? ((ticker.ask - ticker.bid) / ticker.mid) * 1e4 : 0,
             maxLeverage: market.maxLeverage,
             fundingApr: null,
+            depth25: null,
+            grade: null,
           };
         });
       paint();
@@ -205,6 +215,22 @@ export function initBoard(data: MarketData, onOpen: (symbol: string, side?: "lon
             .getSnapshot(row.symbol)
             .then(({ snapshot }) => {
               row.fundingApr = snapshot.funding.nowAprPct;
+            })
+            .catch(() => {}),
+        ),
+      );
+      paint();
+      await Promise.all(
+        rows.map((row) =>
+          toolbox
+            .getBook(row.symbol)
+            .then((book) => {
+              const mid = (book.bids[0].price + book.asks[0].price) / 2;
+              const depth = summarizeDepth(book, mid);
+              row.depth25 = Math.min(depth.bidUsdWithin25Bps, depth.askUsdWithin25Bps);
+              const buy = slippageBps(book, "buy", referenceUsd, mid);
+              const sell = slippageBps(book, "sell", referenceUsd, mid);
+              row.grade = liquidityGrade(buy === null || sell === null ? null : Math.max(buy, sell));
             })
             .catch(() => {}),
         ),

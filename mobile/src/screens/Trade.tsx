@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { perpl, type TradingAccount } from "shared";
+import { liquidityGrade, perpl, slippageBps, type LiquidityGrade, type TradingAccount } from "shared";
+import { toolbox } from "../lib/bots";
 import { AssetMark } from "../components/AssetMark";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { ScreenTitle, Tag, ToneCard, tone } from "../components/ui";
@@ -17,6 +18,8 @@ function px(value: number): string {
   return `$${value.toLocaleString(undefined, { maximumFractionDigits: digits })}`;
 }
 
+const gradeColor: Record<LiquidityGrade, string> = { deep: tone.lime, okay: tone.butter, thin: tone.coral };
+
 type TradeProps = {
   trader: TradingAccount;
   onOpenAsset: (symbol: string) => void;
@@ -31,6 +34,7 @@ export function Trade({ trader, onOpenAsset, onSelectTab }: TradeProps) {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [grades, setGrades] = useState<Record<string, LiquidityGrade>>({});
 
   const refreshPositions = useCallback(
     (markets: MarketData) => {
@@ -54,6 +58,28 @@ export function Trade({ trader, onOpenAsset, onSelectTab }: TradeProps) {
       live = false;
     };
   }, [refreshPositions]);
+
+  useEffect(() => {
+    if (!data) return;
+    let live = true;
+    for (const m of data.markets.values()) {
+      if (m.numOrders === 0) continue;
+      toolbox
+        .getBook(m.symbol)
+        .then((book) => {
+          if (!live || !book.bids[0] || !book.asks[0]) return;
+          const mid = (book.bids[0].price + book.asks[0].price) / 2;
+          const buy = slippageBps(book, "buy", 1000, mid);
+          const sell = slippageBps(book, "sell", 1000, mid);
+          const grade = liquidityGrade(buy === null || sell === null ? null : Math.max(buy, sell));
+          setGrades((current) => ({ ...current, [m.symbol]: grade }));
+        })
+        .catch(() => {});
+    }
+    return () => {
+      live = false;
+    };
+  }, [data]);
 
   const tradable = useMemo(() => [...(data?.markets.values() ?? [])].filter((m) => m.numOrders > 0), [data]);
   const shown = useMemo(() => {
@@ -103,7 +129,9 @@ export function Trade({ trader, onOpenAsset, onSelectTab }: TradeProps) {
           )}
         </View>
 
-        <Text style={styles.muted}>Tap an asset to see its chart, funding and details, and to open a position.</Text>
+        <Text style={styles.muted}>
+          Tap an asset to see its chart, funding and details, and to open a position. The dot is liquidity for a $1,000 order: green deep, yellow okay, red thin.
+        </Text>
 
         {loadError !== null && <Text style={styles.error}>{loadError}</Text>}
         {data === null && loadError === null && <ActivityIndicator color={dark.ink} />}
@@ -120,6 +148,7 @@ export function Trade({ trader, onOpenAsset, onSelectTab }: TradeProps) {
               <AssetMark symbol={m.symbol} size={28} />
               <Text style={styles.assetCellLabel}>{m.symbol}</Text>
               <Text style={styles.assetCellPrice}>{px(m.mark)}</Text>
+              {grades[m.symbol] !== undefined && <View style={[styles.grade, { backgroundColor: gradeColor[grades[m.symbol]] }]} />}
             </Pressable>
           ))}
           {data !== null && shown.length === 0 && <Text style={styles.muted}>No asset matches “{query}”.</Text>}
@@ -173,6 +202,7 @@ const styles = StyleSheet.create({
   grid: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
   assetCell: { width: "48%", flexGrow: 1, flexDirection: "row", alignItems: "center", gap: space.sm, minHeight: 64, paddingHorizontal: space.md, borderRadius: 20, backgroundColor: tone.card },
   assetCellLabel: { flex: 1, fontFamily: family.semibold, fontSize: 15, color: dark.ink },
+  grade: { width: 8, height: 8, borderRadius: 4 },
   assetCellPrice: { fontFamily: family.medium, fontSize: 12, color: dark.muted },
   positionHead: { flexDirection: "row", alignItems: "center", gap: space.md },
   positionTitle: { flex: 1, fontFamily: family.semibold, fontSize: 18, letterSpacing: -0.5, color: dark.ink },

@@ -1,0 +1,59 @@
+<section class="panel" data-panel="analytics" hidden>
+  <div class="an-bar">
+    <div class="switcher" data-switcher="an" role="tablist">
+      <button type="button" data-switch="protocol" aria-pressed="true"><i class="switcher__dot switcher__dot--butter"></i>Protocol</button>
+      <button type="button" data-switch="wallet" aria-pressed="false"><i class="switcher__dot switcher__dot--violet"></i>Wallets</button>
+    </div>
+    <div class="an-bar__right">
+      <div class="seg-pills" role="group" aria-label="Network">
+        <button type="button" data-an-net="mainnet" aria-pressed="true">Mainnet</button>
+        <button type="button" data-an-net="testnet" aria-pressed="false">Testnet</button>
+      </div>
+      <span class="live" data-an-live><i></i><span>Connecting…</span></span>
+    </div>
+  </div>
+
+  <div data-pane="an:protocol">
+    <div class="an-headline" data-an-headline><p class="empty">Loading Perpl…</p></div>
+
+    <div class="card an-chart">
+      <div class="an-chart__head">
+        <div>
+          <span class="panel__label">Trading volume</span>
+          <p class="panel__lede" data-an-chart-note></p>
+        </div>
+        <div class="an-chart__controls">
+          <div class="chip-row" data-an-mode>
+            <button type="button" class="chip chip--active" data-mode="daily">Daily</button>
+            <button type="button" class="chip" data-mode="cumulative">Cumulative</button>
+          </div>
+          <div class="chip-row" data-an-range>
+            <button type="button" class="chip" data-days="7">7D</button>
+            <button type="button" class="chip chip--active" data-days="30">30D</button>
+            <button type="button" class="chip" data-days="90">90D</button>
+            <button type="button" class="chip" data-days="0">All</button>
+          </div>
+        </div>
+      </div>
+      <div class="chart-area an-chart__area" data-an-chart></div>
+    </div>
+
+    <div class="an-grid">
+      <div class="card"><span class="panel__label">Markets</span><div class="table-wrap" data-an-markets></div></div>
+      <div class="an-stack">
+        <div class="card"><span class="panel__label">Funding · a year</span><div data-an-funding></div></div>
+        <div class="card"><span class="panel__label">Capital flows and risk</span><div data-an-flows></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div data-pane="an:wallet" hidden>
+    <form class="an-search" data-an-search>
+      <input type="text" class="search-field" data-an-address placeholder="Paste a Monad wallet address" autocomplete="off" spellcheck="false" />
+      <button type="submit" class="btn btn--primary">Look up</button>
+    </form>
+    <div class="an-watch" data-an-watch></div>
+    <div data-an-compare></div>
+    <div data-an-wallet><p class="empty">Search any address to see its Perpl positions, risk and trading record.</p></div>
+  </div>
+</section>

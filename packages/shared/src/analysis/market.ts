@@ -124,3 +124,61 @@ export function slippageBps(book: Book, side: "buy" | "sell", notionalUsd: numbe
   const average = cost / filledBase;
   return side === "buy" ? ((average - mid) / mid) * 1e4 : ((mid - average) / mid) * 1e4;
 }
+
+export const slippageWarnBps = 25;
+
+export type LiquidityGrade = "deep" | "okay" | "thin";
+
+export type ExecutionEstimate = {
+  slippageBps: number | null;
+  slippageUsd: number | null;
+  spreadBps: number;
+  feeUsd: number;
+  fundingDailyUsd: number;
+  maxSizeUsd: number;
+  grade: LiquidityGrade;
+};
+
+export function maxNotionalWithinBps(book: Book, side: "buy" | "sell", bps: number, mid: number): number {
+  const levels = side === "buy" ? book.asks : book.bids;
+  let low = 0;
+  let high = levels.reduce((sum, level) => sum + level.price * level.size, 0);
+  if (high <= 0) return 0;
+  for (let step = 0; step < 24; step++) {
+    const middle = (low + high) / 2;
+    const slip = slippageBps(book, side, middle, mid);
+    if (slip !== null && slip <= bps) low = middle;
+    else high = middle;
+  }
+  return low;
+}
+
+export function liquidityGrade(slippage: number | null): LiquidityGrade {
+  if (slippage === null || slippage > slippageWarnBps) return "thin";
+  return slippage <= 10 ? "deep" : "okay";
+}
+
+export function estimateExecution(input: {
+  book: Book;
+  side: "buy" | "sell";
+  notionalUsd: number;
+  takerFeeBps: number;
+  fundingAprPct: number;
+}): ExecutionEstimate | null {
+  const { book, side, notionalUsd, takerFeeBps, fundingAprPct: apr } = input;
+  const bid = book.bids[0];
+  const ask = book.asks[0];
+  if (!bid || !ask || notionalUsd <= 0) return null;
+  const mid = (bid.price + ask.price) / 2;
+  const slippage = slippageBps(book, side, notionalUsd, mid);
+  const direction = side === "buy" ? 1 : -1;
+  return {
+    slippageBps: slippage,
+    slippageUsd: slippage === null ? null : (notionalUsd * slippage) / 1e4,
+    spreadBps: ((ask.price - bid.price) / mid) * 1e4,
+    feeUsd: (notionalUsd * takerFeeBps) / 1e4,
+    fundingDailyUsd: (notionalUsd * apr * direction) / 100 / 365,
+    maxSizeUsd: maxNotionalWithinBps(book, side, slippageWarnBps, mid),
+    grade: liquidityGrade(slippage),
+  };
+}

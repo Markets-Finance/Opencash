@@ -1,4 +1,6 @@
-import { bins, cardFromBin, sizeBinFor, terminal, type Bin, type EntryStep } from "../perpl";
+import { customBin, planBin, weightModes, type WeightMode } from "shared";
+import { bins, cardFromBin, terminal, type Bin, type EntryStep } from "../perpl";
+import { toolbox } from "./agent/session";
 import { setCard } from "./agent/card";
 import { addBotFromCard } from "./bots";
 import { errorText, legStackHtml, query, usd } from "./dom";
@@ -35,15 +37,30 @@ export function initBins() {
     });
     carousel.appendChild(card);
   }
+  const build = document.createElement("button");
+  build.type = "button";
+  build.className = "tile-card";
+  build.innerHTML = `
+    <span class="tile-card__name">Build your own</span>
+    <span class="tile-card__thesis">${customBase.thesis}</span>
+    <div class="tile-card__legs"><div class="tile-leg"><span>Pick assets</span><span>+</span></div></div>`;
+  build.addEventListener("click", () => openBinModal(customBase, true));
+  carousel.appendChild(build);
 }
 
-function openBinModal(bin: Bin) {
+const customBase: Bin = { id: "custom", name: "Build your own", thesis: "Pick assets and directions, then choose how margin is split.", legs: [] };
+
+function openBinModal(bin: Bin, custom = false) {
+  let mode: WeightMode = bin.mode ?? "fixed";
+  const picks = new Map<string, "long" | "short">();
   const detail = openModal(`
     <div class="modal__head">
       <div class="modal__identity">${legStackHtml(bin.legs.map((leg) => leg.symbol))}<span class="modal__title">${bin.name}</span></div>
       <button type="button" class="modal__close" data-close>×</button>
     </div>
     <p class="quote-line">${bin.thesis}</p>
+    ${custom ? `<div class="pick-grid" data-bin-picks>Loading markets…</div>` : ""}
+    <div class="chip-row" data-bin-modes>${weightModes.map((m) => `<button type="button" class="chip${m.key === mode ? " chip--active" : ""}" data-mode="${m.key}" title="${m.hint}">${m.label}</button>`).join("")}</div>
     <div class="amount-row">
       <span>$</span>
       <input type="number" min="0" step="any" placeholder="0" data-bin-amount />
@@ -65,7 +82,40 @@ function openBinModal(bin: Bin) {
     status.textContent = errorText(error);
   }
 
-  const binCard = () => cardFromBin(bin, Number(amountInput.value) > 0 ? Number(amountInput.value) : 100, 10);
+  detail.querySelectorAll<HTMLButtonElement>("[data-mode]").forEach((button) =>
+    button.addEventListener("click", () => {
+      mode = button.dataset.mode as WeightMode;
+      detail.querySelectorAll<HTMLElement>("[data-mode]").forEach((el) => el.classList.toggle("chip--active", el === button));
+    }),
+  );
+
+  if (custom) {
+    void getMarketData().then((data) => {
+      const grid = query("[data-bin-picks]", detail);
+      const symbols = [...data.markets.values()].filter((m) => m.numOrders > 0).map((m) => m.symbol);
+      grid.innerHTML = symbols
+        .map((symbol) => `<div class="pick"><b>${symbol}</b><button type="button" class="chip" data-pick="${symbol}:long">Long</button><button type="button" class="chip" data-pick="${symbol}:short">Short</button></div>`)
+        .join("");
+      grid.addEventListener("click", (event) => {
+        const button = (event.target as HTMLElement).closest<HTMLElement>("[data-pick]");
+        if (!button) return;
+        const [symbol, direction] = button.dataset.pick!.split(":") as [string, "long" | "short"];
+        if (picks.get(symbol) === direction) picks.delete(symbol);
+        else picks.set(symbol, direction);
+        grid.querySelectorAll<HTMLElement>(`[data-pick^="${symbol}:"]`).forEach((el) =>
+          el.classList.toggle("chip--active", picks.get(symbol) === el.dataset.pick!.split(":")[1]),
+        );
+      });
+    });
+  }
+
+  function activeBin(): Bin | null {
+    if (!custom) return bin;
+    if (picks.size === 0) return null;
+    return customBin([...picks].map(([symbol, direction]) => ({ symbol, direction })), mode, 3);
+  }
+
+  const binCard = () => cardFromBin(activeBin() ?? bin, Number(amountInput.value) > 0 ? Number(amountInput.value) : 100, 10);
 
   query<HTMLButtonElement>("[data-bin-agent]", detail).addEventListener("click", () => {
     closeModal();
@@ -90,14 +140,22 @@ function openBinModal(bin: Bin) {
       status.dataset.tone = "error";
       return;
     }
+    const chosen = activeBin();
+    if (chosen === null) {
+      status.textContent = "Pick at least one asset.";
+      status.dataset.tone = "error";
+      return;
+    }
     status.textContent = "Reading every leg…";
     status.dataset.tone = "";
     sizingEl.innerHTML = "";
     try {
       const data = await getMarketData();
-      const { sized, issues } = sizeBinFor(bin, amount, data);
+      const { sized, issues, usedMode } = await planBin(toolbox, chosen, amount, data, mode);
       status.textContent = "";
       const warnings = issues.map((i) => i.detail).join(" · ");
+      const skipped = issues.filter((i) => i.reason === "below-minimum" || i.reason === "no-liquidity" || i.reason === "unknown-market").map((i) => i.symbol);
+      const fellBack = usedMode !== mode ? `<p class="warn-line">Not enough data for ${mode} weights, using fixed.</p>` : "";
       if (sized.legs.length === 0) {
         sizingEl.innerHTML = `<p class="warn-line">${warnings || "No legs could be sized."}</p>`;
         return;
@@ -106,11 +164,12 @@ function openBinModal(bin: Bin) {
         sized.legs
           .map(
             (leg) =>
-              `<div class="leg-row"><span>${leg.leg.direction === "long" ? "Long" : "Short"} ${leg.leg.symbol} · ${leg.leverage}x</span><span>${usd(leg.margin)} margin · ${usd(leg.notional)}</span></div>`,
+              `<div class="leg-row"><span>${leg.leg.direction === "long" ? "Long" : "Short"} ${leg.leg.symbol} · ${leg.leverage}x · ${(leg.leg.weightBps / 100).toFixed(1)}%</span><span>${usd(leg.margin)} margin · ${usd(leg.notional)}</span></div>`,
           )
           .join("") +
+        fellBack +
         (warnings ? `<p class="warn-line">${warnings}</p>` : "") +
-        `<button type="button" class="btn btn--primary" data-bin-confirm style="margin-top:12px">Open bin with my passkey</button>`;
+        `<button type="button" class="btn btn--primary" data-bin-confirm style="margin-top:12px">${skipped.length > 0 ? `Open without ${skipped.join(", ")}` : "Open bin with my passkey"}</button>`;
       const confirm = query<HTMLButtonElement>("[data-bin-confirm]", sizingEl);
       confirm.addEventListener("click", async () => {
         confirm.disabled = true;

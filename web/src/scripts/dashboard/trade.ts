@@ -1,4 +1,4 @@
-import { perpl } from "shared";
+import { estimateExecution, summarizeDepth, perpl, slippageWarnBps, type ExecutionEstimate } from "shared";
 import { singleLegBin, sizeBinFor, terminal, type CandleRangeKey, type OpenPosition } from "../perpl";
 import { drawCandles } from "./charts";
 import { loadCandles } from "../perplApi";
@@ -19,6 +19,8 @@ let range: CandleRangeKey = "1d";
 let rerender: () => void = () => {};
 let openHook: ((next: string) => void) | null = null;
 let pendingAsset = false;
+let accepted = false;
+let costRun = 0;
 
 export function openAsset(next: string) {
   symbol = next;
@@ -48,6 +50,7 @@ function elements() {
     margin: query<HTMLInputElement>("[data-ticket-margin]"),
     leverage: query<HTMLInputElement>("[data-ticket-leverage]"),
     size: query("[data-ticket-size]"),
+    cost: query("[data-ticket-cost]"),
     submit: query<HTMLButtonElement>("[data-ticket-submit]"),
     status: query("[data-ticket-status]"),
     stats: query("[data-trade-stats]"),
@@ -104,12 +107,61 @@ export async function initTrade() {
     return sizeBinFor(singleLegBin(symbol, side, leverage), margin, data);
   }
 
+  function isRisky(estimate: ExecutionEstimate | null) {
+    return estimate !== null && (estimate.slippageBps === null || estimate.slippageBps > slippageWarnBps);
+  }
+
+  let lastEstimate: ExecutionEstimate | null = null;
+
+  function paintCost(estimate: ExecutionEstimate | null) {
+    lastEstimate = estimate;
+    ui.cost.hidden = estimate === null;
+    if (estimate === null) return;
+    const risky = isRisky(estimate);
+    const funding = estimate.fundingDailyUsd;
+    const rows: [string, string][] = [
+      ["Slippage", estimate.slippageBps === null ? "Beyond the book" : `${estimate.slippageBps.toFixed(1)} bps · ${usd(estimate.slippageUsd ?? 0)}`],
+      ["Spread", `${estimate.spreadBps.toFixed(1)} bps`],
+      ["Taker fee", usd(estimate.feeUsd)],
+      ["Funding a day", `${funding >= 0 ? "pay" : "earn"} ${usd(Math.abs(funding))}`],
+    ];
+    ui.cost.innerHTML =
+      rows.map(([label, value], index) => `<div class="cost__row${risky && index === 0 ? " cost__row--warn" : ""}"><span>${label}</span><b>${value}</b></div>`).join("") +
+      (risky ? `<p class="cost__warn">Thin book for this size. Up to ${usd(estimate.maxSizeUsd)} fills within ${slippageWarnBps} bps.</p>` : "");
+  }
+
+  async function renderCost() {
+    const run = ++costRun;
+    const sizing = currentSizing();
+    const leg = sizing?.sized.legs[0];
+    if (!leg) return paintCost(null);
+    const shown = symbol;
+    try {
+      const [book, { snapshot }] = await Promise.all([toolbox.getBook(shown), toolbox.getSnapshot(shown)]);
+      if (run !== costRun) return;
+      paintCost(
+        estimateExecution({
+          book,
+          side: side === "long" ? "buy" : "sell",
+          notionalUsd: leg.notional,
+          takerFeeBps: snapshot.takerFeeBps,
+          fundingAprPct: snapshot.funding.nowAprPct,
+        }),
+      );
+    } catch {
+      if (run === costRun) paintCost(null);
+    }
+  }
+
   function renderTicketSize() {
     const sizing = currentSizing();
     const leg = sizing?.sized.legs[0];
     ui.size.textContent = leg
       ? `${leg.lots} ${symbol} · ${usd(leg.notional)} notional · ${leg.leverage}x`
       : (sizing?.issues[0]?.detail ?? "");
+    accepted = false;
+    ui.submit.textContent = "Place order";
+    void renderCost();
   }
 
   function renderDesk() {
@@ -187,8 +239,10 @@ export async function initTrade() {
     const shown = symbol;
     ui.stats.innerHTML = `<p class="empty">Loading…</p>`;
     try {
-      const { snapshot } = await toolbox.getSnapshot(shown);
+      const [{ snapshot }, book] = await Promise.all([toolbox.getSnapshot(shown), toolbox.getBook(shown).catch(() => null)]);
       if (shown !== symbol) return;
+      const mid = book && book.bids[0] && book.asks[0] ? (book.bids[0].price + book.asks[0].price) / 2 : 0;
+      const depth = book && mid > 0 ? summarizeDepth(book, mid) : null;
       const cells: [string, string][] = [
         ["24h volume", compact(snapshot.volume24hUsd)],
         ["Open interest", compact(snapshot.openInterestUsd)],
@@ -197,6 +251,13 @@ export async function initTrade() {
         ["Funding now", `${snapshot.funding.nowAprPct.toFixed(1)}% a year`],
         ["Funding avg 7d", `${snapshot.funding.meanAprPct.toFixed(1)}% a year`],
         ["Fees maker · taker", `${snapshot.makerFeeBps.toFixed(1)} · ${snapshot.takerFeeBps.toFixed(1)} bps`],
+        ...(depth
+          ? ([
+              ["Book within 10 bps", `${compact(depth.bidUsdWithin10Bps)} bid · ${compact(depth.askUsdWithin10Bps)} ask`],
+              ["Book within 25 bps", `${compact(depth.bidUsdWithin25Bps)} bid · ${compact(depth.askUsdWithin25Bps)} ask`],
+              ["Book within 50 bps", `${compact(depth.bidUsdWithin50Bps)} bid · ${compact(depth.askUsdWithin50Bps)} ask`],
+            ] as [string, string][])
+          : []),
         ["Today", `${snapshot.change24hPct >= 0 ? "▲" : "▼"} ${Math.abs(snapshot.change24hPct).toFixed(2)}%`],
       ];
       ui.stats.innerHTML = cells.map(([label, value]) => `<div class="stat"><small>${label}</small><b>${value}</b></div>`).join("");
@@ -246,6 +307,11 @@ export async function initTrade() {
     const sizing = currentSizing();
     if (!sizing || sizing.sized.legs.length === 0) {
       say(ui.status, sizing?.issues[0]?.detail ?? "Enter a margin amount.", "error");
+      return;
+    }
+    if (isRisky(lastEstimate) && !accepted) {
+      accepted = true;
+      ui.submit.textContent = "Click again to accept slippage";
       return;
     }
     ui.submit.disabled = true;
