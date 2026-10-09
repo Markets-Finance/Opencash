@@ -1,5 +1,6 @@
 import type { IntentsToken, Quote } from "./types.js";
 
+export const monadMonAssetId = "nep245:v2_1.omni.hot.tg:143_11111111111111111111";
 export const monadUsdcAssetId = "nep245:v2_1.omni.hot.tg:143_2dmLwYWkCQKyTjeUPAsGJuiVLbFx";
 export const monadUsdcAddress = "0x754704bc059f8c67012fed69bc8a327a5aafb603";
 

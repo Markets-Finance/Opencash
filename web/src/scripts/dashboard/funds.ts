@@ -126,6 +126,7 @@ function openDeposit() {
       <p class="account-address">${esc(trader.address)}</p>
       <button type="button" class="btn" data-dep-copy>Copy address</button>
       <p class="quote-line">Send only on the Monad network. USDC, USDT0, AUSD and MON are fine. Perpl trades in AUSD, so USDC and USDT0 are converted to AUSD in the app before they become margin.</p>
+      <p class="quote-line" data-dep-gas>Keep about $0.50 of MON in this address to pay network fees.</p>
     </div>
     <div data-dep-pane="chain">
       <p class="status-line" data-dep-provider></p>
@@ -221,7 +222,7 @@ function openDeposit() {
       const address = await api<{ kind: string; depositAddress: string; memo?: string; deadline?: string; amountIn?: string; amountOut?: string }>("/intents/deposit-address", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chain: origin.blockchain, recipient: trader.address, originAsset: origin.assetId, amount: intents.toBaseUnits(Number(amountEl.value), origin.decimals), refundTo: evm ? trader.address : refundEl.value.trim() }),
+        body: JSON.stringify({ chain: origin.blockchain, asset: target()?.symbol === "MON" ? "mon" : "usdc", recipient: trader.address, originAsset: origin.assetId, amount: intents.toBaseUnits(Number(amountEl.value), origin.decimals), refundTo: evm ? trader.address : refundEl.value.trim() }),
       });
       resultEl.innerHTML = `<div class="qr-wrap">${qrSvg(address.depositAddress, 160)}</div><p class="account-address">${esc(address.depositAddress)}</p>${address.memo ? `<p class="status-line" data-tone="error">Memo required: ${esc(address.memo)}</p>` : ""}<p class="quote-line">${address.kind === "persistent" ? "This address is yours and stays the same. Send any supported token any time." : `One-time address. Send exactly ${esc(address.amountIn ?? "")} ${esc(origin.symbol)}${address.deadline ? ` before ${esc(new Date(address.deadline).toLocaleTimeString())}` : ""}.`}</p>`;
     } catch (error) {
@@ -230,6 +231,13 @@ function openDeposit() {
       goEl.disabled = false;
     }
   });
+
+  void terminal
+    .loadNativeBalance(trader.address)
+    .then((mon) => {
+      if (mon < 0.05) query("[data-dep-gas]", panel).textContent = "This address has almost no MON for network fees. Send about $0.50 of MON here, or pick MON under “You get on Monad” on the Another chain tab.";
+    })
+    .catch(() => {});
 
   void (async () => {
     try {

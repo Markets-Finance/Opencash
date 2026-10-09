@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { estimateExecution, liquidationDistancePct, slippageWarnBps, type MarketSnapshot, type perpl, type TradingAccount } from "shared";
 import { toolbox } from "../lib/bots";
-import { loadAccount, loadCollateralBalance, openBin, singleLegBin, sizeBinFor, type MarketData } from "../lib/perpl";
+import { loadAccount, loadSpendableBalance, openBin, singleLegBin, sizeBinFor, type MarketData } from "../lib/perpl";
 import { dark, family, space, touch, track } from "../theme";
 import { LeverageSlider, riskColor } from "./LeverageSlider";
 import { CardTitle, ToneCard, tone } from "./ui";
@@ -51,7 +51,7 @@ export function OrderTicket({ trader, data, symbol, initialDirection, onOpened }
 
   useEffect(() => {
     let live = true;
-    Promise.all([loadCollateralBalance(trader.address), loadAccount(trader.address)])
+    Promise.all([loadSpendableBalance(trader.address), loadAccount(trader.address)])
       .then(([wallet, account]) => live && setAvailable(wallet + (account?.balance ?? 0)))
       .catch(() => live && setAvailable(null));
     return () => {

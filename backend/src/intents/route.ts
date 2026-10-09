@@ -43,10 +43,11 @@ export function registerIntentsRoute(app: FastifyInstance): void {
 
   app.get("/intents/info", async () => ({ provider: aurora ? "aurora" : "near-direct", persistent: aurora !== null }));
 
-  app.post<{ Body: { chain?: string; recipient?: string; originAsset?: string; amount?: string; refundTo?: string } }>("/intents/deposit-address", async (request, reply) => {
+  app.post<{ Body: { chain?: string; asset?: string; recipient?: string; originAsset?: string; amount?: string; refundTo?: string } }>("/intents/deposit-address", async (request, reply) => {
     if (limited(request.ip)) return reply.status(429).send({ error: "too many requests" });
     if (!aurora) return reply.status(503).send({ error: "Set AURORA_INTENTS_KEY to create deposit addresses." });
-    const { chain = "", recipient = "" } = request.body ?? {};
+    const { chain = "", recipient = "", asset = "usdc" } = request.body ?? {};
+    if (asset !== "usdc" && asset !== "mon") return reply.status(400).send({ error: "asset must be usdc or mon" });
     if (!isAddress(recipient)) return reply.status(400).send({ error: "recipient must be a Monad address" });
     const { value } = await catalog();
     if (!value.some((token) => token.blockchain === chain)) return reply.status(400).send({ error: "unsupported source chain" });
@@ -56,7 +57,7 @@ export function registerIntentsRoute(app: FastifyInstance): void {
         sender: recipient.toLowerCase(),
         depositChain: intents.isEvmChain(chain) ? "evm" : chain,
         destinationChain: "monad",
-        destinationAsset: intents.monadUsdcAssetId,
+        destinationAsset: asset === "mon" ? intents.monadMonAssetId : intents.monadUsdcAssetId,
       });
       return { kind: "persistent", ...persistent };
     } catch (error) {

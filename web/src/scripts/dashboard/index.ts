@@ -10,6 +10,7 @@ import "./modal";
 import { initFunds } from "./funds";
 import { initSwitchers } from "./switcher";
 import { initAccountMenu, initTabs } from "./tabs";
+import { startSweep } from "./sweep";
 import { initTrade, openAsset, setTradeQuery } from "./trade";
 
 initTabs({ analytics: initAnalytics, agent: initAgent, bins: initBins, trade: initTrade, account: initAccount });
@@ -32,4 +33,5 @@ initBots();
 initGate(() => {
   void initHome();
   void startBots();
+  startSweep();
 });

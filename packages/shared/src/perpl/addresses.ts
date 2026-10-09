@@ -1,4 +1,5 @@
 import { monadMainnet, monadTestnet } from "../chains.js";
+import { mainnetConvert, type ConvertVenue } from "./convert.js";
 
 export type PerplDeployment = {
   chainId: number;
@@ -7,6 +8,7 @@ export type PerplDeployment = {
   collateral: `0x${string}`;
   collateralDecimals: number;
   apiUrl: string;
+  convert?: ConvertVenue;
 };
 
 export const perplMainnet: PerplDeployment = {
@@ -16,6 +18,7 @@ export const perplMainnet: PerplDeployment = {
   collateral: "0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a",
   collateralDecimals: 6,
   apiUrl: "https://app.perpl.xyz/api",
+  convert: mainnetConvert,
 };
 
 export const perplTestnet: PerplDeployment = {

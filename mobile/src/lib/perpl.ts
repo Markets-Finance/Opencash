@@ -22,6 +22,7 @@ export const {
   loadMarkets,
   loadAccount,
   loadCollateralBalance,
+  loadSpendableBalance,
   loadPositions,
   loadOpenPositions,
   loadSummary,

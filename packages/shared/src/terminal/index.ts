@@ -12,6 +12,7 @@ import { fetchMarginTerms, fetchMarkets, marketsBySymbol } from "../perpl/market
 import type { PerpMarket } from "../perpl/markets.js";
 import { fromScaled, toCNS, toScaled } from "../perpl/scale.js";
 import type { PerplDeployment } from "../perpl/addresses.js";
+import { defaultConvertSlippageBps, minimumOut, quoteUsdcToCollateral, swapRequest } from "../perpl/convert.js";
 import { withdrawCollateralRequest } from "../perpl/write.js";
 import {
   allowanceRequest,
@@ -65,6 +66,7 @@ export function sizeBinFor(
 }
 
 const marketCacheMs = 15_000;
+const minGasMon = 0.02;
 
 export function createTerminal(config: TerminalConfig) {
   const { deployment } = config;
@@ -105,6 +107,11 @@ export function createTerminal(config: TerminalConfig) {
     return fromScaled(raw, deployment.collateralDecimals);
   }
 
+  async function loadSpendableBalance(owner: Address): Promise<number> {
+    const [ausd, usdc] = await Promise.all([loadCollateralBalance(owner), deployment.convert ? loadUsdcBalance(owner) : 0]);
+    return ausd + usdc;
+  }
+
   async function loadPositions(owner: Address, data: MarketData): Promise<BinPosition[]> {
     const account = await loadAccount(owner);
     if (account === null) return [];
@@ -130,7 +137,7 @@ export function createTerminal(config: TerminalConfig) {
 
   async function loadSummary(owner: Address, data: MarketData): Promise<PortfolioSummary> {
     const [wallet, account, open] = await Promise.all([
-      loadCollateralBalance(owner),
+      loadSpendableBalance(owner),
       loadAccount(owner),
       loadOpenPositions(owner, data),
     ]);
@@ -206,6 +213,61 @@ export function createTerminal(config: TerminalConfig) {
     return to;
   }
 
+  function venueOrThrow() {
+    if (!deployment.convert) throw new Error("Converting USDC to AUSD is only available on Monad mainnet.");
+    return deployment.convert;
+  }
+
+  async function loadUsdcBalance(owner: Address): Promise<number> {
+    const venue = venueOrThrow();
+    return fromScaled(await client.readContract(balanceOfRequest(venue.usdc, owner)), deployment.collateralDecimals);
+  }
+
+  async function quoteConvert(usdc: number): Promise<number> {
+    const venue = venueOrThrow();
+    const out = await quoteUsdcToCollateral(client, venue, toScaled(usdc, deployment.collateralDecimals));
+    return fromScaled(out, deployment.collateralDecimals);
+  }
+
+  async function convertUsdcToCollateral(
+    account: TradingAccount,
+    usdc: number,
+    onStep: (step: "approve" | "swap", hash: Hash) => void,
+    slippageBps: number = defaultConvertSlippageBps,
+  ): Promise<{ hash: Hash; received: number }> {
+    const venue = venueOrThrow();
+    const owner = account.address as Address;
+    if (!(usdc > 0)) throw new Error("Enter an amount.");
+    const amount = toScaled(usdc, deployment.collateralDecimals);
+    const have = await client.readContract(balanceOfRequest(venue.usdc, owner));
+    if (have < amount) throw new Error("You do not have that much USDC.");
+    const quote = await quoteUsdcToCollateral(client, venue, amount);
+    const wallet = walletFor(account);
+    const signer = { chain: wallet.chain, account: account.account };
+    const allowance = await client.readContract(allowanceRequest(venue.usdc, owner, venue.pool));
+    if (allowance < amount) {
+      const approval = await wallet.writeContract({ ...approveCollateralRequest(venue.usdc, venue.pool, amount), ...signer });
+      onStep("approve", approval);
+      await client.waitForTransactionReceipt({ hash: approval });
+    }
+    const hash = await wallet.writeContract({ ...swapRequest(venue, amount, minimumOut(quote, slippageBps)), ...signer });
+    onStep("swap", hash);
+    await client.waitForTransactionReceipt({ hash });
+    return { hash, received: fromScaled(quote, deployment.collateralDecimals) };
+  }
+
+  async function sweepUsdc(
+    account: TradingAccount,
+    onStep: (step: "approve" | "swap", hash: Hash) => void,
+    minUsdc = 1,
+  ): Promise<{ hash: Hash; received: number } | null> {
+    if (!deployment.convert) return null;
+    const owner = account.address as Address;
+    const [usdc, gas] = await Promise.all([loadUsdcBalance(owner), loadNativeBalance(owner)]);
+    if (usdc < minUsdc || gas < minGasMon) return null;
+    return convertUsdcToCollateral(account, Math.floor(usdc * 1e6) / 1e6, onStep);
+  }
+
   async function sendAsset(
     account: TradingAccount,
     input: { asset: "AUSD" | "MON"; to: string; amount: number },
@@ -270,5 +332,10 @@ export function createTerminal(config: TerminalConfig) {
     loadNativeBalance,
     sendAsset,
     withdrawFromPerpl,
+    loadUsdcBalance,
+    quoteConvert,
+    convertUsdcToCollateral,
+    loadSpendableBalance,
+    sweepUsdc,
   };
 }

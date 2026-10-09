@@ -28,12 +28,12 @@ export const folderPages: FolderPage[] = [
     label: "THEMES AND STRATEGIES",
     title: "Pick a theme.\nOr a rule.",
     description:
-      "Group markets that move together into a bin, or run a rule-based strategy such as a breakout, regular buying or a grid.",
+      "Group markets that move together into a bin, run a rule-based strategy, or tell the agent a trade in one line and get a card back.",
     facts: [
       ["THEMES", "Bins by narrative"],
       ["RULES", "Plain strategies"],
-      ["TESTING", "Real history"],
-      ["PRACTICE", "Fake money"],
+      ["AGENT", "Drafts from one line"],
+      ["TESTING", "Real history, fake money"],
     ],
     caption: "A bigger picture. A single trade.",
     icon: "bins",
@@ -61,7 +61,7 @@ export const steps = [
     insert: "ONE THEME",
     glyph: "▦",
     description:
-      "Choose a theme or a rule-based strategy. A bin groups markets that move together; a strategy follows plain rules.",
+      "Choose a theme or a rule-based strategy, or tell the agent a trade in one line. A bin groups markets that move together; a strategy follows plain rules.",
   },
   {
     name: "Test",
@@ -89,7 +89,7 @@ export const steps = [
   },
 ] as const;
 
-export type FeatureVisual = "bin" | "activity" | "paper" | "cap" | "rank" | "passkey";
+export type FeatureVisual = "bin" | "activity" | "agent" | "paper" | "cap" | "rank" | "signal" | "passkey";
 
 export const features: { id: string; visual: FeatureVisual; title: string; text: string }[] = [
   {
@@ -103,6 +103,12 @@ export const features: { id: string; visual: FeatureVisual; title: string; text:
     visual: "activity",
     title: "Rules, not hunches.",
     text: "Pick a rule-based strategy such as a Donchian breakout, regular buying, a grid or a trailing stop. Each one is a short set of rules you can read.",
+  },
+  {
+    id: "agent",
+    visual: "agent",
+    title: "Describe it in one line.",
+    text: "Type a trade the way you would say it: long MON, short BTC, 2x, $100, stop 8%. The agent drafts a strategy card with the legs, the stop and the risk checks. It only drafts. You approve every trade.",
   },
   {
     id: "test",
@@ -123,12 +129,24 @@ export const features: { id: string; visual: FeatureVisual; title: string; text:
     text: "Traders are ranked on real on-chain results from Perpl. Verified users can copy the strategy behind a rank.",
   },
   {
+    id: "signal",
+    visual: "signal",
+    title: "Let smart money confirm it.",
+    text: "Turn on the optional Nansen signal and a card only opens when smart-money flows agree with its legs. Leave it off and nothing changes.",
+  },
+  {
     id: "keys",
     visual: "passkey",
     title: "Your keys. Your call.",
     text: "Your passkey signs every call. OpenCash never holds withdrawal power.",
   },
 ];
+
+export const agentRows = [
+  ["You", "long MON, short BTC, 2x, $100, stop 8%"],
+  ["Card", "2 legs, stop 8%, $100 margin"],
+  ["Checks", "Spread, slippage, liquidation distance"],
+] as const;
 
 export const strategyRows = ["Donchian breakout", "Regular buying", "Grid", "Trailing stop"] as const;
 
@@ -151,6 +169,16 @@ export const surfaces = [
       ["Templates", "Breakout, regular buying, grid, trailing stop"],
       ["Testing", "Real Perpl history, then fake money"],
       ["Limits", "A hard spending cap per run"],
+    ],
+  },
+  {
+    tab: "Agent",
+    audience: "FOR ANYONE WHO WANTS A HEAD START",
+    label: "AGENT / DRAFT, CHECK, APPROVE",
+    facts: [
+      ["Input", "One line, like “long MON short BTC 2x $100”"],
+      ["Output", "A card with legs, a stop and risk checks"],
+      ["Control", "It drafts. You approve."],
     ],
   },
   {

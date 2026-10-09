@@ -248,14 +248,14 @@ export async function initTrade() {
   async function refresh() {
     const [account, collateral, open] = await Promise.all([
       terminal.loadAccount(trader.address),
-      terminal.loadCollateralBalance(trader.address),
+      terminal.loadSpendableBalance(trader.address),
       terminal.loadOpenPositions(trader.address, data),
     ]);
     positions = open;
     ui.balance.textContent = usd(account?.balance ?? 0);
     availableUsd = collateral + (account?.balance ?? 0);
     ui.available.textContent = `Available ${usd(availableUsd)}`;
-    ui.note.textContent = `Wallet AUSD ${usd(collateral)}${account ? "" : " · no Perpl account yet, the first order creates one"}`;
+    ui.note.textContent = `Wallet ${usd(collateral)} AUSD${account ? "" : " · no Perpl account yet, the first order creates one"}`;
     ui.updated.textContent = new Date().toLocaleTimeString();
     renderDesk();
   }
