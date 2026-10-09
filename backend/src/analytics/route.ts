@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { parseNet } from "./context.js";
 import { leaderboardView, parseSort } from "./leaderboard.js";
+import { liquidationsView, positionsView } from "./risk.js";
 import { protocolView } from "./protocol.js";
 import { storeFor } from "./store.js";
 import { walletView } from "./wallet.js";
@@ -11,6 +12,22 @@ export function registerAnalyticsRoute(app: FastifyInstance): void {
   app.get<{ Querystring: { network?: string } }>("/analytics/protocol", async (request, reply) => {
     try {
       return await protocolView(parseNet(request.query.network));
+    } catch (error) {
+      return reply.status(502).send({ error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  app.get<{ Querystring: { network?: string } }>("/analytics/liquidations", async (request, reply) => {
+    try {
+      return await liquidationsView(parseNet(request.query.network));
+    } catch (error) {
+      return reply.status(502).send({ error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  app.get<{ Querystring: { network?: string } }>("/analytics/positions", async (request, reply) => {
+    try {
+      return await positionsView(parseNet(request.query.network));
     } catch (error) {
       return reply.status(502).send({ error: error instanceof Error ? error.message : String(error) });
     }

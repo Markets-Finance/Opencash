@@ -63,3 +63,4 @@ export type {
   Ticker,
 } from "./api.js";
 export { perplEventsAbi } from "./events.js";
+export * from "./apikey/index.js";

@@ -5,7 +5,8 @@ import { liquidityGrade, perpl, slippageBps, type LiquidityGrade, type TradingAc
 import { toolbox } from "../lib/bots";
 import { AssetMark } from "../components/AssetMark";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
-import { ScreenTitle, Tag, ToneCard, tone } from "../components/ui";
+import { Insights } from "../components/Insights";
+import { ScreenTitle, Switcher, Tag, ToneCard, tone } from "../components/ui";
 import { closePosition, loadMarkets, loadOpenPositions, type MarketData, type OpenPosition } from "../lib/perpl";
 import { dark, family, space, touch } from "../theme";
 
@@ -34,6 +35,7 @@ export function Trade({ trader, onOpenAsset, onSelectTab }: TradeProps) {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [view, setView] = useState<"assets" | "insights">("assets");
   const [grades, setGrades] = useState<Record<string, LiquidityGrade>>({});
 
   const refreshPositions = useCallback(
@@ -111,6 +113,19 @@ export function Trade({ trader, onOpenAsset, onSelectTab }: TradeProps) {
       >
         <ScreenTitle title="Trade" right={<Tag label="Monad Testnet" dot={dark.green} />} />
 
+        <Switcher
+          items={[
+            { key: "assets", label: "Assets", dot: tone.butter },
+            { key: "insights", label: "Insights", dot: tone.violet },
+          ]}
+          value={view}
+          onChange={setView}
+        />
+
+        {view === "insights" ? (
+          <Insights onOpenAsset={onOpenAsset} />
+        ) : (
+          <>
         <View style={styles.search}>
           <Text style={styles.searchGlyph}>⌕</Text>
           <TextInput
@@ -187,6 +202,8 @@ export function Trade({ trader, onOpenAsset, onSelectTab }: TradeProps) {
               </ToneCard>
             );
           })
+        )}
+          </>
         )}
       </ScrollView>
 

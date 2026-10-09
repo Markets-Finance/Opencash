@@ -8,6 +8,7 @@ import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { OrderTicket } from "../components/OrderTicket";
 import { RoundButton, Tag, ToneCard, tone } from "../components/ui";
 import { toolbox } from "../lib/bots";
+import { flowText, loadPulses, stanceLabel } from "../lib/nansen";
 import {
   candleRanges,
   loadCandles,
@@ -128,6 +129,16 @@ export function Asset({ symbol, trader, onBack, onSelectTab, onStrategies }: Ass
     candles && candles.length >= 2 ? ((candles[candles.length - 1].close - candles[0].open) / candles[0].open) * 100 : null;
   const dayChange = snapshot?.change24hPct ?? null;
 
+  const [smart, setSmart] = useState<Awaited<ReturnType<typeof loadPulses>>>(null);
+  useEffect(() => {
+    let live = true;
+    loadPulses([symbol]).then((next) => live && setSmart(next));
+    return () => {
+      live = false;
+    };
+  }, [symbol]);
+  const pulse = smart?.get(symbol.toUpperCase());
+
   const stats: { label: string; value: string }[] = [
     { label: "24h volume", value: snapshot ? compact(snapshot.volume24hUsd) : "—" },
     { label: "Open interest", value: snapshot ? compact(snapshot.openInterestUsd) : "—" },
@@ -137,6 +148,12 @@ export function Asset({ symbol, trader, onBack, onSelectTab, onStrategies }: Ass
     { label: "Fees maker · taker", value: snapshot ? `${snapshot.makerFeeBps.toFixed(1)} · ${snapshot.takerFeeBps.toFixed(1)} bps` : "—" },
     { label: "Bids within 25 bps", value: depth ? compact(depth.bidUsdWithin25Bps) : "—" },
     { label: "Asks within 25 bps", value: depth ? compact(depth.askUsdWithin25Bps) : "—" },
+    ...(pulse && pulse.tokens.length > 0
+      ? [
+          { label: "Smart money 7d (Nansen)", value: `${stanceLabel(pulse.stance)} ${flowText(pulse.flow7dUsd)}` },
+          { label: "Smart traders", value: String(pulse.traders) },
+        ]
+      : []),
   ];
 
   return (

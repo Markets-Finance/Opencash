@@ -15,6 +15,7 @@ export type BotDeps = {
   now: () => number;
   heldLegs: (card: StrategyCard) => Promise<HeldLeg[]>;
   checkEntry: (card: StrategyCard, minCarryAprPct: number) => Promise<EntryCheck>;
+  signalGate?: (card: StrategyCard) => Promise<{ ok: boolean; reason: string }>;
   open: (card: StrategyCard) => Promise<{ txHash?: string }>;
   close: (card: StrategyCard) => Promise<{ txHash?: string }>;
 };
@@ -95,6 +96,15 @@ export async function tickBot(input: Bot, deps: BotDeps): Promise<Bot> {
     const check = await deps.checkEntry(bot.card, bot.rules.minCarryAprPct);
     bot = { ...bot, lastCheck: { at: now, message: check.reason } };
     if (!check.ok) return bot.status === "watching" ? bot : { ...bot, status: "watching" };
+
+    if (bot.card.signal === "nansen" && deps.signalGate) {
+      const gate = await deps.signalGate(bot.card);
+      if (!gate.ok) {
+        bot = { ...bot, lastCheck: { at: now, message: `Waiting on Nansen: ${gate.reason}` } };
+        return bot.status === "watching" ? bot : { ...bot, status: "watching" };
+      }
+      check.reason = `${check.reason}. Nansen: ${gate.reason}`;
+    }
 
     const { txHash } = await deps.open(bot.card);
     bot = withLog(bot, "action", `Opened ${bot.card.name}. ${check.reason}`, now, txHash);

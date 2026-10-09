@@ -1,5 +1,6 @@
 import type { ApiCandle, ApiMarket, Book, FundingPoint, PerplApi, Ticker } from "../perpl/api.js";
 import { snapshotMarket, type MarketSnapshot } from "../analysis/market.js";
+import type { SmartPulse } from "../nansen/types.js";
 import type { RiskLimits } from "../strategy/types.js";
 
 const marketTtlMs = 300_000;
@@ -22,6 +23,7 @@ export function createToolbox(api: PerplApi, limits: RiskLimits, now: () => numb
   let markets: Cached<ApiMarket[]> | null = null;
   let tickers: Cached<Map<number, Ticker>> | null = null;
   const funding = new Map<number, Cached<FundingPoint[]>>();
+  let smartSource: ((symbols: string[]) => Promise<SmartPulse[] | null>) | null = null;
 
   async function getMarkets(): Promise<ApiMarket[]> {
     if (markets && now() - markets.at < marketTtlMs) return markets.value;
@@ -71,5 +73,13 @@ export function createToolbox(api: PerplApi, limits: RiskLimits, now: () => numb
     return api.getBook(await getMarket(symbol), 100);
   }
 
-  return { api, limits, getMarkets, getMarket, getTickers, getFunding, getSnapshot, getCandles, getBook };
+  function setSmartMoney(source: ((symbols: string[]) => Promise<SmartPulse[] | null>) | null) {
+    smartSource = source;
+  }
+
+  async function getSmartMoney(symbols: string[]): Promise<SmartPulse[] | null> {
+    return smartSource ? smartSource(symbols) : null;
+  }
+
+  return { api, limits, setSmartMoney, getSmartMoney, getMarkets, getMarket, getTickers, getFunding, getSnapshot, getCandles, getBook };
 }

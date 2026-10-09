@@ -55,6 +55,24 @@ async function contextsFor(card: StrategyCard, toolbox: Toolbox): Promise<Map<st
 
 export const tools: AgentTool[] = [
   {
+    name: "smart_money",
+    description:
+      "Nansen smart-money net flow for markets over 1h, 24h, 7d and 30d, with a buying, selling or flat stance. Use it only when the user turns the Nansen signal on.",
+    parameters: {
+      type: "object",
+      properties: { symbols: { type: "array", items: { type: "string" }, description: "Market symbols such as BTC, ETH or MON" } },
+      required: ["symbols"],
+    },
+    async run(args, toolbox) {
+      const raw = args.symbols;
+      const symbols = Array.isArray(raw) ? raw.filter((item): item is string => typeof item === "string") : [];
+      if (symbols.length === 0) throw new Error("Missing argument symbols");
+      const pulses = await toolbox.getSmartMoney(symbols);
+      if (pulses === null) throw new Error("Nansen is not connected or has no data right now");
+      return pulses;
+    },
+  },
+  {
     name: "list_markets",
     description: "Every open Perpl market with mark price, spread, 24h volume, open interest, max leverage and funding.",
     parameters: { type: "object", properties: {}, required: [] },

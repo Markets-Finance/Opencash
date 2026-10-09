@@ -2,6 +2,7 @@ import { isAddress, type Address } from "viem";
 import { perpl } from "shared";
 import { summarise } from "./accounts.js";
 import { contextFor, type Net } from "./context.js";
+import { heldPositions, marketBook } from "./positions.js";
 import { storeFor } from "./store.js";
 
 const tiers = [
@@ -32,35 +33,8 @@ export async function walletView(net: Net, input: string) {
   const account = await perpl.fetchAccount(client, deployment.exchange, address);
   if (account === null) return { found: false as const, network: net, address };
 
-  const markets = await perpl.fetchMarkets(client, deployment.exchange);
-  const held = (
-    await Promise.all(
-      markets.map(async (market) => {
-        const position = await perpl.fetchPosition(client, deployment.exchange, market, account.accountId).catch(() => null);
-        if (position === null) return null;
-        const terms = await perpl.fetchMarginTerms(client, deployment.exchange, market, 1).catch(() => null);
-        const long = position.positionType === perpl.OrderType.OpenLong;
-        const notional = position.lots * position.mark;
-        const maint = terms && terms.maintenanceLeverage > 0 ? 1 / terms.maintenanceLeverage : 0.05;
-        const liquidation = long
-          ? (position.lots * position.entryPrice - position.deposit) / (position.lots * (1 - maint))
-          : (position.deposit + position.lots * position.entryPrice) / (position.lots * (1 + maint));
-        return {
-          symbol: market.symbol,
-          side: long ? "long" : "short",
-          lots: position.lots,
-          notionalUsd: notional,
-          entryPrice: position.entryPrice,
-          markPrice: position.mark,
-          marginUsd: position.deposit,
-          leverage: position.deposit > 0 ? notional / position.deposit : null,
-          unrealizedPnlUsd: position.pnl,
-          liquidationPrice: Number.isFinite(liquidation) && liquidation > 0 ? liquidation : null,
-          liquidationDistancePct: Number.isFinite(liquidation) && position.mark > 0 ? (Math.abs(position.mark - liquidation) / position.mark) * 100 : null,
-        };
-      }),
-    )
-  ).filter((row): row is NonNullable<typeof row> => row !== null);
+  const { markets } = await marketBook(net);
+  const held = await heldPositions(net, account.accountId);
 
   const symbolOf = new Map(markets.map((m) => [m.perpId, m.symbol]));
   const store = storeFor(net);

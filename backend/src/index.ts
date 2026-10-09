@@ -8,6 +8,7 @@ import { registerMarketRoute } from "./market/route.js";
 import { warmTradableCache } from "./market/tradable.js";
 import { registerIdentityRoute } from "./identity/route.js";
 import { registerIntentsRoute } from "./intents/route.js";
+import { registerNansenRoute } from "./nansen/route.js";
 import { registerStrategyRoute } from "./strategies/route.js";
 import { registerPerplRoute } from "./perpl/route.js";
 import { registerPortfolioRoute } from "./portfolio/route.js";
@@ -34,6 +35,7 @@ registerLeaderboardRoute(app);
 registerStrategyRoute(app);
 registerIntentsRoute(app);
 registerAnalyticsRoute(app);
+registerNansenRoute(app);
 
 app.listen({ port, host: "0.0.0.0" }).catch((err) => {
   app.log.error(err);

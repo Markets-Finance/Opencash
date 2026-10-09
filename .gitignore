@@ -13,3 +13,5 @@ contracts/cache/
 contracts/broadcast/
 backend/data/
 .private/
+dist-landing/
+.wrangler/

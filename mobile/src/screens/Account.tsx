@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { isDevAuth, perpl, type TradingAccount } from "shared";
 import { PassCard } from "../components/PassCard";
+import { AuthShell, type AuthMode } from "../components/AuthShell";
 import { SettingIcon, type SettingIconKind } from "../components/SettingIcon";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { createAccount, revealPhrase, signIn } from "../lib/mera";
@@ -95,7 +96,6 @@ export function Account({
   initialAccount,
   initialProfile,
   portfolio,
-  onBack,
   onAuthenticated,
   onProfileChange,
   onInitialised,
@@ -104,7 +104,6 @@ export function Account({
   initialAccount: TradingAccount | null;
   initialProfile: Profile | null;
   portfolio: number | null;
-  onBack: () => void;
   onAuthenticated: (account: TradingAccount | null) => void;
   onProfileChange: (profile: Profile | null) => void;
   onInitialised: () => void;
@@ -238,7 +237,7 @@ export function Account({
       setStatus("A name and an email are both needed to label the passkey.");
       return;
     }
-    if (formMode === "profile") {
+    if (account !== null) {
       void saveProfile(entered);
       return;
     }
@@ -299,6 +298,24 @@ export function Account({
     setPanel(null);
     setFormMode(null);
     setPhrase(null);
+  }
+
+  if (account === null || profile === null) {
+    const authMode: AuthMode = account !== null ? "profile" : formMode === "create" ? "create" : "signin";
+    return (
+      <AuthShell
+        mode={authMode}
+        dev={isDevAuth}
+        name={name}
+        email={email}
+        status={status}
+        failed={failed}
+        onName={setName}
+        onEmail={setEmail}
+        onSwitch={account === null ? () => setFormMode(formMode === "create" ? null : "create") : undefined}
+        onSubmit={() => (authMode === "signin" ? void run(signIn, "Waiting for your passkey…") : submit())}
+      />
+    );
   }
 
   if (account !== null && showTabBar && panel !== null) {
@@ -370,15 +387,6 @@ export function Account({
 
   return (
     <View style={styles.screen}>
-      {!showTabBar && (
-        <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
-          <Pressable onPress={onBack} hitSlop={12} style={styles.iconButton}>
-            <Text style={styles.back}>←</Text>
-          </Pressable>
-          <Text style={styles.heading}>Account</Text>
-          <View style={styles.iconSpacer} />
-        </View>
-      )}
       {showTabBar && (
         <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
           <Text style={styles.heading}>Account</Text>

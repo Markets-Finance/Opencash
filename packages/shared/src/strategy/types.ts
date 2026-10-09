@@ -17,6 +17,7 @@ export type StrategyCard = {
   legs: StrategyLeg[];
   stopLossPct: number;
   takeProfitPct?: number;
+  signal?: "nansen";
 };
 
 export type RiskLimits = {

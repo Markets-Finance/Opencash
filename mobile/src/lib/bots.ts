@@ -11,9 +11,11 @@ import {
   type BotRuntime,
   type TradingAccount,
 } from "shared";
+import { pulseList } from "./nansen";
 import { terminal } from "./perpl";
 
 export const toolbox = createToolbox(perpl.createPerplApi(perpl.perplTestnet.apiUrl), defaultLimits);
+toolbox.setSmartMoney(pulseList);
 
 let runtime: BotRuntime | null = null;
 let owner: string | null = null;
@@ -44,6 +46,7 @@ export async function startBots(trader: TradingAccount): Promise<void> {
     toolbox,
     trader,
     onChange: notify,
+    smartPulses: pulseList,
     storage: {
       load: async () => {
         try {
@@ -70,13 +73,13 @@ export function stopBots(): void {
   notify([]);
 }
 
-export async function draftBot(prompt: string, mode: BotMode): Promise<string | null> {
+export async function draftBot(prompt: string, mode: BotMode, signal: "nansen" | null = null): Promise<string | null> {
   const symbols = (await toolbox.getMarkets()).map((m) => m.symbol);
   const card = await ruleDrafter(prompt, symbols);
   if (card === null || runtime === null) {
     return `Name a market and a side, like "long MON short BTC 2x $100 stop 8%". Markets: ${symbols.join(", ")}.`;
   }
-  await runtime.add(createBot(card.name, mode, card, Date.now()));
+  await runtime.add(createBot(card.name, mode, signal ? { ...card, signal } : card, Date.now()));
   return null;
 }
 

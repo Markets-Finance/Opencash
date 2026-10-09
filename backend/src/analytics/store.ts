@@ -72,8 +72,34 @@ class Store {
 
   start() {
     const run = () => this.sync().catch((error) => console.error(`analytics sync ${this.net} failed`, error));
-    void run();
-    setInterval(run, 60_000);
+    void this.claim().then((owner) => {
+      if (!owner) {
+        console.error(`analytics ${this.net}: another process owns the index, this one will not write it`);
+        return;
+      }
+      void run();
+      setInterval(run, 60_000);
+    });
+  }
+
+  private async claim(): Promise<boolean> {
+    const lock = `${this.path}.lock`;
+    try {
+      const holder = Number(await readFile(lock, "utf8"));
+      if (holder > 0 && holder !== process.pid) {
+        try {
+          process.kill(holder, 0);
+          return false;
+        } catch {
+          void 0;
+        }
+      }
+    } catch {
+      void 0;
+    }
+    await mkdir(dirname(lock), { recursive: true });
+    await writeFile(lock, String(process.pid));
+    return true;
   }
 
   private async load() {
@@ -140,7 +166,7 @@ class Store {
 
   targetHours(): number {
     const { startBlock, headBlock } = this.saved;
-    return startBlock === 0 ? 0 : Math.round(((headBlock - startBlock) * blockSec * 10) / 3600) / 10;
+    return startBlock === 0 || headBlock < startBlock ? 0 : Math.round(((headBlock - startBlock) * blockSec * 10) / 3600) / 10;
   }
 
   get progress(): { startBlock: number; lastBlock: number; headBlock: number; done: boolean } {

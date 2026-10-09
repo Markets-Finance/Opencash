@@ -1,7 +1,7 @@
 import { followMessage, type StrategyCard } from "shared";
 import { addBotFromCard, currentTrader } from "./bots";
+import { backendUrl } from "./config";
 
-export const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL ?? "http://10.0.2.2:8787";
 
 export type RankRow = {
   rank: number;

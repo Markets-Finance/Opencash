@@ -2,6 +2,8 @@ import type { Toolbox } from "../agent/toolbox.js";
 import { binFromCard } from "../strategy/convert.js";
 import type { StrategyCard } from "../strategy/types.js";
 import type { TradingAccount } from "../mera/index.js";
+import { signalGate } from "../nansen/gate.js";
+import type { SmartPulse } from "../nansen/types.js";
 import { sizeBinFor, type createTerminal } from "../terminal/index.js";
 import { checkEntry } from "./entry.js";
 import { tickBot, type BotDeps, type HeldLeg } from "./engine.js";
@@ -21,12 +23,13 @@ export type BotRuntimeConfig = {
   storage: BotStorage;
   onChange: (bots: Bot[]) => void;
   intervalMs?: number;
+  smartPulses?: (symbols: string[]) => Promise<SmartPulse[] | null>;
 };
 
 const defaultIntervalMs = 30_000;
 
 export function createBotRuntime(config: BotRuntimeConfig) {
-  const { terminal, toolbox, trader, storage, onChange } = config;
+  const { terminal, toolbox, trader, storage, onChange, smartPulses } = config;
   let bots: Bot[] = [];
   let timer: ReturnType<typeof setInterval> | undefined;
   let busy = false;
@@ -57,6 +60,9 @@ export function createBotRuntime(config: BotRuntimeConfig) {
       );
     },
     checkEntry: (card, minCarry) => checkEntry(card, minCarry, toolbox),
+    signalGate: smartPulses
+      ? async (card) => signalGate(card.legs, await smartPulses(card.legs.map((leg) => leg.symbol)))
+      : async () => ({ ok: false, reason: "Nansen is not connected" }),
     open: async (card) => {
       const data = await terminal.loadMarkets();
       const { sized } = sizeBinFor(binFromCard(card), card.marginUsd, data);

@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { planBin, weightModes, type Bin, type BinSizingIssue, type SizedBin, type TradingAccount, type WeightMode } from "shared";
 import { toolbox } from "../lib/bots";
+import { agreementFor, flowText, loadPulses, stanceLabel } from "../lib/nansen";
 import { SelectPill } from "../components/ui";
 import { AssetMark, LegStack } from "../components/AssetMark";
 import { openBin, type EntryStep, type MarketData } from "../lib/perpl";
@@ -43,6 +44,15 @@ export function BinDetail({ bin, data, balance, trader, onBack }: BinDetailProps
   const [result, setResult] = useState<{ sized: SizedBin; issues: BinSizingIssue[]; usedMode: WeightMode } | null>(null);
 
   const marginAmount = Number(amount) || 0;
+  const [pulses, setPulses] = useState<Awaited<ReturnType<typeof loadPulses>>>(null);
+
+  useEffect(() => {
+    let live = true;
+    loadPulses(bin.legs.map((leg) => leg.symbol)).then((next) => live && setPulses(next));
+    return () => {
+      live = false;
+    };
+  }, [bin]);
 
   useEffect(() => {
     if (marginAmount <= 0) {
@@ -138,6 +148,24 @@ export function BinDetail({ bin, data, balance, trader, onBack }: BinDetailProps
             </Text>
           ) : null}
         </View>
+
+        {pulses !== null && (
+          <View style={styles.pulseBox}>
+            <Text style={styles.fieldLabel}>SMART MONEY, 7 DAYS (NANSEN)</Text>
+            <Text style={styles.pulseLabel}>{agreementFor(bin.legs, [...pulses.values()]).label}</Text>
+            {bin.legs.map((leg) => {
+              const pulse = pulses.get(leg.symbol.toUpperCase());
+              if (!pulse || pulse.tokens.length === 0) return null;
+              return (
+                <View key={leg.symbol} style={styles.pulseRow}>
+                  <Text style={styles.pulseSymbol}>{leg.symbol}</Text>
+                  <Text style={[styles.pulseStance, { color: pulse.stance === "buying" ? dark.green : pulse.stance === "selling" ? dark.red : dark.muted }]}>{stanceLabel(pulse.stance)}</Text>
+                  <Text style={styles.pulseFlow}>{flowText(pulse.flow7dUsd)}</Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
 
         <View style={styles.modes}>
           {weightModes.map((item) => (
@@ -245,6 +273,12 @@ const styles = StyleSheet.create({
   back: { fontFamily: family.medium, fontSize: 22, color: "#14181a" },
   content: { padding: space.lg, gap: space.lg },
   modes: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
+  pulseBox: { gap: space.xs, padding: space.md, borderRadius: 18, backgroundColor: dark.surface },
+  pulseLabel: { fontFamily: family.medium, fontSize: 14, color: dark.ink },
+  pulseRow: { flexDirection: "row", alignItems: "center", gap: space.md },
+  pulseSymbol: { width: 52, fontFamily: family.semibold, fontSize: 13, color: dark.ink },
+  pulseStance: { width: 72, fontFamily: family.medium, fontSize: 13 },
+  pulseFlow: { fontFamily: family.regular, fontSize: 13, color: dark.muted },
   modeHint: { fontFamily: family.regular, fontSize: 12, color: dark.muted },
   identityRow: { flexDirection: "row", alignItems: "center", gap: space.md },
   thesis: {

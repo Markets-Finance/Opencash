@@ -1,5 +1,5 @@
 import { intents } from "shared";
-import { backendUrl } from "./ranks";
+import { backendUrl } from "./config";
 
 export type Source = intents.FundingSource;
 export type Destination = intents.IntentsToken;

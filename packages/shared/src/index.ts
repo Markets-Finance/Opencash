@@ -46,3 +46,4 @@ export {
 export type { P256PublicKey } from "./webauthn/publicKey.js";
 export * as templates from "./templates/index.js";
 export * as intents from "./intents/index.js";
+export * as nansen from "./nansen/index.js";

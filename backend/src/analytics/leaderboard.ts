@@ -1,7 +1,6 @@
-import type { Address } from "viem";
-import { resolveAddresses } from "shared";
 import { summarise } from "./accounts.js";
-import { contextFor, type Net } from "./context.js";
+import { addressBook } from "./addresses.js";
+import type { Net } from "./context.js";
 import { storeFor } from "./store.js";
 import { pnlTier } from "./wallet.js";
 
@@ -11,7 +10,6 @@ const minClosedTrades = 5;
 const minVolumeUsd = 1000;
 const cacheMs = 30_000;
 const cache = new Map<string, { at: number; value: unknown }>();
-const known = new Map<string, Address>();
 
 export function parseSort(value: unknown): LeaderSort {
   return value === "volume" || value === "winRate" ? value : "pnl";
@@ -35,14 +33,7 @@ async function build(net: Net, sort: LeaderSort, limit: number) {
     .sort((a, b) => (sort === "volume" ? b.volumeUsd - a.volumeUsd : sort === "winRate" ? b.winRate - a.winRate || b.netPnlUsd - a.netPnlUsd : b.netPnlUsd - a.netPnlUsd))
     .slice(0, limit);
 
-  const { client, deployment } = contextFor(net);
-  const fromEvents = new Map<number, Address>();
-  for (const event of saved.events) if (event.kind === "account") fromEvents.set(event.accountId, event.address);
-  const missing = rows.filter((row) => !fromEvents.has(row.accountId) && !known.has(`${net}:${row.accountId}`)).map((row) => row.accountId);
-  if (missing.length > 0) {
-    const resolved = await resolveAddresses(client, deployment.exchange, missing);
-    for (const [id, address] of resolved) known.set(`${net}:${id}`, address);
-  }
+  const book = await addressBook(net, rows.map((row) => row.accountId));
 
   return {
     network: net,
@@ -55,7 +46,7 @@ async function build(net: Net, sort: LeaderSort, limit: number) {
     rows: rows.map((row, index) => ({
       rank: index + 1,
       accountId: row.accountId,
-      address: fromEvents.get(row.accountId) ?? known.get(`${net}:${row.accountId}`) ?? null,
+      address: book.get(row.accountId) ?? null,
       netPnlUsd: row.netPnlUsd,
       volumeUsd: row.volumeUsd,
       winRate: row.winRate,

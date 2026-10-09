@@ -22,8 +22,6 @@ import { Send } from "./src/screens/Send";
 import { Trade } from "./src/screens/Trade";
 import type { TabKey } from "./src/components/TabBar";
 import { Home } from "./src/screens/Home";
-import { Landing } from "./src/screens/Landing";
-import { MarkIntro } from "./src/components/MarkIntro";
 import {
   loadCollateralBalance,
   loadMarkets,
@@ -33,7 +31,6 @@ import {
 import { dark } from "./src/theme";
 
 type Screen =
-  | "landing"
   | "account"
   | "bins"
   | "bin"
@@ -45,7 +42,7 @@ type Screen =
   | "bots";
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>("landing");
+  const [screen, setScreen] = useState<Screen>("account");
   const [bin, setBin] = useState<Bin | null>(null);
   const [markets, setMarkets] = useState<MarketData | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
@@ -63,7 +60,6 @@ export default function App() {
     DelaGothicOne_400Regular,
   });
   const [fontTimedOut, setFontTimedOut] = useState(false);
-  const [intro, setIntro] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => setFontTimedOut(true), 4000);
@@ -116,15 +112,12 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <StatusBar style="light" />
-      {screen === "landing" ? (
-        <Landing onSignIn={() => setScreen("account")} />
-      ) : screen === "account" ? (
+      {screen === "account" ? (
         <Account
           initialAccount={trader}
           initialProfile={profile}
           portfolio={portfolio}
           onProfileChange={setProfile}
-          onBack={() => setScreen("landing")}
           onAuthenticated={onAuthenticated}
           onInitialised={() => setScreen("home")}
           onSelectTab={goTab}
@@ -171,7 +164,6 @@ export default function App() {
           onBack={() => setScreen("bins")}
         />
       ) : null}
-      {intro && <MarkIntro onDone={() => setIntro(false)} />}
     </SafeAreaProvider>
   );
 }
