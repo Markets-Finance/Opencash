@@ -1,3 +1,4 @@
+import { pulseList } from "../nansen";
 import { createBot, createBotRuntime, type Bot, type BotMode, type BotRuntime } from "../../perpl";
 import { terminal } from "../../perpl";
 import { query } from "../dom";
@@ -23,6 +24,7 @@ export async function startBots() {
     trader,
     storage: localBotStorage(trader.address),
     onChange: paint,
+    smartPulses: pulseList,
   });
   await runtime.init();
   runtime.start();

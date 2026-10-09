@@ -1,11 +1,14 @@
 import { errorText, query } from "../dom";
 import { ago } from "./format";
 import { initProtocolControls, paintProtocol, type Protocol } from "./protocol";
+import { initRiskControls, loadRisk } from "./risk";
 import { initWallet, lookup, setNetwork } from "./wallet";
 
 const backend = import.meta.env.PUBLIC_BACKEND_URL ?? "http://localhost:8787";
 let network = "mainnet";
 let updatedAt = 0;
+let riskAt = 0;
+const riskEveryMs = 60_000;
 let timer: ReturnType<typeof setInterval> | undefined;
 
 async function load() {
@@ -16,6 +19,10 @@ async function load() {
     if (!response.ok) throw new Error(body.error ?? `Analytics ${response.status}`);
     paintProtocol(body);
     updatedAt = body.at;
+    if (Date.now() - riskAt > riskEveryMs) {
+      riskAt = Date.now();
+      void loadRisk(backend, network);
+    }
     live.classList.remove("live--off");
   } catch (error) {
     live.classList.add("live--off");
@@ -30,6 +37,7 @@ function tick() {
 
 export function initAnalytics() {
   initProtocolControls();
+  initRiskControls();
   initWallet(backend, () => network);
   void load();
   timer = setInterval(() => {
@@ -43,6 +51,7 @@ export function initAnalytics() {
     network = button.dataset.anNet!;
     button.parentElement!.querySelectorAll("[data-an-net]").forEach((el) => el.setAttribute("aria-pressed", String(el === button)));
     updatedAt = 0;
+    riskAt = 0;
     setNetwork(network);
     void load();
   });

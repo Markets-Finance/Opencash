@@ -12,10 +12,16 @@ const argsByTool: Record<string, string[]> = {
   price_stats: ["symbol", "days"],
   order_book: ["symbol", "notionalUsd"],
   compare_pair: ["long", "short", "days"],
+  smart_money: [],
 };
 
 function readArgs(tool: string): Record<string, unknown> {
   const args: Record<string, unknown> = {};
+  if (tool === "smart_money") {
+    const names = ["symbol", "long", "short"].map((key) => query<HTMLInputElement>(`[data-arg=${key}]`).value.trim().toUpperCase());
+    args.symbols = [...new Set(names.filter((name) => name !== ""))];
+    return args;
+  }
   for (const key of argsByTool[tool] ?? []) {
     const value = query<HTMLInputElement>(`[data-arg=${key}]`).value.trim();
     args[key] = key === "days" || key === "notionalUsd" ? Number(value) : value.toUpperCase();

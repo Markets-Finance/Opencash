@@ -1,5 +1,6 @@
 import { avatars, errorText, esc, markForSymbol, px, query } from "../dom";
 import { ago, compact, pct, shortAddress, signedUsd, tone } from "./format";
+import { loadIntel, nansenStatus, type Intel } from "../nansen";
 
 type Position = {
   symbol: string;
@@ -146,6 +147,57 @@ function activityList(activity: Activity[], hours: number): string {
     .join("")}</div>`;
 }
 
+function intelBody(intel: Intel): string {
+  const labels = intel.labels
+    ? intel.labels.length > 0
+      ? `<div class="nansen__chips">${intel.labels.map((item) => `<i class="badge badge--size" title="${esc(item.category)} · ${esc(item.kind)}">${esc(item.label)}</i>`).join("")}</div>`
+      : `<p class="panel__lede">No Nansen labels for this address.</p>`
+    : "";
+  const pnl = intel.pnl
+    ? `<div class="stat-grid stat-grid--wide">
+        ${stat("Monad realised PnL (90d)", signedUsd(intel.pnl.realizedUsd), `${(intel.pnl.realizedPercent * 100).toFixed(1)}% return`, `delta-text--${tone(intel.pnl.realizedUsd)}`)}
+        ${stat("Nansen win rate", `${(intel.pnl.winRate * 100).toFixed(0)}%`, `${intel.pnl.trades} trades · ${intel.pnl.tradedTokens} tokens`)}
+        ${stat("Best tokens", intel.pnl.topTokens.length ? intel.pnl.topTokens.slice(0, 3).map((token) => esc(token.symbol)).join(" · ") : "—", "by realised PnL")}
+      </div>`
+    : "";
+  const balances = intel.balances && intel.balances.length
+    ? `<div><span class="panel__label">Monad holdings</span><div class="nansen__chips">${intel.balances.map((row) => `<i class="badge">${esc(row.symbol)} ${compact(row.valueUsd)}</i>`).join("")}</div></div>`
+    : "";
+  const related = intel.related && intel.related.length
+    ? `<div><span class="panel__label">Related wallets</span><div class="nansen__related">${intel.related.map((row) => `<button type="button" class="link-btn" data-an-lookup="${esc(row.address)}">${esc(shortAddress(row.address))}${row.label ? ` · ${esc(row.label)}` : ""} <small>${esc(row.relation)}</small></button>`).join("")}</div></div>`
+    : "";
+  const errors = intel.errors.length ? `<p class="status-line" data-tone="error">${esc(intel.errors.join(" · "))}</p>` : "";
+  return `${labels}${pnl}${balances}${related}${errors}<small class="nansen__credits">${intel.creditsUsed} Nansen credits used for this read</small>`;
+}
+
+async function paintNansen(host: HTMLElement, address: string) {
+  const status = await nansenStatus();
+  if (!status?.configured) {
+    host.innerHTML = `<span class="panel__label">Nansen intelligence</span><p class="panel__lede">Add NANSEN_API_KEY to the backend to see who is behind this wallet: labels, Monad PnL, holdings and related wallets.</p>`;
+    return;
+  }
+  host.innerHTML = `
+    <div class="nansen__head">
+      <div><span class="panel__label">Nansen intelligence</span><p class="panel__lede">Who is behind this wallet beyond Perpl. A basic read costs about 3 credits and labels about 100. ${status.creditsLeft === null ? "" : `${status.creditsLeft} credits left.`}</p></div>
+      <div class="nansen__actions">
+        <button type="button" class="btn btn--primary" data-nansen-read>Read wallet</button>
+        <button type="button" class="btn" data-nansen-labels>Add labels</button>
+      </div>
+    </div>
+    <div class="nansen__body" data-nansen-body></div>`;
+  const body = host.querySelector<HTMLElement>("[data-nansen-body]")!;
+  async function run(labels: boolean) {
+    body.innerHTML = `<p class="empty">Reading Nansen…</p>`;
+    try {
+      body.innerHTML = intelBody(await loadIntel(address, labels));
+    } catch (error) {
+      body.innerHTML = `<p class="status-line" data-tone="error">${esc(errorText(error))}</p>`;
+    }
+  }
+  host.querySelector("[data-nansen-read]")!.addEventListener("click", () => void run(false));
+  host.querySelector("[data-nansen-labels]")!.addEventListener("click", () => void run(true));
+}
+
 async function paintProfile(wallet: Wallet) {
   const host = query("[data-an-wallet]");
   if (!wallet.found) {
@@ -169,9 +221,11 @@ async function paintProfile(wallet: Wallet) {
       </div>
       <div class="stat-grid stat-grid--wide">${metrics(wallet)}</div>
     </div>
+    <div class="card nansen" data-an-nansen></div>
     <div class="card"><span class="panel__label">Open positions</span>${positionsTable(wallet.positions)}</div>
     <div class="card"><span class="panel__label">Performance by market</span>${marketsTable(wallet.bySymbol)}</div>
     <div class="card"><span class="panel__label">Recent activity</span>${activityList(wallet.activity, wallet.indexedHours)}</div>`;
+  paintNansen(host.querySelector<HTMLElement>("[data-an-nansen]")!, wallet.address);
   host.querySelector("[data-an-watch-toggle]")!.addEventListener("click", () => {
     const list = watchList();
     const key = wallet.address.toLowerCase();

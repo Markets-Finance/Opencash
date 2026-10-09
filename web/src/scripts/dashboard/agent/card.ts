@@ -6,6 +6,8 @@ import { initHome } from "../home";
 import { getMarketData, getPositions } from "../market";
 import { requireTrader } from "../state";
 import { terminal } from "../../perpl";
+import { nansen } from "shared";
+import { pulseList } from "../nansen";
 import { run } from "./session";
 
 const previewDelayMs = 400;
@@ -26,6 +28,8 @@ function elements() {
     preview: query("[data-card-preview]"),
     approve: query<HTMLButtonElement>("[data-card-approve]"),
     status: query("[data-card-status]"),
+    signal: query<HTMLSelectElement>("[data-card-signal]"),
+    signalNote: query("[data-card-signal-note]"),
   };
 }
 
@@ -87,6 +91,8 @@ function readFields() {
   card.marginUsd = Number(ui.margin.value) || 0;
   card.stopLossPct = Number(ui.stop.value) || 0;
   card.takeProfitPct = Number(ui.tp.value) > 0 ? Number(ui.tp.value) : undefined;
+  if (ui.signal.value === "nansen") card.signal = "nansen";
+  else delete card.signal;
   ui.legs.querySelectorAll<HTMLElement>("[data-leg]").forEach((row) => {
     const leg = card!.legs[Number(row.dataset.leg)];
     if (!leg) return;
@@ -106,9 +112,12 @@ export function setCard(next: StrategyCard) {
   ui.margin.value = String(next.marginUsd);
   ui.stop.value = String(next.stopLossPct);
   ui.tp.value = next.takeProfitPct === undefined ? "" : String(next.takeProfitPct);
+  ui.signal.value = next.signal ?? "";
+  ui.signalNote.textContent = "";
   ui.legs.innerHTML = `<div class="leg-head"><span>Market</span><span>Side</span><span>Weight %</span><span>Lev</span><span></span></div>${next.legs.map(legRow).join("")}`;
   say(ui.status, "");
   schedulePreview();
+  void paintSignal();
 }
 
 export function addLeg(symbol: string, direction: "long" | "short") {
@@ -133,12 +142,35 @@ export function addLeg(symbol: string, direction: "long" | "short") {
   setCard(card);
 }
 
+async function paintSignal() {
+  if (!card) return;
+  const ui = elements();
+  if (card.signal !== "nansen") {
+    ui.signalNote.textContent = "";
+    return;
+  }
+  ui.signalNote.textContent = "Reading Nansen smart money…";
+  const current = card;
+  const gate = nansen.signalGate(current.legs, await pulseList(current.legs.map((leg) => leg.symbol)));
+  if (card !== current || card.signal !== "nansen") return;
+  ui.signalNote.textContent = `${gate.ok ? "Signal agrees" : "Signal blocks this trade"}: ${gate.reason}.`;
+}
+
 async function approve() {
   if (!card) return;
   readFields();
   const ui = elements();
   ui.approve.disabled = true;
   try {
+    if (card.signal === "nansen") {
+      say(ui.status, "Checking Nansen smart money…");
+      const gate = nansen.signalGate(card.legs, await pulseList(card.legs.map((leg) => leg.symbol)));
+      if (!gate.ok) {
+        say(ui.status, `Not opened. ${gate.reason}. Set the signal to None to trade anyway.`, "error");
+        return;
+      }
+      say(ui.status, `Nansen agrees: ${gate.reason}.`);
+    }
     const data = await getMarketData();
     const { sized, issues } = sizeBinFor(binFromCard(card), card.marginUsd, data);
     if (sized.legs.length === 0) {
@@ -166,6 +198,10 @@ export function initCard() {
     schedulePreview();
   };
   [ui.name, ui.margin, ui.stop, ui.tp].forEach((input) => input.addEventListener("input", onEdit));
+  ui.signal.addEventListener("change", () => {
+    onEdit();
+    void paintSignal();
+  });
   ui.legs.addEventListener("input", onEdit);
   ui.legs.addEventListener("click", (event) => {
     const remove = (event.target as HTMLElement).closest<HTMLElement>("[data-remove]");

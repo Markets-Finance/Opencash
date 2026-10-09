@@ -6,6 +6,7 @@ import { changeClass, errorText, markForSymbol, px, query, say, usd } from "./do
 import { getMarketData } from "./market";
 import { initBoard } from "./board";
 import { toolbox } from "./agent/session";
+import { flowText, loadPulses, stanceText } from "./nansen";
 import { requireTrader } from "./state";
 import { activateTab } from "./tabs";
 
@@ -295,6 +296,9 @@ export async function initTrade() {
         ["Funding avg 7d", `${snapshot.funding.meanAprPct.toFixed(1)}% a year`],
         ["Fees maker · taker", `${snapshot.makerFeeBps.toFixed(1)} · ${snapshot.takerFeeBps.toFixed(1)} bps`],
       ];
+      const pulse = (await loadPulses([shown]))?.get(shown.toUpperCase());
+      if (shown !== symbol) return;
+      if (pulse && pulse.tokens.length > 0) cells.push(["Smart money 7d (Nansen)", `${stanceText(pulse.stance)} ${flowText(pulse.flow7dUsd)}`]);
       ui.depth.innerHTML = depth
         ? ([
             ["10 bps", depth.bidUsdWithin10Bps, depth.askUsdWithin10Bps],

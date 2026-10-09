@@ -1,6 +1,7 @@
 import { customBin, planBin, weightModes, type WeightMode } from "shared";
 import { bins, cardFromBin, terminal, type Bin, type EntryStep } from "../perpl";
 import { toolbox } from "./agent/session";
+import { binPulse, flowText, loadPulses, stanceText } from "./nansen";
 import { setCard } from "./agent/card";
 import { addBotFromCard } from "./bots";
 import { errorText, legStackHtml, query, usd } from "./dom";
@@ -24,6 +25,7 @@ export function initBins() {
     const card = document.createElement("button");
     card.type = "button";
     card.className = "tile-card";
+    card.dataset.binId = bin.id;
     card.innerHTML = `
       ${legStackHtml(bin.legs.map((leg) => leg.symbol))}
       <span class="tile-card__name">${bin.name}</span>
@@ -47,6 +49,19 @@ export function initBins() {
     <div class="tile-card__legs"><div class="tile-leg"><span>Pick assets</span><span>+</span></div></div>`;
   build.addEventListener("click", () => openBinModal(customBase, true));
   carousel.appendChild(build);
+  void paintPulses(carousel);
+}
+
+async function paintPulses(carousel: HTMLElement) {
+  const pulses = await loadPulses(bins.flatMap((bin) => bin.legs.map((leg) => leg.symbol)));
+  if (!pulses) return;
+  carousel.querySelectorAll<HTMLElement>("[data-bin-id]").forEach((card) => {
+    const bin = bins.find((item) => item.id === card.dataset.binId);
+    if (!bin) return;
+    const agreement = binPulse(bin.legs, pulses);
+    const tone = agreement.agree === agreement.total ? "agree" : agreement.against > agreement.agree ? "against" : "mixed";
+    card.insertAdjacentHTML("beforeend", `<span class="tile-pulse tile-pulse--${tone}" title="Nansen smart-money net flow, 7 days">${agreement.label}</span>`);
+  });
 }
 
 const customBase: Bin = { id: "custom", name: "Build your own", thesis: "Pick assets and directions, then choose how margin is split.", legs: [] };
@@ -61,6 +76,7 @@ function openBinModal(bin: Bin, custom = false) {
     </div>
     <p class="quote-line">${bin.thesis}</p>
     ${custom ? `<div class="pick-grid" data-bin-picks>Loading markets…</div>` : ""}
+    <div class="pulse-table" data-bin-pulse></div>
     <div class="chip-row" data-bin-modes>${weightModes.map((m) => `<button type="button" class="chip${m.key === mode ? " chip--active" : ""}" data-mode="${m.key}" title="${m.hint}">${m.label}</button>`).join("")}</div>
     <div class="amount-row">
       <span>$</span>
@@ -83,6 +99,27 @@ function openBinModal(bin: Bin, custom = false) {
     status.textContent = errorText(error);
   }
 
+  async function paintModalPulse(symbols: string[]) {
+    const holder = query("[data-bin-pulse]", detail);
+    if (symbols.length === 0) {
+      holder.innerHTML = "";
+      return;
+    }
+    const pulses = await loadPulses(symbols);
+    if (!pulses) {
+      holder.innerHTML = "";
+      return;
+    }
+    holder.innerHTML =
+      `<span class="pulse-table__title">Smart money, 7 days (Nansen)</span>` +
+      symbols
+        .map((symbol) => pulses.get(symbol.toUpperCase()))
+        .filter((pulse): pulse is NonNullable<typeof pulse> => pulse !== undefined && pulse.tokens.length > 0)
+        .map((pulse) => `<div class="pulse-row"><b>${pulse.symbol}</b><span class="pulse-chip pulse-chip--${pulse.stance}">${stanceText(pulse.stance)}</span><span>${flowText(pulse.flow7dUsd)}</span><small>${pulse.traders} traders</small></div>`)
+        .join("");
+  }
+  void paintModalPulse(bin.legs.map((leg) => leg.symbol));
+
   detail.querySelectorAll<HTMLButtonElement>("[data-mode]").forEach((button) =>
     button.addEventListener("click", () => {
       mode = button.dataset.mode as WeightMode;
@@ -103,6 +140,7 @@ function openBinModal(bin: Bin, custom = false) {
         const [symbol, direction] = button.dataset.pick!.split(":") as [string, "long" | "short"];
         if (picks.get(symbol) === direction) picks.delete(symbol);
         else picks.set(symbol, direction);
+        void paintModalPulse([...picks.keys()]);
         grid.querySelectorAll<HTMLElement>(`[data-pick^="${symbol}:"]`).forEach((el) =>
           el.classList.toggle("chip--active", picks.get(symbol) === el.dataset.pick!.split(":")[1]),
         );
@@ -121,6 +159,7 @@ function openBinModal(bin: Bin, custom = false) {
   query<HTMLButtonElement>("[data-bin-agent]", detail).addEventListener("click", () => {
     closeModal();
     activateTab("agent");
+    document.querySelector<HTMLElement>('[data-switcher="agent"] [data-switch="agent"]')?.click();
     setCard(binCard());
   });
 

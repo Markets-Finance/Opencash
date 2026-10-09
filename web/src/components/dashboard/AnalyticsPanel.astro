@@ -45,6 +45,24 @@
         <div class="card"><span class="panel__label">Capital flows and risk</span><div data-an-flows></div></div>
       </div>
     </div>
+
+    <div class="an-grid an-grid--risk">
+      <div class="card">
+        <span class="panel__label">Liquidations · last 24h</span>
+        <p class="panel__lede" data-an-liq-note></p>
+        <div data-an-liq><p class="empty">Reading liquidations…</p></div>
+      </div>
+      <div class="card">
+        <div class="an-chart__head">
+          <div><span class="panel__label">Large positions</span><p class="panel__lede" data-an-pos-note></p></div>
+          <div class="chip-row" data-an-pos-mode>
+            <button type="button" class="chip chip--active" data-pos="largest">Largest</button>
+            <button type="button" class="chip" data-pos="nearest">Nearest liquidation</button>
+          </div>
+        </div>
+        <div class="table-wrap" data-an-pos><p class="empty">Scanning open positions…</p></div>
+      </div>
+    </div>
   </div>
 
   <div data-pane="an:wallet" hidden>

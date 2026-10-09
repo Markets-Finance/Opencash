@@ -7,9 +7,14 @@ import { session } from "./state";
 const gate = query("[data-gate]");
 const dash = query("[data-dash]");
 const status = query("[data-gate-status]");
-const signInButton = query<HTMLButtonElement>("[data-sign-in]");
-const createButton = query<HTMLButtonElement>("[data-create]");
-const createForm = query<HTMLFormElement>("[data-create-form]");
+const form = query<HTMLFormElement>("[data-gate-form]");
+const switchButton = query<HTMLButtonElement>("[data-gate-switch]");
+const goButton = query<HTMLButtonElement>("[data-gate-go]");
+const titleEl = query("[data-gate-title]");
+const hintEl = query("[data-gate-hint]");
+const fieldsEl = query("[data-gate-fields]");
+
+type Mode = "signin" | "create";
 
 function say(message: string, tone: "info" | "error" = "info") {
   status.textContent = message;
@@ -46,8 +51,25 @@ async function paintIdentity(account: TradingAccount) {
 }
 
 export function initGate(onEnter: () => void) {
+  let mode: Mode = "signin";
+
+  function setMode(next: Mode) {
+    mode = next;
+    const creating = next === "create";
+    titleEl.textContent = creating ? "Create account" : "Sign in";
+    hintEl.textContent = creating ? "Two details label your passkey." : "Use your passkey.";
+    hintEl.hidden = false;
+    fieldsEl.hidden = !creating;
+    goButton.textContent = creating ? "Create" : "Sign in";
+    switchButton.textContent = creating ? "I have an account" : "Create an account";
+    form.querySelectorAll<HTMLInputElement>("input").forEach((input) => (input.required = creating));
+    say("");
+    if (creating) form.querySelector("input")?.focus();
+  }
+
   async function run(action: () => Promise<TradingAccount>, pending: string) {
     say(pending);
+    goButton.disabled = true;
     try {
       const account = await action();
       session.trader = account;
@@ -57,19 +79,21 @@ export function initGate(onEnter: () => void) {
       onEnter();
     } catch (error) {
       say(explain(error), "error");
+    } finally {
+      goButton.disabled = false;
     }
   }
 
-  signInButton.addEventListener("click", () => run(signIn, "Waiting for your passkey…"));
-  createButton.addEventListener("click", () => {
-    createForm.hidden = !createForm.hidden;
-    if (!createForm.hidden) createForm.querySelector("input")?.focus();
-  });
-  createForm.addEventListener("submit", (event) => {
+  switchButton.addEventListener("click", () => setMode(mode === "signin" ? "create" : "signin"));
+  form.addEventListener("submit", (event) => {
     event.preventDefault();
-    const data = new FormData(createForm);
+    if (mode === "signin") {
+      void run(signIn, "Waiting for your passkey…");
+      return;
+    }
+    const data = new FormData(form);
     const name = String(data.get("name") ?? "").trim();
     const email = String(data.get("email") ?? "").trim();
-    void run(() => createAccount(email, name), "Creating a passkey…");
+    void run(() => createAccount(email, name), "Creating your passkey…");
   });
 }

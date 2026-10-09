@@ -47,16 +47,18 @@ export function initAccount() {
   void paint();
   void initIdentity();
 
-  const rows = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-acct-open]"));
+  const home = query("[data-acct-home]");
   const panes = Array.from(document.querySelectorAll<HTMLElement>("[data-acct-pane]"));
-  rows.forEach((row) =>
-    row.addEventListener("click", () => {
-      const key = row.dataset.acctOpen!;
-      const opening = panes.find((pane) => pane.dataset.acctPane === key)?.hidden ?? true;
-      panes.forEach((pane) => (pane.hidden = !(opening && pane.dataset.acctPane === key)));
-      rows.forEach((other) => other.setAttribute("aria-expanded", String(opening && other === row)));
-    }),
-  );
+  function showPage(key: string | null) {
+    home.hidden = key !== null;
+    panes.forEach((pane) => (pane.hidden = pane.dataset.acctPane !== key));
+    window.scrollTo({ top: 0 });
+  }
+  document.querySelectorAll<HTMLButtonElement>("[data-acct-open]").forEach((row) => row.addEventListener("click", () => showPage(row.dataset.acctOpen!)));
+  document.querySelectorAll<HTMLButtonElement>("[data-acct-back]").forEach((button) => button.addEventListener("click", () => showPage(null)));
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !home.offsetParent) showPage(null);
+  });
   const addressEl = document.querySelector<HTMLElement>("[data-wallet-address]");
   if (addressEl) addressEl.textContent = trader.address;
   document.querySelector<HTMLButtonElement>("[data-copy-address]")?.addEventListener("click", async (event) => {

@@ -402,3 +402,23 @@
 .board-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .board-row[data-an-open] { cursor: pointer; }
 .an-search .btn:not(.btn--primary) { flex: none; }
+
+.nansen { display: grid; gap: 16px; }
+.nansen__head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.nansen__actions { display: flex; gap: 8px; }
+.nansen__body { display: grid; gap: 16px; }
+.nansen__chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.nansen__related { display: grid; gap: 4px; margin-top: 8px; justify-items: start; }
+.nansen__credits { color: var(--muted); font-size: 12px; }
+
+.an-grid--risk { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); }
+.liq-bars { display: flex; align-items: flex-end; gap: 2px; height: 56px; margin: 8px 0 14px; }
+.liq-bars i { flex: 1; min-height: 3px; border-radius: 2px; background: var(--raised); }
+.liq-bars i.liq-bars__on { background: var(--tone-coral); }
+.dist { padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 500; color: var(--tone-ink); }
+.dist--hot { background: var(--tone-coral); }
+.dist--warm { background: var(--tone-butter); }
+.dist--ok { background: var(--tone-lime); }
+@media (max-width: 900px) { .an-grid--risk { grid-template-columns: minmax(0, 1fr); } }
+.an-grid--risk .feed__what { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; }
+.an-grid--risk .feed__row .link-btn { color: inherit; }
