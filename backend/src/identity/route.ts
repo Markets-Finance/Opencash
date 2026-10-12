@@ -60,3 +60,10 @@ export function registerIdentityRoute(app: FastifyInstance): void {
     return reply.status(400).send({ error: "address or handle required" });
   });
 }
+
+export async function deleteIdentityLink(address: string): Promise<number> {
+  const key = address.toLowerCase();
+  if ((await links.get(key)) === undefined) return 0;
+  await links.delete(key);
+  return 1;
+}

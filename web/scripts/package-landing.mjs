@@ -9,7 +9,7 @@ if (!existsSync(join(source, "index.html"))) throw new Error("Run astro build fi
 
 rmSync(target, { recursive: true, force: true });
 
-const queue = ["index.html"];
+const queue = ["index.html", "404.html", ".well-known/assetlinks.json"];
 const copied = new Set();
 
 while (queue.length > 0) {

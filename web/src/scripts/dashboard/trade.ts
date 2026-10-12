@@ -1,3 +1,4 @@
+import { label as networkName } from "../../data/network";
 import { estimateExecution, liquidationDistancePct, summarizeDepth, perpl, slippageWarnBps, type ExecutionEstimate } from "shared";
 import { singleLegBin, sizeBinFor, terminal, type CandleRangeKey, type OpenPosition } from "../perpl";
 import { drawCandles } from "./charts";
@@ -133,7 +134,7 @@ export async function initTrade() {
     const shown = symbol;
     try {
       const candles = await loadCandles(market, range);
-      if (shown === symbol) drawCandles(ui.chart, candles, "No trades in this range on Monad testnet.");
+      if (shown === symbol) drawCandles(ui.chart, candles, `No trades in this range on ${networkName}.`);
     } catch (error) {
       ui.chart.innerHTML = `<div class="chart-empty">${errorText(error)}</div>`;
     }
@@ -207,7 +208,7 @@ export async function initTrade() {
   function renderDesk() {
     if (positions.length === 0) {
       ui.desk.className = "empty";
-      ui.desk.textContent = "No open positions on Monad testnet for this address.";
+      ui.desk.textContent = `No open positions on ${networkName} for this address.`;
       return;
     }
     ui.desk.className = "table-wrap";

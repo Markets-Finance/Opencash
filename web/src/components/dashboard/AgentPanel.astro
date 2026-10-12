@@ -92,6 +92,19 @@ import StrategyLab from "./StrategyLab.astro";
         <div class="bots__list" data-bot-list>
           <p class="empty">No bots yet.</p>
         </div>
+        <span class="card__label">Live strategies</span>
+        <p class="agent__hint">Lab strategies trading real Perpl orders on the server with a trade-only key. Perpl's API takes no stop orders, so the server watches each stop every 30 seconds. Pause stops new orders and leaves the position open. Stop and close closes at market.</p>
+        <form class="bots__form" data-trade-key-form>
+          <p class="agent__hint" data-trade-key-state></p>
+          <input name="apiKey" type="text" autocomplete="off" spellcheck="false" placeholder="Perpl API key" required />
+          <input name="secret" type="password" autocomplete="off" spellcheck="false" placeholder="Perpl key secret (64 hex characters)" required />
+          <button type="submit" class="btn">Save trade key</button>
+        </form>
+        <div class="live__switch">
+          <button type="button" class="btn" data-live-stop-all>Pause all bots</button>
+          <button type="button" class="btn" data-live-close-all>Stop all and close</button>
+        </div>
+        <div class="bots__list" data-live-bot-list></div>
       </section>
     </div>
   </div>

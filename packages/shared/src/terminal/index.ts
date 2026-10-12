@@ -156,7 +156,7 @@ export function createTerminal(config: TerminalConfig) {
   ): Promise<void> {
     const wallet = walletFor(tradingAccount);
     const owner = tradingAccount.address;
-    const descs = binEntryOrders(sized, data.markets, { postOnly: true });
+    const descs = binEntryOrders(sized, data.markets);
     const total = descs.reduce((sum, desc) => sum + desc.amountCNS, 0n);
     const signer = { chain: wallet.chain, account: tradingAccount.account };
 
@@ -319,6 +319,44 @@ export function createTerminal(config: TerminalConfig) {
     return sendHash;
   }
 
+  async function depositToPerpl(
+    account: TradingAccount,
+    amount: number,
+    onStep?: (step: "approve" | "deposit", hash: Hash) => void,
+  ): Promise<Hash> {
+    const owner = account.address as Address;
+    if (!(amount > 0)) throw new Error("Enter an amount.");
+    const have = await loadCollateralBalance(owner);
+    if (amount > have) throw new Error(`You only have ${have} AUSD in your wallet.`);
+    const total = toCNS(amount);
+    const wallet = walletFor(account);
+    const signer = { chain: wallet.chain, account: account.account };
+    const allowance = await client.readContract(allowanceRequest(deployment.collateral, owner, deployment.exchange));
+    if (allowance < total) {
+      const approval = await wallet.writeContract({ ...approveCollateralRequest(deployment.collateral, deployment.exchange, total), ...signer });
+      onStep?.("approve", approval);
+      await client.waitForTransactionReceipt({ hash: approval });
+    }
+    const existing = await fetchAccount(client, deployment.exchange, owner);
+    const fund = existing ? depositCollateralRequest(deployment.exchange, total) : createAccountRequest(deployment.exchange, total);
+    const hash = await wallet.writeContract({ ...fund, ...signer });
+    onStep?.("deposit", hash);
+    await client.waitForTransactionReceipt({ hash });
+    return hash;
+  }
+
+  async function withdrawToWallet(account: TradingAccount, amount: number): Promise<Hash> {
+    const owner = account.address as Address;
+    if (!(amount > 0)) throw new Error("Enter an amount.");
+    const existing = await fetchAccount(client, deployment.exchange, owner);
+    if (existing === null) throw new Error("You have no Perpl account yet.");
+    if (amount > existing.balance) throw new Error(`Only ${existing.balance} AUSD is free to withdraw.`);
+    const wallet = walletFor(account);
+    const hash = await wallet.writeContract({ ...withdrawCollateralRequest(deployment.exchange, toCNS(amount)), chain: wallet.chain, account: account.account });
+    await client.waitForTransactionReceipt({ hash });
+    return hash;
+  }
+
   return {
     deployment,
     loadMarkets,
@@ -332,6 +370,8 @@ export function createTerminal(config: TerminalConfig) {
     loadNativeBalance,
     sendAsset,
     withdrawFromPerpl,
+    depositToPerpl,
+    withdrawToWallet,
     loadUsdcBalance,
     quoteConvert,
     convertUsdcToCollateral,

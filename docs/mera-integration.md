@@ -190,9 +190,9 @@ wallet and the journal are therefore two separate prompts.
 
 **`rpId` is permanent.** Passkeys are bound to the domain they were created under. If the web app
 moves domains, every derived account becomes unreachable and every vault undecryptable. The domain
-must be chosen once, before any real user creates a passkey. `packages/shared/src/mera/config.ts` and
-`android/app.json` currently carry the placeholder **`terminal.example.xyz`** — both must be
-replaced with the real domain before anything ships.
+must be chosen once, before any real user creates a passkey. It is **`monad.opencash.in`**
+(set 2026-10-12 in `packages/shared/src/mera/config.ts` and `mobile/app.json`), separate from the
+Hyperliquid app's `hl.opencash.in` so the two products never share passkeys or wallets.
 
 **Both surfaces must share one `rpId`.** The same-address-everywhere property depends on it, so the
 value is single-sourced as `relyingPartyId` in `packages/shared/src/mera/config.ts` and imported by

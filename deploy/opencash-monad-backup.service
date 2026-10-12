@@ -1,0 +1,6 @@
+[Unit]
+Description=OpenCash Monad data backup
+
+[Service]
+Type=oneshot
+ExecStart=/opt/opencash-monad/deploy/backup.sh

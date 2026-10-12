@@ -1,4 +1,5 @@
 import { createTerminal, perpl } from "shared";
+import { deployment } from "../data/network";
 import { publicClient, walletClientFor } from "./chain";
 
 export {
@@ -33,5 +34,5 @@ export type CandleRangeKey = perpl.CandleRangeKey;
 export const terminal = createTerminal({
   publicClient,
   walletClientFor,
-  deployment: perpl.perplTestnet,
+  deployment,
 });

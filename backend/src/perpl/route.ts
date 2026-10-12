@@ -1,6 +1,7 @@
+import { networkFrom, perplFor } from "shared";
 import type { FastifyInstance } from "fastify";
 
-const upstream = process.env.PERPL_API_URL ?? "https://testnet.perpl.xyz/api";
+const upstream = process.env.PERPL_API_URL ?? perplFor(networkFrom(process.env.NETWORK)).apiUrl;
 
 const allowed = [
   /^\/v1\/pub\/context$/,

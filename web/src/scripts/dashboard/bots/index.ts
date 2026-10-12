@@ -5,6 +5,7 @@ import { query } from "../dom";
 import { toolbox } from "../agent/session";
 import { requireTrader } from "../state";
 import { publishStrategy } from "../strategies";
+import { initLiveBots, paintLiveBots, startLiveBots } from "../lab/live";
 import { localBotStorage } from "./storage";
 import { renderBot } from "./view";
 
@@ -17,6 +18,7 @@ function paint(bots: Bot[]) {
 
 export async function startBots() {
   if (runtime) return;
+  startLiveBots();
   const trader = requireTrader();
   runtime = createBotRuntime({
     terminal,
@@ -37,6 +39,18 @@ export async function addBotFromCard(card: Bot["card"], mode: BotMode) {
 
 export function initBots() {
   const list = query("[data-bot-list]");
+  const hint = () => query("[data-bot-hint]");
+  initLiveBots(
+    (error) => {
+      hint().dataset.tone = "error";
+      hint().textContent = error instanceof Error ? error.message : String(error);
+    },
+    (text) => {
+      hint().dataset.tone = "";
+      hint().textContent = text;
+    },
+  );
+  document.addEventListener("live:changed", () => void paintLiveBots());
 
   list.addEventListener("click", async (event) => {
     const root = (event.target as HTMLElement).closest<HTMLElement>("[data-bot]");

@@ -1,6 +1,8 @@
 import { createToolbox, defaultLimits, perpl, tickBot, type Toolbox } from "shared";
+import { killed } from "../kill.js";
 import type { Address } from "viem";
 import { contextFor, type Net } from "../analytics/context.js";
+import { tickLiveAll } from "../live/loop.js";
 import { claimLock } from "../lock.js";
 import { smartPulse } from "../nansen/pulse.js";
 import { chainReads, createApiDeps } from "./adapter.js";
@@ -67,17 +69,25 @@ export async function tickAll(): Promise<void> {
   );
 }
 
+let active = false;
+
+export function runnerActive(): boolean {
+  return active;
+}
+
 export async function startRunner(intervalMs = 30_000): Promise<boolean> {
   if (!(await claimLock("data/bot-runner.lock"))) {
     console.error("bot runner: another process owns the runner, this one will not trade");
     return false;
   }
+  active = true;
   let busy = false;
   const run = async () => {
-    if (busy) return;
+    if (busy || killed()) return;
     busy = true;
     try {
       await tickAll();
+      await tickLiveAll();
     } finally {
       busy = false;
     }

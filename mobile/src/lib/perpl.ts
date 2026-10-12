@@ -1,5 +1,6 @@
 import { createTerminal, perpl } from "shared";
 import { publicClient, walletClientFor } from "./mera";
+import { deployment as networkDeployment } from "./network";
 
 export type Candle = perpl.Candle;
 export type CandleRangeKey = perpl.CandleRangeKey;
@@ -15,7 +16,7 @@ export {
   type PortfolioSummary,
 } from "shared";
 
-export const terminal = createTerminal({ publicClient, walletClientFor, deployment: perpl.perplTestnet });
+export const terminal = createTerminal({ publicClient, walletClientFor, deployment: networkDeployment });
 
 export const {
   deployment,
@@ -34,4 +35,4 @@ export const {
 } = terminal;
 
 export const loadCandles = (market: perpl.PerpMarket, range: CandleRangeKey) =>
-  perpl.fetchCandles(perpl.perplTestnet.apiUrl, market, range);
+  perpl.fetchCandles(networkDeployment.apiUrl, market, range);

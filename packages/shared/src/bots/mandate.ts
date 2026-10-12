@@ -35,3 +35,11 @@ export function tradeKeyMessage(owner: string, network: string, apiKey: string, 
 export function freshSignature(issuedAt: number, now: number = Date.now()): boolean {
   return Number.isFinite(issuedAt) && Math.abs(now - issuedAt) <= signatureWindowMs;
 }
+
+export function tradeKeyRemoveMessage(owner: string, network: string, issuedAt: number): string {
+  return `Remove my Perpl API key from OpenCash.\nOwner: ${owner.toLowerCase()}\nNetwork: ${network}\nIssued: ${iso(issuedAt)}`;
+}
+
+export function deleteAccountMessage(owner: string, issuedAt: number): string {
+  return `Delete all my OpenCash data.\nOwner: ${owner.toLowerCase()}\nIssued: ${iso(issuedAt)}`;
+}

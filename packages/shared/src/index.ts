@@ -1,13 +1,18 @@
 export { monadMainnet, monadTestnet } from "./chains.js";
 export type { MonadChain } from "./chains.js";
 export { monad, monadTestnetChain } from "./viem-chain.js";
+export { chainFor, networkFrom, networkLabel, perplFor, type MonadNetwork } from "./network.js";
 export {
   alertsNamespace,
   authMode,
   isDevAuth,
   createTradingAccount,
   deriveNamespaceKey,
+  clearImportedWallet,
+  importWalletKey,
   journalNamespace,
+  openImportedKey,
+  sealImportedKey,
   namespaceSalt,
   openJournalSession,
   openNamespaceSession,

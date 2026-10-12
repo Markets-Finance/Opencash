@@ -1,7 +1,7 @@
 import { createPublicClient, http } from "viem";
-import { monad, monadTestnetChain, perpl } from "shared";
+import { monad, monadTestnetChain, networkFrom, perpl } from "shared";
 
-export const network = process.env.LEADERBOARD_NETWORK === "mainnet" ? "mainnet" : "testnet";
+export const network = networkFrom(process.env.LEADERBOARD_NETWORK ?? process.env.NETWORK);
 export const deployment = network === "mainnet" ? perpl.perplMainnet : perpl.perplTestnet;
 export const client = createPublicClient({
   chain: network === "mainnet" ? monad : monadTestnetChain,

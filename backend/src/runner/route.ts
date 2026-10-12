@@ -10,22 +10,24 @@ import {
   freshSignature,
   perpl,
   tradeKeyMessage,
+  tradeKeyRemoveMessage,
   type BotAction,
   type BotMode,
   type StrategyCard,
 } from "shared";
 import { contextFor, parseNet } from "../analytics/context.js";
 import { finishEnrollment, startEnrollment } from "./enroll.js";
-import { startRunner } from "./loop.js";
+import { listLive } from "../live/store.js";
+import { runnerActive, startRunner } from "./loop.js";
 import { deleteBot, getBot, listBots, saveBot, type ServerBot } from "./store.js";
-import { hasKey, saveKey } from "./vault.js";
+import { hasKey, removeKey, saveKey } from "./vault.js";
 
 const windowMs = 60_000;
 const perWindow = 30;
 const hits = new Map<string, { start: number; count: number }>();
-const maxBotsPerOwner = 10;
+export const maxBotsPerOwner = 10;
 
-function limited(ip: string): boolean {
+export function limited(ip: string): boolean {
   const now = Date.now();
   const entry = hits.get(ip);
   if (!entry || now - entry.start > windowMs) {
@@ -50,16 +52,15 @@ function publicBot(bot: ServerBot) {
 }
 
 export function registerBotRoute(app: FastifyInstance): void {
-  let running = false;
-  if (process.env.BOT_RUNNER === "1") void startRunner().then((started) => (running = started));
+  if (process.env.BOT_RUNNER === "1") void startRunner();
 
-  app.get("/bots/status", async () => ({ runner: running, enabledByEnv: process.env.BOT_RUNNER === "1" }));
+  app.get("/bots/status", async () => ({ runner: runnerActive(), enabledByEnv: process.env.BOT_RUNNER === "1" }));
 
   app.get<{ Querystring: { owner?: string; network?: string } }>("/bots", async (request, reply) => {
     const owner = request.query.owner ?? "";
     if (!isAddress(owner)) return reply.status(400).send({ error: "owner must be a Monad address" });
     const net = parseNet(request.query.network);
-    return { bots: (await listBots({ owner, net })).map(publicBot), hasKey: await hasKey(owner, net), runner: running };
+    return { bots: (await listBots({ owner, net })).map(publicBot), hasKey: await hasKey(owner, net), runner: runnerActive() };
   });
 
   app.post<{ Body: { owner?: string; network?: string; apiKey?: string; secret?: string; issuedAt?: number; signature?: string } }>("/bots/key", async (request, reply) => {
@@ -79,6 +80,19 @@ export function registerBotRoute(app: FastifyInstance): void {
       return reply.status(400).send({ error: `Perpl rejected the key: ${error instanceof Error ? error.message : String(error)}` });
     }
     await saveKey(owner, net, apiKey, secret.replace(/^0x/, ""));
+    return { ok: true };
+  });
+
+  app.post<{ Body: { owner?: string; network?: string; issuedAt?: number; signature?: string } }>("/bots/key/remove", async (request, reply) => {
+    if (limited(request.ip)) return reply.status(429).send({ error: "too many requests" });
+    const { owner = "", issuedAt = 0, signature = "" } = request.body ?? {};
+    const net = parseNet(request.body?.network);
+    if (!isAddress(owner)) return reply.status(400).send({ error: "owner must be a Monad address" });
+    if (!freshSignature(issuedAt)) return reply.status(400).send({ error: "signature expired" });
+    if (!(await signedBy(owner, tradeKeyRemoveMessage(owner, net, issuedAt), signature))) return reply.status(401).send({ error: "signature does not match the owner" });
+    const running = [...(await listBots({ owner, net, enabled: true })), ...(await listLive({ owner, net, enabled: true }))];
+    if (running.length > 0) return reply.status(409).send({ error: `Pause your ${running.length} running bot${running.length === 1 ? "" : "s"} first` });
+    await removeKey(owner, net);
     return { ok: true };
   });
 
@@ -114,7 +128,7 @@ export function registerBotRoute(app: FastifyInstance): void {
     if (issues.length > 0) return reply.status(400).send({ error: issues.join(" ") });
     const digest = botDigest(card, mode);
     if (!(await signedBy(owner, botMandateMessage(owner, net, digest, issuedAt), signature))) return reply.status(401).send({ error: "signature does not match the owner" });
-    if ((await listBots({ owner, net })).length >= maxBotsPerOwner) return reply.status(400).send({ error: `At most ${maxBotsPerOwner} bots per wallet` });
+    if ((await listBots({ owner, net })).length + (await listLive({ owner, net })).length >= maxBotsPerOwner) return reply.status(400).send({ error: `At most ${maxBotsPerOwner} bots per wallet` });
     const bot: ServerBot = { ...createBot(card.name, mode, card, Date.now()), owner, net, mandate: { digest, signature, issuedAt } };
     await saveBot(bot);
     return publicBot(bot);

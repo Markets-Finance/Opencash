@@ -1,8 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { perpl, templates } from "shared";
 import { currentOwner, toolbox } from "./bots";
+import { deployment } from "./network";
 
-export const loadSeries = templates.createSeriesLoader(perpl.createPerplApi(perpl.perplTestnet.apiUrl), () => toolbox.getMarkets());
+export const loadSeries = templates.createSeriesLoader(perpl.createPerplApi(deployment.apiUrl), () => toolbox.getMarkets());
 
 type Listener = (bots: templates.PaperBot[]) => void;
 

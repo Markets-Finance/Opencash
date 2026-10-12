@@ -14,22 +14,24 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { isDevAuth, perpl, type TradingAccount } from "shared";
 import { PassCard } from "../components/PassCard";
 import { AuthShell, type AuthMode } from "../components/AuthShell";
+import { ImportPanel } from "../components/ImportPanel";
 import { SettingIcon, type SettingIconKind } from "../components/SettingIcon";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { createAccount, revealPhrase, signIn } from "../lib/mera";
 import { dark, family, space, track } from "../theme";
+import { deployment, label as networkName } from "../lib/network";
 
 const profileKey = "opencash.profile";
 
 export type Profile = { name: string; email: string; variant?: number };
 
-type Panel = "profile" | "history" | "wallets" | "phrase" | "network" | null;
+type Panel = "profile" | "history" | "wallets" | "phrase" | "network" | "import" | null;
 
 const failures: Record<string, string> = {
   PRF_UNAVAILABLE:
     "This passkey cannot derive keys. Its authenticator does not support the PRF extension, so it cannot be used for an OpenCash account. Try a passkey stored in iCloud Keychain, Google Password Manager or 1Password.",
   PASSKEY_OPERATION_FAILED:
-    "The passkey prompt was cancelled or unavailable.",
+    "We couldn't find a passkey, or the prompt was closed. New to OpenCash? Choose Create an account.",
   CRYPTO_UNAVAILABLE: "This device is missing a required crypto primitive.",
 };
 
@@ -121,6 +123,9 @@ export function Account({
   const [email, setEmail] = useState("");
   const [copied, setCopied] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importAddress, setImportAddress] = useState("");
+  const [importKey, setImportKey] = useState("");
 
   function explain(error: unknown) {
     setFailed(true);
@@ -241,11 +246,17 @@ export function Account({
       void saveProfile(entered);
       return;
     }
+    const key = importOpen ? importKey.trim() : "";
+    if (importOpen && (key === "" || importAddress.trim() === "")) {
+      setFailed(true);
+      setStatus("Enter the wallet address and its private key, or skip the import.");
+      return;
+    }
     void run(
-      () => createAccount(entered.email, entered.name),
+      () => createAccount(entered.email, entered.name, key === "" ? undefined : { privateKey: key, expectedAddress: importAddress.trim() }),
       "Creating a passkey…",
       entered,
-    );
+    ).finally(() => setImportKey(""));
   }
 
   const showTabBar = account !== null && profile !== null;
@@ -292,6 +303,7 @@ export function Account({
     history: "History",
     phrase: "Recovery phrase",
     network: "Network",
+    import: "Import a wallet",
   };
 
   function closePage() {
@@ -314,6 +326,12 @@ export function Account({
         onEmail={setEmail}
         onSwitch={account === null ? () => setFormMode(formMode === "create" ? null : "create") : undefined}
         onSubmit={() => (authMode === "signin" ? void run(signIn, "Waiting for your passkey…") : submit())}
+        importOpen={importOpen}
+        importAddress={importAddress}
+        importKey={importKey}
+        onImportOpen={account === null ? (open) => { setImportOpen(open); if (open) setFormMode("create"); } : undefined}
+        onImportAddress={setImportAddress}
+        onImportKey={setImportKey}
       />
     );
   }
@@ -336,7 +354,7 @@ export function Account({
           {panel === "profile" && formCard}
           {panel === "wallets" && (
             <View style={styles.card}>
-              <Text style={styles.note}>One passkey, one address. Monad Testnet</Text>
+              <Text style={styles.note}>One passkey, one address. {networkName}</Text>
               <Text style={styles.walletAddress}>{account.address}</Text>
               <Action label={copied ? "Copied" : "Copy address"} onPress={() => void copyAddress()} />
             </View>
@@ -348,12 +366,15 @@ export function Account({
               </Text>
             </View>
           )}
+          {panel === "import" && account !== null && <ImportPanel trader={account} onDone={() => void run(signIn, "Signing in with your passkey…")} />}
           {panel === "phrase" && (
             <View style={styles.card}>
               {phrase === null ? (
                 <>
                   <Text style={styles.note}>
-                    Your 24 words rebuild this account in any wallet. Anyone who has them owns it. Reveal them only where nobody can see your screen.
+                    {account !== null && account.source === "imported"
+                      ? `You are using an imported wallet (${account.address}). These 24 words belong to your passkey account (${account.passkeyAddress}), not to the imported wallet. The imported wallet's recovery is the private key you imported, which this app does not keep in readable form. Anyone who has the words owns the passkey account.`
+                      : "Your 24 words rebuild this account in any wallet. Anyone who has them owns it. Reveal them only where nobody can see your screen."}
                   </Text>
                   <Action label="Reveal with passkey" emphasis="primary" onPress={showPhrase} />
                 </>
@@ -371,11 +392,11 @@ export function Account({
           {panel === "network" && (
             <View style={styles.card}>
               <Text style={styles.note}>Network</Text>
-              <Text style={styles.walletAddress}>Monad Testnet · chain {perpl.perplTestnet.chainId}</Text>
+              <Text style={styles.walletAddress}>{networkName} · chain {deployment.chainId}</Text>
               <Text style={styles.note}>Perpl exchange</Text>
-              <Text style={styles.walletAddress}>{perpl.perplTestnet.exchange}</Text>
+              <Text style={styles.walletAddress}>{deployment.exchange}</Text>
               <Text style={styles.note}>Collateral (AUSD)</Text>
-              <Text style={styles.walletAddress}>{perpl.perplTestnet.collateral}</Text>
+              <Text style={styles.walletAddress}>{deployment.collateral}</Text>
             </View>
           )}
           {status !== "" && <Text style={[styles.status, failed && styles.statusFailed]}>{status}</Text>}
@@ -428,7 +449,7 @@ export function Account({
             email={profile?.email}
             tier={isDevAuth ? "Dev account" : "Passkey pass"}
             variant={variant}
-            network="Monad Testnet"
+            network={networkName}
             value={portfolio}
             copied={copied}
             onCopyAddress={() => void copyAddress()}
@@ -462,6 +483,7 @@ export function Account({
                   <View style={styles.group}>
                     <Row icon="profile" tint="purple" label="Profile" onPress={() => openPanel("profile")} />
                     <Row icon="wallet" tint="blue" label="Wallets" onPress={() => openPanel("wallets")} />
+                    <Row icon="wallet" tint="lime" label="Import a wallet" onPress={() => openPanel("import")} />
                     <Row icon="history" tint="lime" label="History" onPress={() => openPanel("history")} last />
                   </View>
 
@@ -472,7 +494,7 @@ export function Account({
 
                   <Text style={styles.sectionLabel}>Settings</Text>
                   <View style={styles.group}>
-                    <Row icon="globe" tint="blue" label="Network" value="Monad Testnet" onPress={() => openPanel("network")} />
+                    <Row icon="globe" tint="blue" label="Network" value={networkName} onPress={() => openPanel("network")} />
                     <Row icon="exit" tint="peach" label="Sign out" onPress={signOut} last />
                   </View>
                 </>

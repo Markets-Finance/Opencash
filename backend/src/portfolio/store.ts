@@ -44,3 +44,9 @@ export async function recordSnapshot(input: {
 export function historyForOwner(owner: Address, limit = 200): Promise<PortfolioSnapshot[]> {
   return forOwner(owner).then((snapshots) => snapshots.slice(-limit));
 }
+
+export async function deleteSnapshotsForOwner(owner: Address): Promise<number> {
+  const snapshots = await forOwner(owner);
+  for (const snapshot of snapshots) await store.delete(snapshot.id);
+  return snapshots.length;
+}

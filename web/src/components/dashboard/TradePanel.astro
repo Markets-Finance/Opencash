@@ -1,3 +1,6 @@
+---
+import { label } from "../../data/network";
+---
 <section class="panel" data-panel="trade" hidden>
 
   <div data-trade-list>
@@ -5,7 +8,7 @@
       <div class="card card--balance widget widget--account">
         <div class="balance-head">
           <span class="card__label">Perpl account</span>
-          <span class="chain-badge">Monad Testnet</span>
+          <span class="chain-badge">{label}</span>
         </div>
         <span class="stat-card__value stat-card__value--lg trade-mono" data-trade-balance>—</span>
         <div class="balance-meta">
@@ -61,7 +64,7 @@
           <div class="stat-grid stat-grid--four" data-trade-stats><p class="empty">Loading…</p></div>
           <span class="panel__label">Order book depth</span>
           <div class="depth" data-trade-depth></div>
-          <p class="panel__lede">Positive funding means longs pay shorts. Figures come from Perpl on Monad testnet.</p>
+          <p class="panel__lede">Positive funding means longs pay shorts. Figures come from Perpl on {label}.</p>
         </div>
       </div>
 

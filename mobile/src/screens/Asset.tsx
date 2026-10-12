@@ -21,6 +21,7 @@ import {
   type OpenPosition,
 } from "../lib/perpl";
 import { dark, family, space, touch } from "../theme";
+import { label as networkName } from "../lib/network";
 
 const rangeKeys = Object.keys(candleRanges) as CandleRangeKey[];
 
@@ -247,7 +248,7 @@ export function Asset({ symbol, trader, onBack, onSelectTab, onStrategies }: Ass
               </View>
             ))}
           </View>
-          <Text style={styles.muted}>Positive funding means longs pay shorts. Figures come from Perpl on Monad testnet.</Text>
+          <Text style={styles.muted}>Positive funding means longs pay shorts. Figures come from Perpl on {networkName}.</Text>
         </ToneCard>
 
         <Pressable onPress={() => onStrategies(symbol)} style={({ pressed }) => [styles.strategy, pressed && styles.pressed]}>

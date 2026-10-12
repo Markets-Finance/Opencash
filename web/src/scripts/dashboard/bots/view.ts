@@ -1,7 +1,8 @@
+import { explorer as networkExplorer } from "../../../data/network";
 import type { Bot } from "../../perpl";
 import { changeClass, esc, usd } from "../dom";
 
-const explorer = "https://testnet.monadexplorer.com/tx/";
+const explorer = `${networkExplorer}/tx/`;
 
 function legsText(bot: Bot): string {
   return bot.card.legs

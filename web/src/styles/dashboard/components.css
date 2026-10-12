@@ -385,3 +385,8 @@
     max-width: 340px;
   }
 }
+.setting-row--danger .setting-row__label { color: #ef5b5b; }
+.warn-box { padding: 14px 16px; border-radius: 14px; background: rgba(239, 91, 91, 0.14); color: #ffb3b3; font-size: 13px; line-height: 1.5; }
+.warn-box ul { margin: 8px 0 0; padding-left: 18px; }
+.btn--danger { background: #ef5b5b; color: #1a0b0b; }
+.btn--danger:disabled { opacity: 0.4; }

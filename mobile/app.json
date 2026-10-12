@@ -8,9 +8,9 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "xyz.opencash.mobile",
+      "bundleIdentifier": "xyz.opencash.monad",
       "associatedDomains": [
-        "webcredentials:terminal.example.xyz"
+        "webcredentials:monad.opencash.in"
       ]
     },
     "android": {
@@ -21,7 +21,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "xyz.opencash.mobile"
+      "package": "xyz.opencash.monad"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -37,9 +37,12 @@
           },
           "ios": {
             "backgroundColor": "#0b0f0e"
-          }
+          },
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 120
         }
-      ]
+      ],
+      "./plugins/withReleaseSigning"
     ]
   }
 }

@@ -1,3 +1,4 @@
+import { explorer as networkExplorer, label as networkName } from "../../data/network";
 import { intents } from "shared";
 import { isAddress } from "viem";
 import { terminal } from "../perpl";
@@ -7,7 +8,7 @@ import { qrSvg } from "./qr";
 import { requireTrader } from "./state";
 
 const backend = import.meta.env.PUBLIC_BACKEND_URL ?? "http://localhost:8787";
-const explorer = "https://testnet.monadexplorer.com/tx/";
+const explorer = `${networkExplorer}/tx/`;
 
 const chainNames: Record<string, string> = { eth: "Ethereum", base: "Base", arb: "Arbitrum", op: "Optimism", pol: "Polygon", bsc: "BNB Chain", avax: "Avalanche", sol: "Solana", btc: "Bitcoin", near: "NEAR", ton: "TON", tron: "Tron", xrp: "XRP Ledger", sui: "Sui", doge: "Dogecoin" };
 const chainName = (chain: string) => chainNames[chain] ?? chain.toUpperCase();
@@ -23,7 +24,7 @@ function openSend() {
   const trader = requireTrader();
   const panel = openModal(`
     <div class="modal__head"><span class="modal__title">Send</span><button type="button" class="modal__close" data-close>×</button></div>
-    <p class="quote-line">Send to any Monad address. Only use the Monad network. Funds sent to a wrong address cannot be recovered. This is Monad testnet.</p>
+    <p class="quote-line">Send to any Monad address. Only use the Monad network. Funds sent to a wrong address cannot be recovered. This is ${networkName}.</p>
     <div class="send-sources" data-send-sources></div>
     <label class="field"><span>To address</span><input data-send-to placeholder="0x… any Monad address" autocomplete="off" spellcheck="false" /></label>
     <label class="field"><span>Amount <b data-send-unit></b></span><div class="field-row"><input data-send-amount type="number" min="0" step="any" placeholder="0" /><button type="button" class="btn" data-send-max>Max</button></div></label>
@@ -95,6 +96,83 @@ function openSend() {
           ? await terminal.withdrawFromPerpl(trader, { to, amount }, (step) => (statusEl.textContent = step === "withdraw" ? "Withdrawn from Perpl. Sending…" : "Sent."))
           : await terminal.sendAsset(trader, { asset: kind === "wallet-mon" ? "MON" : "AUSD", to, amount });
       statusEl.innerHTML = `Sent ${amount} ${kinds.find((k) => k.key === kind)!.unit} to ${esc(short(to))}. <a href="${explorer}${hash}" target="_blank" rel="noreferrer">View transaction ↗</a>`;
+      amountEl.value = "";
+      void load();
+    } catch (error) {
+      statusEl.dataset.tone = "error";
+      statusEl.textContent = errorText(error);
+    } finally {
+      paint();
+    }
+  });
+}
+
+function openMove() {
+  const trader = requireTrader();
+  const panel = openModal(`
+    <div class="modal__head"><span class="modal__title">Move between accounts</span><button type="button" class="modal__close" data-close>×</button></div>
+    <p class="quote-line">Your wallet holds AUSD. Your Perpl account holds the AUSD you trade with. Both belong to ${esc(short(trader.address))}.</p>
+    <div class="send-sources" data-move-ways></div>
+    <label class="field"><span>Amount <b>(AUSD)</b></span><div class="field-row"><input data-move-amount type="number" min="0" step="any" placeholder="0" /><button type="button" class="btn" data-move-max>Max</button></div></label>
+    <button type="button" class="btn btn--primary" data-move-go>Move</button>
+    <p class="status-line" data-move-status></p>
+  `);
+  const ways = [
+    { key: "in", label: "Wallet → Perpl" },
+    { key: "out", label: "Perpl → Wallet" },
+  ] as const;
+  type Way = (typeof ways)[number]["key"];
+  const balances: Record<Way, number | null> = { in: null, out: null };
+  let way: Way = "in";
+  const waysEl = query("[data-move-ways]", panel);
+  const amountEl = query<HTMLInputElement>("[data-move-amount]", panel);
+  const goEl = query<HTMLButtonElement>("[data-move-go]", panel);
+  const statusEl = query("[data-move-status]", panel);
+
+  function paint() {
+    waysEl.innerHTML = ways
+      .map((w) => `<button type="button" class="send-source${w.key === way ? " send-source--on" : ""}" data-way="${w.key}"><span>${w.label}</span><b>${balances[w.key] === null ? "…" : balances[w.key]!.toLocaleString(undefined, { maximumFractionDigits: 4 })}</b></button>`)
+      .join("");
+    const value = Number(amountEl.value) || 0;
+    const have = balances[way];
+    goEl.disabled = value <= 0 || (have !== null && value > have);
+  }
+  waysEl.addEventListener("click", (event) => {
+    const button = (event.target as HTMLElement).closest<HTMLElement>("[data-way]");
+    if (button) {
+      way = button.dataset.way as Way;
+      paint();
+    }
+  });
+  amountEl.addEventListener("input", paint);
+  query("[data-move-max]", panel).addEventListener("click", () => {
+    amountEl.value = String(balances[way] ?? 0);
+    paint();
+  });
+
+  async function load() {
+    const [ausd, account] = await Promise.all([
+      terminal.loadCollateralBalance(trader.address).catch(() => null),
+      terminal.loadAccount(trader.address).catch(() => null),
+    ]);
+    balances.in = ausd;
+    balances.out = account?.balance ?? 0;
+    paint();
+  }
+  void load();
+  paint();
+
+  goEl.addEventListener("click", async () => {
+    const amount = Number(amountEl.value);
+    goEl.disabled = true;
+    statusEl.dataset.tone = "";
+    statusEl.textContent = "Waiting for your passkey…";
+    try {
+      const hash =
+        way === "in"
+          ? await terminal.depositToPerpl(trader, amount, (step) => (statusEl.textContent = step === "approve" ? "Approved. Depositing…" : "Deposited."))
+          : await terminal.withdrawToWallet(trader, amount);
+      statusEl.innerHTML = `Moved ${amount} AUSD ${way === "in" ? "to Perpl" : "to your wallet"}. <a href="${explorer}${hash}" target="_blank" rel="noreferrer">View transaction ↗</a>`;
       amountEl.value = "";
       void load();
     } catch (error) {
@@ -264,6 +342,7 @@ export function initFunds() {
     const target = event.target as HTMLElement;
     if (target.closest("[data-open-deposit]")) openDeposit();
     if (target.closest("[data-open-send]")) openSend();
+    if (target.closest("[data-open-move]")) openMove();
   });
 }
 

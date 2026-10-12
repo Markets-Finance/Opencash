@@ -13,8 +13,9 @@ import {
 } from "shared";
 import { pulseList } from "./nansen";
 import { terminal } from "./perpl";
+import { deployment } from "./network";
 
-export const toolbox = createToolbox(perpl.createPerplApi(perpl.perplTestnet.apiUrl), defaultLimits);
+export const toolbox = createToolbox(perpl.createPerplApi(deployment.apiUrl), defaultLimits);
 toolbox.setSmartMoney(pulseList);
 
 let runtime: BotRuntime | null = null;

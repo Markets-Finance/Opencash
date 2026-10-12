@@ -8,10 +8,11 @@ import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { RoundButton, ToneCard, tone } from "../components/ui";
 import { loadAccount, loadCollateralBalance, loadNativeBalance, sendAsset, withdrawFromPerpl } from "../lib/perpl";
 import { dark, family, space, touch } from "../theme";
+import { explorer as networkExplorer, label as networkName } from "../lib/network";
 
 type Source = "wallet-ausd" | "wallet-mon" | "perpl";
 
-const explorer = "https://testnet.monadexplorer.com/tx/";
+const explorer = `${networkExplorer}/tx/`;
 
 const sources: { key: Source; label: string; sub: string; symbol: string; unit: string }[] = [
   { key: "wallet-ausd", label: "Wallet AUSD", sub: "In your OpenCash address", symbol: "USDC", unit: "AUSD" },
@@ -123,7 +124,7 @@ export function Send({ trader, onBack, onSelectTab }: SendProps) {
             </Pressable>
           </View>
 
-          <Text style={styles.muted}>Only send on the Monad network. Funds sent to a wrong address cannot be recovered. This is Monad testnet.</Text>
+          <Text style={styles.muted}>Only send on the Monad network. Funds sent to a wrong address cannot be recovered. This is {networkName}.</Text>
 
           <Pressable
             disabled={blocked !== null}

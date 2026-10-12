@@ -16,6 +16,7 @@ import { SelectPill } from "../components/ui";
 import { AssetMark, LegStack } from "../components/AssetMark";
 import { openBin, type EntryStep, type MarketData } from "../lib/perpl";
 import { dark, family, space, track } from "../theme";
+import { label as networkName } from "../lib/network";
 
 type BinDetailProps = {
   bin: Bin;
@@ -210,7 +211,7 @@ export function BinDetail({ bin, data, balance, trader, onBack }: BinDetailProps
         ) : null}
 
         <Text style={styles.footnote}>
-          All legs open together or none do. Orders fill on the Perpl order book on Monad testnet.
+          All legs open together or none do. Orders fill on the Perpl order book on {networkName}.
         </Text>
       </ScrollView>
 

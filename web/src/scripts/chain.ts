@@ -1,8 +1,9 @@
-import { monadTestnetChain, type TradingAccount } from "shared";
+import type { TradingAccount } from "shared";
+import { chain } from "../data/network";
 import { createPublicClient, createWalletClient, http } from "viem";
 
 export const publicClient = createPublicClient({
-  chain: monadTestnetChain,
+  chain,
   transport: http(),
   batch: { multicall: { wait: 20 } },
 });
@@ -10,7 +11,7 @@ export const publicClient = createPublicClient({
 export function walletClientFor(tradingAccount: TradingAccount) {
   return createWalletClient({
     account: tradingAccount.account,
-    chain: monadTestnetChain,
+    chain,
     transport: http(),
   });
 }

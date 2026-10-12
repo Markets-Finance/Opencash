@@ -9,6 +9,7 @@ import { Insights } from "../components/Insights";
 import { ScreenTitle, Switcher, Tag, ToneCard, tone } from "../components/ui";
 import { closePosition, loadMarkets, loadOpenPositions, type MarketData, type OpenPosition } from "../lib/perpl";
 import { dark, family, space, touch } from "../theme";
+import { label as networkName } from "../lib/network";
 
 function usd(value: number): string {
   return `${value < 0 ? "−" : ""}$${Math.abs(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -111,7 +112,7 @@ export function Trade({ trader, onOpenAsset, onSelectTab }: TradeProps) {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <ScreenTitle title="Trade" right={<Tag label="Monad Testnet" dot={dark.green} />} />
+        <ScreenTitle title="Trade" right={<Tag label={networkName} dot={dark.green} />} />
 
         <Switcher
           items={[
@@ -178,7 +179,7 @@ export function Trade({ trader, onOpenAsset, onSelectTab }: TradeProps) {
         {positions === null ? (
           <ActivityIndicator color={dark.ink} />
         ) : positions.length === 0 ? (
-          <Text style={styles.muted}>No open positions on Monad testnet for this address.</Text>
+          <Text style={styles.muted}>No open positions on {networkName} for this address.</Text>
         ) : (
           positions.map((entry) => {
             const long = entry.position.positionType === perpl.OrderType.OpenLong;

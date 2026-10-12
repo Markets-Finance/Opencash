@@ -1,4 +1,5 @@
 ---
+import { label } from "../data/network";
 interface Props {
   name?: string;
   email?: string;
@@ -36,7 +37,7 @@ const { name = "—", email = "", tier } = Astro.props;
           </button>
         </dd>
       </div>
-      <div><dt>Network</dt><dd>Monad Testnet</dd></div>
+      <div><dt>Network</dt><dd>{label}</dd></div>
     </dl>
   </div>
 </article>

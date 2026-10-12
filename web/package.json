@@ -9,6 +9,7 @@
     "preview": "astro preview",
     "typecheck": "astro check",
     "build:landing": "astro build && node scripts/package-landing.mjs",
+    "deploy:app": "PUBLIC_BACKEND_URL=https://monad-api.opencash.in PUBLIC_NETWORK=mainnet astro build && wrangler pages deploy dist --project-name opencash --branch monad --commit-dirty=true",
     "deploy:landing": "pnpm build:landing && wrangler pages deploy dist-landing --project-name opencash --branch monad --commit-dirty=true"
   },
   "dependencies": {

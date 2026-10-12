@@ -4,6 +4,8 @@ import { equityChart } from "./chart";
 import { runTemplate } from "./data";
 import { money, pct, tone } from "./format";
 import { glyph, meta } from "./meta";
+import { label as networkName } from "../../../data/network";
+import { liveAct, liveNetwork, renderPreflight, reviewLive } from "./live";
 import { addPaperBot } from "./paper";
 import { labState, paramsFor, type Stage } from "./state";
 
@@ -35,8 +37,13 @@ function stageBody(stage: Stage): string {
     return `<p class="run__text">Runs on live prices with fills simulated. It acts when each candle closes, so the first move comes after the next one.</p>
       <button type="button" class="btn btn--primary" data-lab-paper>Start paper bot</button>`;
   }
-  return `<p class="run__text">Real orders under the allocation cap. Unlocks after a paper run of 24 hours. Order placement for these strategies ships after the first real testnet order is verified.</p>
-      <button type="button" class="btn" disabled>Locked</button>`;
+  return `<p class="run__text">Real orders on Perpl ${liveNetwork}, sized by the allocation cap up to the leverage below. The server acts when each candle closes and watches the stop every 30 seconds, because Perpl's API takes no stop orders. Pause or stop it any time from Bots.</p>
+      <label class="param">
+        <span class="param__label">Leverage<b data-live-lev-out>${labState.liveLeverage}x</b></span>
+        <input type="range" data-live-leverage min="1" max="${templates.maxLiveLeverage}" step="1" value="${labState.liveLeverage}" />
+      </label>
+      <button type="button" class="btn btn--primary" data-lab-live-review>Review with a dry run</button>
+      <div data-lab-live-out></div>`;
 }
 
 export function renderDetail() {
@@ -82,7 +89,7 @@ export function paintResult() {
   const win = m.winRatePct === null ? "—" : `${m.winRatePct.toFixed(0)}%`;
   query("[data-lab-result]").innerHTML = `
     <div class="result__top">
-      <span class="lab__kicker">${esc(series.market.symbol)} · ${days} days · testnet history</span>
+      <span class="lab__kicker">${esc(series.market.symbol)} · ${days} days · ${networkName} history</span>
       <span class="result__vs">Just holding: ${pct(m.holdReturnPct)}</span>
     </div>
     <div class="result__big result__big--${tone(m.returnPct)}">${pct(m.returnPct)}</div>
@@ -111,6 +118,10 @@ export function initDetail() {
       paintResult();
       document.dispatchEvent(new CustomEvent("lab:changed"));
     }
+    if (input.hasAttribute("data-live-leverage")) {
+      labState.liveLeverage = Number(input.value);
+      query("[data-live-lev-out]").textContent = `${input.value}x`;
+    }
     if (input.hasAttribute("data-lab-allocation")) {
       labState.allocationUsd = Number(input.value);
       query("[data-alloc-out]").textContent = `$${input.value}`;
@@ -137,8 +148,47 @@ export function initDetail() {
       host.querySelectorAll<HTMLElement>("[data-lab-stage]").forEach((b) => b.setAttribute("aria-pressed", String(b === stage)));
       query("[data-lab-stage-body]").innerHTML = stageBody(labState.stage);
     }
+    const status = query("[data-lab-status]");
+    try {
+      if (target.closest("[data-lab-live-review]") && labState.series) {
+        const out = query("[data-lab-live-out]");
+        status.dataset.tone = "info";
+        status.textContent = "Approve with your passkey, then the server runs a dry run…";
+        const { id: botId, preflight } = await reviewLive({
+          templateId: id,
+          symbol: labState.series.market.symbol,
+          resolution: labState.series.resolution,
+          params: { ...paramsFor(template) },
+          allocationUsd: labState.allocationUsd,
+          leverage: labState.liveLeverage,
+        });
+        status.textContent = "";
+        out.innerHTML = `${renderPreflight(preflight)}
+          <div class="live__switch">
+            <button type="button" class="btn btn--primary" data-lab-live-go="${botId}" ${preflight.ready ? "" : "disabled"}>Go live</button>
+            <button type="button" class="link-btn" data-lab-live-discard="${botId}">Discard</button>
+          </div>`;
+      }
+      const go = target.closest<HTMLElement>("[data-lab-live-go]");
+      if (go) {
+        go.setAttribute("disabled", "");
+        await liveAct(go.dataset.labLiveGo!, "enable");
+        query("[data-lab-live-out]").innerHTML = "";
+        status.dataset.tone = "info";
+        status.textContent = "Live. Track it, pause it or stop it under Bots, Live strategies.";
+        document.dispatchEvent(new CustomEvent("live:changed"));
+      }
+      const discard = target.closest<HTMLElement>("[data-lab-live-discard]");
+      if (discard) {
+        await liveAct(discard.dataset.labLiveDiscard!, "remove");
+        query("[data-lab-live-out]").innerHTML = "";
+        status.textContent = "Discarded.";
+      }
+    } catch (error) {
+      status.dataset.tone = "error";
+      status.textContent = error instanceof Error ? error.message : String(error);
+    }
     if (target.closest("[data-lab-paper]") && labState.series) {
-      const status = query("[data-lab-status]");
       await addPaperBot(template, { ...paramsFor(template) }, labState.series, labState.allocationUsd);
       status.dataset.tone = "info";
       status.textContent = "Paper bot started. It is under Your bots.";

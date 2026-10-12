@@ -3,8 +3,9 @@ import "react-native-get-random-values";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { reactNativeWebAuthnClient } from "@category-labs/mera/react-native-webauthn-client";
 import {
+  clearImportedWallet,
   createTradingAccount,
-  monadTestnetChain,
+  importWalletKey,
   relyingPartyId,
   relyingPartyName,
   revealRecoveryPhrase,
@@ -13,8 +14,10 @@ import {
   type TradingAccount,
 } from "shared";
 import { createPublicClient, createWalletClient, http } from "viem";
+import { chain } from "./network";
 
 const storageKey = "monad.passkey.credential";
+const importStorageKey = "monad.import.v1";
 export const rpId = relyingPartyId;
 
 const nativeStore: CredentialStore = {
@@ -22,11 +25,20 @@ const nativeStore: CredentialStore = {
   write: (value) => AsyncStorage.setItem(storageKey, value),
 };
 
+const importStore: CredentialStore = {
+  read: () => AsyncStorage.getItem(importStorageKey),
+  write: async (value) => {
+    if (value === "") await AsyncStorage.removeItem(importStorageKey);
+    else await AsyncStorage.setItem(importStorageKey, value);
+  },
+};
+
 function passkeyContext() {
   return {
     rpId,
     rpName: relyingPartyName,
     store: nativeStore,
+    importStore,
     webAuthnClient: reactNativeWebAuthnClient,
   };
 }
@@ -34,8 +46,9 @@ function passkeyContext() {
 export function createAccount(
   userName: string,
   displayName: string,
+  importKey?: { privateKey: string; expectedAddress?: string },
 ): Promise<TradingAccount> {
-  return createTradingAccount({ ...passkeyContext(), userName, displayName });
+  return createTradingAccount({ ...passkeyContext(), userName, displayName, importKey });
 }
 
 export function signIn(): Promise<TradingAccount> {
@@ -46,8 +59,16 @@ export function revealPhrase(): Promise<string> {
   return revealRecoveryPhrase(passkeyContext());
 }
 
+export function importWallet(privateKey: string, expectedAddress: string): Promise<`0x${string}`> {
+  return importWalletKey(passkeyContext(), { privateKey, expectedAddress });
+}
+
+export function clearImport(): Promise<void> {
+  return clearImportedWallet(passkeyContext());
+}
+
 export const publicClient = createPublicClient({
-  chain: monadTestnetChain,
+  chain,
   transport: http(),
   batch: { multicall: { wait: 20 } },
 });
@@ -55,7 +76,7 @@ export const publicClient = createPublicClient({
 export function walletClientFor(tradingAccount: TradingAccount) {
   return createWalletClient({
     account: tradingAccount.account,
-    chain: monadTestnetChain,
+    chain,
     transport: http(),
   });
 }

@@ -83,3 +83,9 @@ export async function removeBinFromBoard(id: string, binId: string): Promise<Boa
 export function deleteBoard(id: string): Promise<void> {
   return store.delete(id);
 }
+
+export async function deleteBoardsForOwner(owner: Address): Promise<number> {
+  const boards = await listBoardsForOwner(owner);
+  for (const board of boards) await store.delete(board.id);
+  return boards.length;
+}
