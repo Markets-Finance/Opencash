@@ -1,0 +1,52 @@
+---
+import favicon from "../assets/favicon.svg";
+import fontUrl from "../assets/fonts/dm-sans.woff2?url";
+import Mark from "../components/Mark.astro";
+
+type Props = { title: string; updated: string };
+const { title, updated } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b0f0e" />
+    <link rel="icon" href={favicon.src} type="image/svg+xml" />
+    <link rel="preload" href={fontUrl} as="font" type="font/woff2" crossorigin />
+    <title>{title} · OpenCash</title>
+  </head>
+  <body>
+    <header class="legal-head">
+      <a class="legal-brand" href="/"><Mark />open<span>cash</span></a>
+      <nav><a href="/privacy">Privacy</a><a href="/terms">Terms</a></nav>
+    </header>
+    <main class="legal">
+      <h1>{title}</h1>
+      <p class="legal-updated">Last updated {updated}</p>
+      <slot />
+    </main>
+    <footer class="legal-foot"><span>© {new Date().getFullYear()} OpenCash</span><a href="/">Back to home</a></footer>
+  </body>
+</html>
+
+<style is:global>
+  @font-face { font-family: "DM Sans"; src: url("../assets/fonts/dm-sans.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+  body { margin: 0; background: #0b0f0e; color: #e9ede9; font-family: "DM Sans", system-ui, sans-serif; line-height: 1.65; }
+  .legal-head { display: flex; justify-content: space-between; align-items: center; max-width: 760px; margin: 0 auto; padding: 24px 16px; }
+  .legal-brand { display: inline-flex; align-items: center; gap: 6px; color: #fff; text-decoration: none; font-size: 22px; font-weight: 650; letter-spacing: -0.04em; }
+  .legal-brand span { opacity: 0.55; font-weight: 400; }
+  .legal-brand svg { width: 20px; height: 20px; }
+  .legal-head nav { display: flex; gap: 20px; }
+  .legal-head nav a, .legal-foot a { color: rgba(255, 255, 255, 0.65); text-decoration: none; font-size: 14px; }
+  .legal-head nav a:hover, .legal-foot a:hover { color: #fff; }
+  .legal { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+  .legal h1 { font-size: clamp(36px, 7vw, 56px); font-weight: 300; letter-spacing: -0.04em; line-height: 1.05; margin: 0 0 8px; }
+  .legal h2 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; margin: 40px 0 8px; }
+  .legal p, .legal li { color: rgba(255, 255, 255, 0.78); font-size: 16px; }
+  .legal ul { padding-left: 20px; }
+  .legal a { color: #b7a9ff; }
+  .legal-updated { color: rgba(255, 255, 255, 0.45); font-size: 14px; margin: 0 0 32px; }
+  .legal-foot { display: flex; justify-content: space-between; max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; border-top: 1px solid rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.45); font-size: 14px; }
+</style>

@@ -24,4 +24,6 @@ export const footerLinks = [
   { href: "#platform", label: "Platform" },
   { href: "#network", label: "Developers" },
   { href: "#about", label: "About OpenCash" },
+  { href: "/privacy", label: "Privacy Policy" },
+  { href: "/terms", label: "Terms & Conditions" },
 ] as const;

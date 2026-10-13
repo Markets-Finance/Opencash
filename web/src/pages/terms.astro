@@ -1,0 +1,85 @@
+---
+import Legal from "../layouts/Legal.astro";
+---
+
+<Legal title="Terms and conditions" updated="14 October 2026">
+  <h2>1. About OpenCash</h2>
+  <p>OpenCash is a non-custodial interface to Perpl perpetual futures on the Monad network. It also provides bins (themed baskets of Perpl markets), rule-based bots, strategy testing tools and market data. It is available as an Android app and on the web. OpenCash is not an exchange, a broker or a bank. Trades are placed on Perpl, and funds stay in your own account.</p>
+  <p>By using the app or this website you agree to these terms. If you do not agree, do not use OpenCash.</p>
+
+  <h2>2. Early access</h2>
+  <p>OpenCash is in early access. Features can change, break or be removed, and some parts may run on test networks. We do not promise that any feature will stay available.</p>
+
+  <h2>3. Eligibility</h2>
+  <ul>
+    <li>You must be at least 18 years old.</li>
+    <li>You must not use OpenCash where trading derivatives or leveraged products is restricted or prohibited for you.</li>
+    <li>You are responsible for knowing and following the laws that apply to you, including tax and reporting rules.</li>
+  </ul>
+
+  <h2>4. Self-custody and your passkey</h2>
+  <p>Your account is controlled by a passkey on your device. OpenCash does not hold your funds and cannot move them for you. We do not hold a copy of your keys.</p>
+  <ul>
+    <li>If you lose your passkey and have no other way to sign in, you lose access to the account. We cannot recover it.</li>
+    <li>If you import a private key, you are responsible for keeping it safe. Anyone who has it controls the funds.</li>
+    <li>You are responsible for the security of your devices and for every action signed with your passkey.</li>
+  </ul>
+
+  <h2>5. Trading risk</h2>
+  <ul>
+    <li>Perpetual futures are high risk. Leverage multiplies both gains and losses.</li>
+    <li>Your position can be liquidated, and you can lose all of the funds you put into a position. Fast markets, thin order books and gaps can make losses larger than you expect.</li>
+    <li>Prices, rankings, signals, analytics and strategy results are information, not financial, investment or tax advice.</li>
+    <li>Backtests, paper trading and past results of any strategy or trader do not predict live results. Live trading has costs, slippage and failures that simulations do not show.</li>
+    <li>Only trade with money you can afford to lose.</li>
+  </ul>
+
+  <h2>6. Bots and automation</h2>
+  <p>Server bots trade on your behalf only under a mandate that you sign, and they use a trade-only Perpl key that cannot withdraw funds. Each bot runs within the allocation and leverage limits set for it.</p>
+  <ul>
+    <li>You can stop or delete a bot at any time.</li>
+    <li>Automation can fail. Bots depend on our servers, Perpl, the network and market data, any of which can be slow, unavailable or wrong.</li>
+    <li>We do not guarantee uptime, order fills, prices or timing.</li>
+    <li>Stop orders are best effort. They may fill at a worse price than expected, or not at all.</li>
+    <li>We may pause or stop all bots at any time, for example for maintenance or safety.</li>
+    <li>You are responsible for checking your bots and positions and for the settings you choose.</li>
+  </ul>
+
+  <h2>7. Fees</h2>
+  <p>Perpl charges its own trading fees, and the network charges gas where it applies. These fees are set by those services, not by us.</p>
+  <p>Orders and bots may carry an OpenCash builder code on Perpl, which pays OpenCash a small fee set within a maximum that you approve. Swap quotes from third-party bridges may include a fee if one is configured. Any fee that applies is shown in the quote or order details, or is visible on the Perpl venue.</p>
+
+  <h2>8. Referral codes</h2>
+  <p>Referral codes are promotional. A code may raise limits such as the number of bots and the leverage a live bot can use. We can change, limit, expire or revoke a code and the benefits that come with it at any time. Do not sell, abuse or automate the use of codes.</p>
+
+  <h2>9. Prohibited use</h2>
+  <ul>
+    <li>Breaking the law, or using OpenCash to launder money, evade sanctions or fund illegal activity.</li>
+    <li>Attacking, probing or overloading the service, or bypassing rate limits, limits on bots or the kill switch.</li>
+    <li>Reverse engineering the service to harm it, or using it to harm other users.</li>
+    <li>Using someone else's account or keys without permission.</li>
+    <li>Market manipulation, including wash trading and spoofing.</li>
+  </ul>
+  <p>We may block access to the service for anyone who breaks these rules.</p>
+
+  <h2>10. Third-party services</h2>
+  <p>OpenCash relies on services we do not control, including Perpl (the trading venue), the Monad network, Aurora and NEAR Intents for swaps and bridging into Monad, and Nansen for wallet and market data. Their availability, rules and fees are their own, and their terms may apply when you use them. We are not responsible for what they do or fail to do.</p>
+
+  <h2>11. No warranty</h2>
+  <p>OpenCash is provided as is and as available, without warranties of any kind, whether express or implied. This includes fitness for a particular purpose, accuracy, reliability, availability and security. We do not promise that the service will be uninterrupted or free of errors.</p>
+
+  <h2>12. Limitation of liability</h2>
+  <p>To the extent the law allows, OpenCash and the people who build it are not liable for any indirect, incidental or consequential loss, or for loss of funds, profits or data, arising from your use of the service. This includes trading losses, liquidations, bot failures, missed fills, lost passkeys, smart contract or third-party failures and downtime. You use OpenCash at your own risk.</p>
+
+  <h2>13. Deleting your data and account</h2>
+  <p>You can delete your data from the web dashboard, and stop or delete your bots at any time. Deleting data in OpenCash does not close open positions or move funds on Perpl. Close positions and withdraw first. Because your keys are yours, funds on the chain stay under your control. See the <a href="/privacy">Privacy Policy</a> for how data is handled.</p>
+
+  <h2>14. Changes to these terms</h2>
+  <p>We may update these terms from time to time. The date at the top shows the latest version. If you keep using OpenCash after a change, you accept the updated terms.</p>
+
+  <h2>15. Governing law</h2>
+  <p>These terms are governed by the laws that apply where the operators of OpenCash are established, without regard to conflict of law rules. Local consumer laws that cannot be waived still apply to you.</p>
+
+  <h2>16. Contact</h2>
+  <p>Questions about these terms: open an issue at <a href="https://github.com/Markets-Finance/Opencash">github.com/Markets-Finance/Opencash</a>.</p>
+</Legal>

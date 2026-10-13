@@ -1,0 +1,71 @@
+---
+import Legal from "../layouts/Legal.astro";
+---
+
+<Legal title="Privacy policy" updated="14 October 2026">
+  <p>OpenCash is a non-custodial trading app for Perpl on Monad. It runs on the web at monad.opencash.in and as an Android app. This page explains what we handle, where it lives and how to remove it.</p>
+
+  <h2>Who holds your money</h2>
+  <p>We do not hold your funds or your wallet key. Your wallet stays on your device and your funds stay on Monad and at Perpl.</p>
+
+  <h2>Signing in</h2>
+  <ul>
+    <li>You sign in with a passkey through Mera. Your wallet key is derived from the passkey and never leaves your device.</li>
+    <li>We do not ask for a password and we never see your passkey.</li>
+    <li>If you import an existing private key, it is sealed by your passkey and stored on your device only. It is never sent to us.</li>
+  </ul>
+
+  <h2>Data we handle</h2>
+  <ul>
+    <li><b>Profile name and email.</b> Encrypted on your device with a key derived from your passkey and kept in localStorage (web) or AsyncStorage (Android). They are not sent to our server.</li>
+    <li><b>Private notes.</b> If you use notes sync, they are encrypted on your device first. Our server stores only the ciphertext, tied to your wallet address, and cannot read it.</li>
+    <li><b>Server bots (optional).</b> Only if you turn on server running, we store a Perpl trade-only API key, encrypted on our server, and a signed mandate that describes what the bot may do. We also store the bot settings and run state.</li>
+    <li><b>Boards, portfolio snapshots, shared strategies and follow records.</b> Saved on our server against your wallet address when you use those features.</li>
+    <li><b>X link (optional).</b> If you link an X handle, we store the handle and the verified link to your address.</li>
+    <li><b>Referral code.</b> When you redeem a code we store your wallet address, a hash of the code and the time. We do not keep the code itself.</li>
+    <li><b>Public data.</b> We read public on-chain data and data from the Perpl API for your wallet address. This is public information, not something you give us.</li>
+  </ul>
+
+  <h2>Where it is stored</h2>
+  <ul>
+    <li>On your device: profile, imported key, settings and session data.</li>
+    <li>On our server at AWS Lightsail: bots, encrypted API keys, boards, snapshots, strategies and similar records, kept in files on the server.</li>
+    <li>In Neon Postgres: encrypted notes and referral records.</li>
+  </ul>
+
+  <h2>Third parties</h2>
+  <ul>
+    <li><b>Perpl</b> receives your trading requests and, for server bots, the trade-only API key.</li>
+    <li><b>Monad RPC providers</b> receive the on-chain requests the app makes.</li>
+    <li><b>Neon</b> hosts the Postgres database described above.</li>
+    <li><b>Cloudflare</b> serves the website through Pages and carries traffic to our API through a tunnel. It sees normal request data such as IP address.</li>
+    <li><b>AWS Lightsail</b> hosts our backend and bot runner.</li>
+    <li><b>GitHub</b> hosts the Android app downloads. The app checks GitHub for new releases, so GitHub sees that request.</li>
+    <li><b>Nansen</b> is queried from our server for public wallet and market signals. Requests can include public wallet addresses.</li>
+    <li><b>X</b> is contacted to check the public post when you verify an X link.</li>
+  </ul>
+  <p>We do not show ads and we do not sell your data. We do not use analytics or advertising trackers in the app or website. Local storage is used only to keep your settings and session on your device.</p>
+
+  <h2>Retention and deletion</h2>
+  <p>We keep your server data until you delete it. In the dashboard, choose Delete my data. You sign a message with your wallet to confirm. You must close open Perpl positions and pause running bots first. The server then removes your bots and live strategies, saved Perpl keys, boards, portfolio snapshots, shared strategies and follow records, X link, synced notes and referral record. The app then wipes everything saved on your device and signs you out.</p>
+  <p>Deletion does not touch your wallet, your Perpl account or the funds in them. The Perpl API key still exists at Perpl until you revoke it there. Your passkey stays in your password manager. Public on-chain data cannot be deleted by anyone. Server backups and logs may hold older copies for a short time.</p>
+
+  <h2>Security</h2>
+  <ul>
+    <li>Wallet keys and imported keys are never sent to us.</li>
+    <li>Notes are encrypted before they leave your device.</li>
+    <li>Perpl API keys on the server are encrypted, and the encryption secret is kept apart from the data.</li>
+    <li>Changes to your data on the server need a signature from your wallet.</li>
+    <li>Traffic to our API goes through a Cloudflare tunnel.</li>
+  </ul>
+  <p>No system is perfectly safe. Use a device you trust and keep your passkey backed up.</p>
+
+  <h2>Children</h2>
+  <p>OpenCash is not for anyone under 18. We do not knowingly collect data from children.</p>
+
+  <h2>Changes to this policy</h2>
+  <p>If we change this policy we will update the date at the top of this page.</p>
+
+  <h2>Contact</h2>
+  <p>Open an issue on our GitHub repository: <a href="https://github.com/Markets-Finance/Opencash">github.com/Markets-Finance/Opencash</a>.</p>
+</Legal>
