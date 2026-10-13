@@ -1,3 +1,4 @@
+import { initLab } from "./lab";
 import { label as networkName } from "../../data/network";
 import { estimateExecution, liquidationDistancePct, summarizeDepth, perpl, slippageWarnBps, type ExecutionEstimate } from "shared";
 import { singleLegBin, sizeBinFor, terminal, type CandleRangeKey, type OpenPosition } from "../perpl";
@@ -73,6 +74,7 @@ function elements() {
 }
 
 export async function initTrade() {
+  void initLab();
   const trader = requireTrader();
   const ui = elements();
   const data = await getMarketData();

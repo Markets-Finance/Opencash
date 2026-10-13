@@ -297,3 +297,6 @@
 .newbot__col { display: grid; gap: 12px; align-content: start; }
 @media (max-width: 900px) { .newbot { grid-template-columns: minmax(0, 1fr); } }
 .agent__bots .bots__list { grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); }
+
+[data-panel="agent"] { max-width: 1040px; margin: 0 auto; }
+.lab-bar { display: flex; justify-content: flex-end; margin-bottom: 8px; }

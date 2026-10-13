@@ -1,6 +1,3 @@
----
-import StrategyLab from "./StrategyLab.astro";
----
 <section class="panel" data-panel="agent" hidden>
   <div class="botbar card">
     <div class="botbar__state">
@@ -102,33 +99,4 @@ import StrategyLab from "./StrategyLab.astro";
     <div class="bots__list" data-live-bot-list></div>
   </section>
 
-  <details class="agent__advanced">
-    <summary>Rule strategies: backtest, paper and live</summary>
-    <StrategyLab />
-  </details>
-
-  <details class="agent__advanced">
-    <summary>Analysis tools</summary>
-    <div class="agent__tools" data-agent-tools>
-      <div class="chip-row">
-        <button type="button" class="chip" data-tool="list_markets">Markets</button>
-        <button type="button" class="chip" data-tool="market_snapshot">Snapshot</button>
-        <button type="button" class="chip" data-tool="funding_history">Funding</button>
-        <button type="button" class="chip" data-tool="price_stats">Price stats</button>
-        <button type="button" class="chip" data-tool="order_book">Order book</button>
-        <button type="button" class="chip" data-tool="compare_pair">Compare pair</button>
-        <button type="button" class="chip" data-tool="smart_money">Smart money</button>
-      </div>
-      <div class="agent__args" data-agent-args>
-        <label class="field"><span>Market</span><input data-arg="symbol" value="BTC" /></label>
-        <label class="field"><span>Long</span><input data-arg="long" value="MON" /></label>
-        <label class="field"><span>Short</span><input data-arg="short" value="BTC" /></label>
-        <label class="field"><span>Days</span><input data-arg="days" type="number" min="1" max="30" value="7" /></label>
-        <label class="field"><span>Order USD</span><input data-arg="notionalUsd" type="number" min="0" value="300" /></label>
-      </div>
-    </div>
-    <div class="agent__feed" data-agent-feed>
-      <p class="empty">Run a tool. Everything the agent looks at appears here.</p>
-    </div>
-  </details>
 </section>

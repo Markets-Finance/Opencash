@@ -1,3 +1,4 @@
+import { initAnalysisTools } from "../agent";
 import { errorText, query } from "../dom";
 import { ago } from "./format";
 import { initProtocolControls, paintProtocol, type Protocol } from "./protocol";
@@ -36,6 +37,7 @@ function tick() {
 }
 
 export function initAnalytics() {
+  initAnalysisTools();
   initProtocolControls();
   initRiskControls();
   initWallet(backend, () => network);

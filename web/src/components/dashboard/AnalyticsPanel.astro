@@ -3,6 +3,7 @@
     <div class="switcher" data-switcher="an" role="tablist">
       <button type="button" data-switch="protocol" aria-pressed="true"><i class="switcher__dot switcher__dot--butter"></i>Protocol</button>
       <button type="button" data-switch="wallet" aria-pressed="false"><i class="switcher__dot switcher__dot--violet"></i>Wallets</button>
+      <button type="button" data-switch="tools" aria-pressed="false"><i class="switcher__dot switcher__dot--lime"></i>Agent tools</button>
     </div>
     <div class="an-bar__right">
       <div class="seg-pills" role="group" aria-label="Network">
@@ -23,6 +24,7 @@
           <p class="panel__lede" data-an-chart-note></p>
         </div>
         <div class="an-chart__controls">
+          <label class="chart-size"><span>Chart height</span><select data-chart-size aria-label="Chart height"><option value="compact">Compact</option><option value="normal">Normal</option><option value="tall">Tall</option><option value="max">Max</option></select></label>
           <div class="chip-row" data-an-mode>
             <button type="button" class="chip chip--active" data-mode="daily">Daily</button>
             <button type="button" class="chip" data-mode="cumulative">Cumulative</button>
@@ -74,5 +76,31 @@
     <div class="an-watch" data-an-watch></div>
     <div data-an-compare></div>
     <div data-an-wallet><p class="empty">Loading the leaderboard…</p></div>
+  </div>
+
+  <div data-pane="an:tools" hidden>
+    <div class="card agent__tools" data-agent-tools>
+      <span class="panel__label">The tools the agent uses</span>
+      <p class="agent__hint">Run any of them yourself. Everything they return appears below.</p>
+      <div class="chip-row">
+        <button type="button" class="chip" data-tool="list_markets">Markets</button>
+        <button type="button" class="chip" data-tool="market_snapshot">Snapshot</button>
+        <button type="button" class="chip" data-tool="funding_history">Funding</button>
+        <button type="button" class="chip" data-tool="price_stats">Price stats</button>
+        <button type="button" class="chip" data-tool="order_book">Order book</button>
+        <button type="button" class="chip" data-tool="compare_pair">Compare pair</button>
+        <button type="button" class="chip" data-tool="smart_money">Smart money</button>
+      </div>
+      <div class="agent__args" data-agent-args>
+        <label class="field"><span>Market</span><input data-arg="symbol" value="BTC" /></label>
+        <label class="field"><span>Long</span><input data-arg="long" value="MON" /></label>
+        <label class="field"><span>Short</span><input data-arg="short" value="BTC" /></label>
+        <label class="field"><span>Days</span><input data-arg="days" type="number" min="1" max="30" value="7" /></label>
+        <label class="field"><span>Order USD</span><input data-arg="notionalUsd" type="number" min="0" value="300" /></label>
+      </div>
+    </div>
+    <div class="agent__feed" data-agent-feed>
+      <p class="empty">Run a tool. Everything the agent looks at appears here.</p>
+    </div>
   </div>
 </section>

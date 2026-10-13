@@ -9,6 +9,7 @@ import { initRanks } from "./ranks";
 import { initHome } from "./home";
 import "./modal";
 import { initFunds } from "./funds";
+import { initChartSize } from "./chartSize";
 import { initSwitchers } from "./switcher";
 import { initAccountMenu, initTabs } from "./tabs";
 import { startSweep } from "./sweep";
@@ -31,6 +32,7 @@ document.addEventListener("click", (event) => {
   if (target?.dataset.openAsset) openAsset(target.dataset.openAsset);
 });
 initBots();
+initChartSize();
 initGate(() => {
   void initHome();
   void startBots();

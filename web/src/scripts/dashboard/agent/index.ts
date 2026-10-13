@@ -5,7 +5,6 @@ import { terminal } from "../../perpl";
 import { session } from "../state";
 import { esc, query } from "../dom";
 import { addLeg, initCard, setCard } from "./card";
-import { initLab } from "../lab";
 import { onAddLeg, pushOutcome } from "./feed";
 import { run, toolbox } from "./session";
 
@@ -33,14 +32,7 @@ function readArgs(tool: string): Record<string, unknown> {
   return args;
 }
 
-export function initAgent() {
-  void initLab();
-  initCard();
-  onAddLeg(addLeg);
-
-  const hint = query("[data-agent-hint]");
-  const input = query<HTMLInputElement>("[data-agent-input]");
-
+export function initAnalysisTools() {
   document.querySelectorAll<HTMLButtonElement>("[data-tool]").forEach((button) =>
     button.addEventListener("click", async () => {
       button.disabled = true;
@@ -48,6 +40,14 @@ export function initAgent() {
       button.disabled = false;
     }),
   );
+}
+
+export function initAgent() {
+  initCard();
+  onAddLeg(addLeg);
+
+  const hint = query("[data-agent-hint]");
+  const input = query<HTMLInputElement>("[data-agent-input]");
 
   const chat = query("[data-agent-chat]");
   const send = query<HTMLButtonElement>("[data-agent-send]");

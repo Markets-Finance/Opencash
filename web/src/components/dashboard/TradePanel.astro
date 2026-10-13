@@ -1,5 +1,6 @@
 ---
 import { label } from "../../data/network";
+import StrategyLab from "./StrategyLab.astro";
 ---
 <section class="panel" data-panel="trade" hidden>
 
@@ -37,6 +38,12 @@ import { label } from "../../data/network";
       </div>
       <div class="table-wrap board-wrap" data-board-table><p class="empty">Loading markets…</p></div>
     </div>
+
+    <details class="agent__advanced" open>
+      <summary>Rule strategies: backtest, paper and live</summary>
+      <div class="lab-bar"><label class="chart-size"><span>Chart height</span><select data-chart-size aria-label="Chart height"><option value="compact">Compact</option><option value="normal">Normal</option><option value="tall">Tall</option><option value="max">Max</option></select></label></div>
+      <StrategyLab />
+    </details>
   </div>
 
   <div data-trade-asset hidden>
@@ -50,6 +57,7 @@ import { label } from "../../data/network";
               <span class="chart-head__price trade-mono" data-trade-market-price>—</span>
               <small class="chart-head__meta" data-trade-market-meta></small>
             </div>
+            <label class="chart-size"><span>Chart height</span><select data-chart-size aria-label="Chart height"><option value="compact">Compact</option><option value="normal">Normal</option><option value="tall">Tall</option><option value="max">Max</option></select></label>
             <div class="chip-row" data-trade-range>
               <button type="button" class="chip" data-range="1h">1H</button>
               <button type="button" class="chip" data-range="4h">4H</button>
