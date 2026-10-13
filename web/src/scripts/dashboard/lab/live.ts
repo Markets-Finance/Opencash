@@ -37,6 +37,10 @@ const post = <T>(path: string, body: unknown) => call<T>(path, { method: "POST",
 
 export async function turnOnServerRunning(onStep: (text: string) => void): Promise<void> {
   const trader = requireTrader();
+  const perplAccount = await terminal.loadAccount(trader.address).catch(() => undefined);
+  if (perplAccount === null) {
+    throw new Error("You do not have a Perpl account yet. Move at least $10 of AUSD into Perpl first (Account, Move between accounts, Wallet to Perpl). That creates it. Then turn on server running again.");
+  }
   onStep("Asking Perpl for a trading key…");
   const start = await post<{ id: string; signing: Record<string, unknown> }>("/bots/enroll/start", { owner: trader.address, network: liveNetwork });
   onStep("Approve once with your passkey…");
