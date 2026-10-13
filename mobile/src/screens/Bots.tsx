@@ -286,6 +286,9 @@ export function Bots({ name, onSelectTab, onOpenAsset, onOpenBot }: BotsProps) {
               <SelectPill label="Live · real money" active={kind === "live"} onPress={() => setKind("live")} />
             </View>
             <View style={styles.pills}>
+              <SelectPill label="Open on start" active={draft.openOnStart === true} onPress={() => setDraft({ ...draft, openOnStart: draft.openOnStart === true ? undefined : true })} />
+            </View>
+            <View style={styles.pills}>
               <SelectPill label="Opens for me" active={mode === "auto"} onPress={() => setMode("auto")} />
               <SelectPill label="Guards my position" active={mode === "guard"} onPress={() => setMode("guard")} />
             </View>

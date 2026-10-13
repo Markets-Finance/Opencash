@@ -102,7 +102,8 @@ export async function tickBot(input: Bot, deps: BotDeps): Promise<Bot> {
       return { ...bot, status: "watching", lastCheck: { at: now, message: "Cooling down after the last open" } };
     }
 
-    const check = await deps.checkEntry(bot.card, bot.rules.minCarryAprPct);
+    const first = bot.card.openOnStart === true && bot.lastOpenAt === null;
+    const check = await deps.checkEntry(first ? bot.card : { ...bot.card, openOnStart: false }, bot.rules.minCarryAprPct);
     bot = { ...bot, lastCheck: { at: now, message: check.reason } };
     if (!check.ok) return bot.status === "watching" ? bot : { ...bot, status: "watching" };
 

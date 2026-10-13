@@ -364,3 +364,6 @@
 .only-analytics, .only-bot { display: none; }
 [data-host="analytics"] .only-analytics { display: revert; }
 [data-host="bot"] .only-bot { display: revert; }
+
+.field--check small { display: block; opacity: 0.6; margin-top: 4px; font-size: 12px; }
+.field--check input { margin-right: 8px; }

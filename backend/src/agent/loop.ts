@@ -52,6 +52,7 @@ const submitSpec = {
             },
             stopLossPct: { type: "number" },
             takeProfitPct: { type: "number" },
+            openOnStart: { type: "boolean", description: "True only when the user asks to open the position right away instead of waiting for the bot rule." },
           },
           required: ["name", "thesis", "kind", "marginUsd", "legs", "stopLossPct"],
         },

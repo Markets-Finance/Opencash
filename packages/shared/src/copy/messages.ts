@@ -7,6 +7,7 @@ export function cardDigestInput(card: StrategyCard): string {
     marginUsd: card.marginUsd,
     stopLossPct: card.stopLossPct,
     takeProfitPct: card.takeProfitPct ?? null,
+    openOnStart: card.openOnStart ? true : undefined,
     legs: card.legs.map((leg) => [leg.symbol, leg.direction, leg.weightBps, leg.leverage]),
   });
 }

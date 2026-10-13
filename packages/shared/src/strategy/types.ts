@@ -18,6 +18,7 @@ export type StrategyCard = {
   stopLossPct: number;
   takeProfitPct?: number;
   signal?: "nansen";
+  openOnStart?: boolean;
 };
 
 export type RiskLimits = {

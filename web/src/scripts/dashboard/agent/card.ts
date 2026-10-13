@@ -93,6 +93,8 @@ function readFields() {
   card.takeProfitPct = Number(ui.tp.value) > 0 ? Number(ui.tp.value) : undefined;
   if (ui.signal.value === "nansen") card.signal = "nansen";
   else delete card.signal;
+  if (query<HTMLInputElement>("[data-card-open-start]").checked) card.openOnStart = true;
+  else delete card.openOnStart;
   ui.legs.querySelectorAll<HTMLElement>("[data-leg]").forEach((row) => {
     const leg = card!.legs[Number(row.dataset.leg)];
     if (!leg) return;
@@ -113,6 +115,7 @@ export function setCard(next: StrategyCard) {
   ui.stop.value = String(next.stopLossPct);
   ui.tp.value = next.takeProfitPct === undefined ? "" : String(next.takeProfitPct);
   ui.signal.value = next.signal ?? "";
+  query<HTMLInputElement>("[data-card-open-start]").checked = next.openOnStart === true;
   ui.signalNote.textContent = "";
   ui.legs.innerHTML = `<div class="leg-head"><span>Market</span><span>Side</span><span>Weight %</span><span>Lev</span><span></span></div>${next.legs.map(legRow).join("")}`;
   say(ui.status, "");
@@ -199,6 +202,7 @@ export function initCard() {
     void paintSignal();
   });
   ui.legs.addEventListener("input", onEdit);
+  query<HTMLInputElement>("[data-card-open-start]").addEventListener("change", onEdit);
   ui.legs.addEventListener("click", (event) => {
     const remove = (event.target as HTMLElement).closest<HTMLElement>("[data-remove]");
     if (!remove || !card) return;

@@ -30,6 +30,10 @@ export async function checkEntry(
     return { ok: false, reason: preview.issues.find((i) => i.severity === "error")?.message ?? "Blocked", carryAprPct: null };
   }
   const carry = carryAprPct(card, apr);
+  if (card.openOnStart === true) {
+    const legs = preview.legs.map((leg) => `${leg.symbol} liquidation ${leg.liquidationDistancePct.toFixed(0)}% away${leg.slippageBps === null ? "" : `, slippage ${leg.slippageBps.toFixed(1)} bps`}`).join("; ");
+    return { ok: true, reason: `Opened on start, as set on this bot. Funding carry ${carry.toFixed(1)}% APR. ${legs}. Risk checks pass`, carryAprPct: carry };
+  }
   if (carry < minCarryAprPct) {
     return { ok: false, reason: `Carry ${carry.toFixed(1)}% is below ${minCarryAprPct}%`, carryAprPct: carry };
   }

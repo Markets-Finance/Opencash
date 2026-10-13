@@ -71,4 +71,14 @@ const stopped = deps({ held: [{ symbol: "ETH", direction: "long", depositUsd: 10
 await tickBot(guard, stopped);
 assert.deepEqual(stopped.calls, ["protect", "close"], "bot-side stop still closes past the limit");
 
+const startCard = { ...card, openOnStart: true } as StrategyCard;
+const seen: boolean[] = [];
+const onStart = deps({ checkEntry: async (entry) => (seen.push(entry.openOnStart === true), { ok: true, reason: "ok", carryAprPct: null }) });
+const startBot = { ...createBot("s", "auto", startCard, now), enabled: true, status: "watching" as const };
+await tickBot(startBot, onStart);
+assert.deepEqual(seen, [true], "first entry is flagged as open on start");
+const later = { ...startBot, lastOpenAt: now - 7_200_000 };
+const afterStart = deps({ checkEntry: async (entry) => (seen.push(entry.openOnStart === true), { ok: false, reason: "no", carryAprPct: null }) });
+await tickBot(later, afterStart);
+assert.deepEqual(seen, [true, false], "later entries follow the normal rule");
 console.log("bots protect: ok");
