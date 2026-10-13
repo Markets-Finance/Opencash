@@ -339,3 +339,14 @@
 .agent-panel .agent-chat { align-self: stretch; }
 
 .share-card { width: 100%; max-width: 340px; margin-top: 12px; }
+
+.leg-edit { grid-template-columns: minmax(0, 1fr) 92px 84px 64px 20px; gap: 8px; }
+.leg-edit input, .leg-edit select { padding: 9px 10px; min-width: 0; font-size: 13px; }
+.agent__row { gap: 8px; }
+.agent__bots .bot__head .btn { padding: 7px 14px; font-size: 13px; min-height: 0; }
+.agent__bots .bot__head .link-btn { font-size: 13px; }
+.agent__bots .bot__meta { font-size: 12px; gap: 4px 12px; }
+.agent__bots { align-content: start; }
+.agent__more[open] { padding-bottom: 4px; }
+.newbot__col .stat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.newbot__col .stat { padding: 10px 12px; }

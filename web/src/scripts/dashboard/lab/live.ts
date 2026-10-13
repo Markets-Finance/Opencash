@@ -158,7 +158,7 @@ export async function paintLiveBots(): Promise<void> {
     const state = document.querySelector<HTMLElement>("[data-botbar-title]");
     if (state) state.textContent = hasKey ? (runner ? "On" : "Paused") : "Off";
     const off = runner ? "" : `<p class="empty">The server runner is off, so live bots will not act.</p>`;
-    host.innerHTML = off + (bots.length === 0 ? `<p class="empty">No live strategies yet. Start one from the Strategy Lab, Live stage.</p>` : bots.map(renderLive).join(""));
+    host.innerHTML = off + (bots.length === 0 ? "" : bots.map(renderLive).join(""));
   } catch (error) {
     host.innerHTML = `<p class="empty">${esc(error instanceof Error ? error.message : String(error))}</p>`;
   }
