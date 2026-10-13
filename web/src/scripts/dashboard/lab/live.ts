@@ -150,11 +150,13 @@ export async function paintLiveBots(): Promise<void> {
   const host = query("[data-live-bot-list]");
   try {
     const { bots, runner, hasKey } = await call<{ bots: PublicLive[]; runner: boolean; hasKey: boolean }>(`/live?owner=${requireTrader().address}&network=${liveNetwork}`);
-    query("[data-trade-key-state]").textContent = hasKey ? "On. Live bots keep trading on our server when this page is closed." : "Off. Live bots need it. One passkey approval starts it, with a trade-only key that cannot withdraw.";
+    query("[data-trade-key-state]").textContent = hasKey ? "Live bots keep trading on our server, even when this page is closed." : "Needed for live bots. One passkey approval, with a trade-only key that cannot withdraw.";
     query<HTMLButtonElement>("[data-server-run]").hidden = hasKey;
     query<HTMLButtonElement>("[data-server-stop]").hidden = !hasKey;
     const dot = document.querySelector<HTMLElement>("[data-botbar-dot]");
     if (dot) dot.dataset.on = hasKey && runner ? "1" : "0";
+    const state = document.querySelector<HTMLElement>("[data-botbar-title]");
+    if (state) state.textContent = hasKey ? (runner ? "On" : "Paused") : "Off";
     const off = runner ? "" : `<p class="empty">The server runner is off, so live bots will not act.</p>`;
     host.innerHTML = off + (bots.length === 0 ? `<p class="empty">No live strategies yet. Start one from the Strategy Lab, Live stage.</p>` : bots.map(renderLive).join(""));
   } catch (error) {

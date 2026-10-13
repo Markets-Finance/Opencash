@@ -1,47 +1,52 @@
 <section class="panel" data-panel="agent" hidden>
-  <div class="botbar card">
-    <div class="botbar__state">
-      <span class="botbar__dot" data-botbar-dot></span>
-      <div>
-        <b data-botbar-title>Autonomous trading</b>
-        <p class="agent__hint" data-trade-key-state></p>
+  <div class="bots-hero">
+    <section class="card agent-panel">
+      <div class="agent-panel__head">
+        <span class="agent-avatar" aria-hidden="true">✦</span>
+        <div>
+          <b>Trading agent</b>
+          <p class="agent__hint">Plain words in. A bot draft out. It never moves funds.</p>
+        </div>
       </div>
-    </div>
-    <div class="botbar__actions">
+      <div class="agent-chat" data-agent-chat>
+        <div class="agent-msg">
+          <div class="agent-bubble" data-agent-greeting>Hi! Tell me what you want in plain words. I check your balance and the markets myself, then draft a bot. You choose Paper or Live and press Start.</div>
+        </div>
+      </div>
+      <div class="chip-row agent-prompts" data-agent-prompts>
+        <button type="button" class="chip chip--lime" data-prompt="Long BTC with the smallest safe size, 2x, stop 6%">Safe BTC long</button>
+        <button type="button" class="chip chip--sky" data-prompt="Pair trade: long MON, short BTC, 2x, stop 8%">MON vs BTC pair</button>
+        <button type="button" class="chip chip--butter" data-prompt="Short PUMP 2x with a tight stop and a 10% target">Short PUMP</button>
+        <button type="button" class="chip chip--peach" data-prompt="Use my whole free Perpl balance on the best funding carry right now">Best funding carry</button>
+        <button type="button" class="chip chip--lime" data-prompt="Build a basket of ETH, SOL and HYPE longs at 2x with a 8% stop">ETH, SOL, HYPE basket</button>
+      </div>
+      <form class="agent__composer" data-agent-form>
+        <input type="text" data-agent-input autocomplete="off" maxlength="600" placeholder="Ask for a trade, e.g. long MON short BTC 2x $100 stop 8%" />
+        <button type="submit" class="btn btn--primary" data-agent-send>Send</button>
+      </form>
+      <p class="agent__hint" data-agent-hint></p>
+    </section>
+
+    <aside class="card auto-panel" data-auto-panel>
+      <div class="auto-panel__top">
+        <span class="botbar__dot" data-botbar-dot></span>
+        <span class="auto-panel__label">Autonomous trading</span>
+      </div>
+      <b class="auto-panel__state" data-botbar-title>Off</b>
+      <p class="agent__hint" data-trade-key-state></p>
       <button type="button" class="btn btn--primary" data-server-run>Start autonomous trading</button>
       <button type="button" class="btn" data-server-stop hidden>Stop autonomous trading</button>
-      <button type="button" class="link-btn" data-live-stop-all>Pause all</button>
-      <button type="button" class="link-btn" data-live-close-all>Stop all and close</button>
-    </div>
-    <p class="status-line" data-server-run-status></p>
-  </div>
-  <p class="bots-note" data-bots-note>Deposit at least $10 before starting a bot. A bot skips any order under $10, so it can't trade with less.</p>
-
-  <div class="agent">
-    <div class="agent__main">
-      <div class="card agent__chatcard">
-        <div class="agent-chat" data-agent-chat>
-          <div class="agent-msg">
-            <span class="agent-avatar" aria-hidden="true">✦</span>
-            <div class="agent-bubble" data-agent-greeting>Hi! I'm your trading agent. Tell me what you want in plain words. I check your balance and the markets myself, then draft a bot. You choose Paper or Live and press Start.</div>
-          </div>
-        </div>
-        <div class="chip-row agent-prompts" data-agent-prompts>
-          <button type="button" class="chip" data-prompt="Long BTC with the smallest safe size, 2x, stop 6%">Safe BTC long</button>
-          <button type="button" class="chip" data-prompt="Pair trade: long MON, short BTC, 2x, stop 8%">MON vs BTC pair</button>
-          <button type="button" class="chip" data-prompt="Short PUMP 2x with a tight stop and a 10% target">Short PUMP, tight stop</button>
-          <button type="button" class="chip" data-prompt="Use my whole free Perpl balance on the best funding carry right now">Best funding carry</button>
-          <button type="button" class="chip" data-prompt="Build a basket of ETH, SOL and HYPE longs at 2x with a 8% stop">ETH, SOL, HYPE basket</button>
-        </div>
-        <form class="agent__composer" data-agent-form>
-          <input type="text" data-agent-input autocomplete="off" maxlength="600" placeholder="Ask for a trade, e.g. long MON short BTC 2x $100 stop 8%" />
-          <button type="submit" class="btn btn--primary" data-agent-send>Send</button>
-        </form>
-        <p class="agent__boundary">Drafts only. Perpl markets only. It never moves funds or opens a trade on its own.</p>
-        <p class="agent__hint" data-agent-hint></p>
+      <div class="auto-panel__links">
+        <button type="button" class="link-btn" data-live-stop-all>Pause all</button>
+        <button type="button" class="link-btn" data-live-close-all>Stop all and close</button>
       </div>
-    </div>
+      <p class="status-line" data-server-run-status></p>
+      <p class="bots-note" data-bots-note>Deposit at least $10 before starting a bot. A bot skips any order under $10, so it can't trade with less.</p>
+    </aside>
+  </div>
 
+  <div class="bots-row">
+  <div class="agent">
     <aside class="agent__card card" data-agent-card>
       <span class="card__label">New bot</span>
       <p class="empty" data-card-empty>Ask the agent for a trade and the bot appears here.</p>
@@ -98,5 +103,6 @@
     <div class="bots__list" data-paper-list></div>
     <div class="bots__list" data-live-bot-list></div>
   </section>
+  </div>
 
 </section>
