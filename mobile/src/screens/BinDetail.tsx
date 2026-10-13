@@ -273,7 +273,7 @@ export function BinDetail({ bin, data, balance: initialBalance, trader, onBack, 
                 blocked !== null && styles.primaryLabelDisabled,
               ]}
             >
-              {blocked ?? `Open ${bin.name}`}
+              {blocked ?? `Trade ${bin.name}`}
             </Text>
           )}
         </Pressable>
