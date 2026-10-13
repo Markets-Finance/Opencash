@@ -13,7 +13,7 @@ import Mark from "../Mark.astro";
   <section class="gate__panel">
     <div class="gate__card">
       {isDevAuth && <div class="gate__top"><span class="gate__dev">Dev mode · test account</span></div>}
-      <form class="gate__form" data-gate-form>
+      <form class="gate__form" data-gate-form method="post" action="javascript:void(0)" onsubmit="return false">
         <h1 class="gate__title" data-gate-title>Sign in</h1>
         <p class="gate__hint" data-gate-hint>Use your passkey.</p>
         <div class="gate__fields" data-gate-fields hidden>

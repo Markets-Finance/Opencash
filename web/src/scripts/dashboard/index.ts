@@ -1,3 +1,5 @@
+if (location.search !== "") history.replaceState(null, "", location.pathname + location.hash);
+
 import { initAccount } from "./account";
 import { initAnalytics } from "./analytics";
 import { initAgent } from "./agent";
