@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { Bot, BotMode } from "shared";
+import { agentMemoryNamespace, loadVault, saveVault, type AgentTurn, type Bot, type BotMode, type NamespaceSession } from "shared";
+import { backendUrl } from "../lib/config";
+import { openNamespace } from "../lib/mera";
 import { Mark } from "../components/Mark";
 import { ServerRunning } from "../components/ServerRunning";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
@@ -54,6 +56,10 @@ export function Bots({ name, onSelectTab, onOpenAsset, onOpenBot }: BotsProps) {
   const [kind, setKind] = useState<"paper" | "live">("paper");
   const [mode, setMode] = useState<BotMode>("auto");
   const [starting, setStarting] = useState(false);
+  const [memoryOn, setMemoryOn] = useState(false);
+  const [memoryNote, setMemoryNote] = useState<string | null>(null);
+  const memory = useRef<NamespaceSession | null>(null);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [startNote, setStartNote] = useState<{ text: string; failed: boolean } | null>(null);
 
   useEffect(() => subscribeBots(setLocalBots), []);
@@ -83,20 +89,55 @@ export function Bots({ name, onSelectTab, onOpenAsset, onOpenBot }: BotsProps) {
     );
   }, [serverBots.length]);
 
+  function rememberSoon(nextMessages: Message[], nextDraft: Bot["card"] | null) {
+    const session = memory.current;
+    const trader = currentTrader();
+    if (!session || !trader) return;
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      void saveVault(backendUrl, trader, agentMemoryNamespace, JSON.stringify({ messages: nextMessages.slice(-40), card: nextDraft }), session).catch(() => {});
+    }, 1500);
+  }
+
+  async function unlockMemory() {
+    const trader = currentTrader();
+    if (!trader) return;
+    setMemoryNote("Waiting for your passkey…");
+    try {
+      memory.current ??= await openNamespace(agentMemoryNamespace);
+      const saved = await loadVault(backendUrl, trader, agentMemoryNamespace, memory.current);
+      if (saved !== null) {
+        const parsed = JSON.parse(saved) as { messages?: Message[]; card?: Bot["card"] | null };
+        if (Array.isArray(parsed.messages)) setMessages(parsed.messages.slice(-40));
+        if (parsed.card) setDraft(parsed.card);
+      }
+      setMemoryOn(true);
+      setMemoryNote("Memory on. Chats are sealed with your passkey and follow you to any device.");
+    } catch (error) {
+      setMemoryNote(error instanceof Error ? error.message : String(error));
+    }
+  }
+
   async function ask(text: string) {
     const trimmed = text.trim();
     if (trimmed === "" || thinking) return;
     setPrompt("");
     setStartNote(null);
-    setMessages((current) => [...current, { role: "me", text: trimmed }]);
+    const earlier: AgentTurn[] = messages.slice(-8).map((message) => ({ role: message.role === "me" ? "user" : "assistant", content: message.text }));
+    const asked: Message[] = [...messages, { role: "me", text: trimmed }];
+    setMessages(asked);
     setThinking(true);
     try {
-      const { card, problem, note } = await draftCard(trimmed);
+      const { card, problem, note } = await draftCard(trimmed, null, earlier);
       if (card === null) {
-        setMessages((current) => [...current, { role: "agent", text: problem ?? "I could not draft that." }]);
+        const next: Message[] = [...asked, { role: "agent", text: problem ?? "I could not draft that." }];
+        setMessages(next);
+        rememberSoon(next, draft);
       } else {
         setDraft(card);
-        setMessages((current) => [...current, { role: "agent", text: note && note !== "" ? note : "Drafted. Check the bot below, then start it in Paper or Live." }]);
+        const next: Message[] = [...asked, { role: "agent", text: note && note !== "" ? note : "Drafted. Check the bot below, then start it in Paper or Live." }];
+        setMessages(next);
+        rememberSoon(next, card);
       }
     } catch (error) {
       setMessages((current) => [...current, { role: "agent", text: error instanceof Error ? error.message : String(error) }]);
@@ -178,6 +219,12 @@ export function Bots({ name, onSelectTab, onOpenAsset, onOpenBot }: BotsProps) {
               </Text>
             </View>
           </View>
+          {!memoryOn && (
+            <Pressable onPress={() => void unlockMemory()} style={({ pressed }) => [styles.memory, pressed && styles.pressed]}>
+              <Text style={styles.memoryLabel}>🔒 Unlock memory</Text>
+            </Pressable>
+          )}
+          {memoryNote !== null && <Text style={styles.hint}>{memoryNote}</Text>}
           {messages.map((message, index) => (
             <View key={index} style={[styles.messageRow, message.role === "me" && styles.messageMe]}>
               <View style={[styles.bubble, message.role === "me" && styles.bubbleMe]}>
@@ -306,6 +353,8 @@ const styles = StyleSheet.create({
   ideaText: { fontFamily: family.medium, fontSize: 13, color: tone.ink },
   inputRow: { flexDirection: "row", alignItems: "center", gap: space.sm, padding: space.xs, borderRadius: 999, backgroundColor: dark.paper },
   input: { flex: 1, minHeight: touch, fontFamily: family.regular, fontSize: 14, color: dark.ink, paddingHorizontal: space.md },
+  memory: { alignSelf: "flex-start", paddingVertical: space.xs, paddingHorizontal: space.md, borderRadius: 999, backgroundColor: tone.raised },
+  memoryLabel: { fontFamily: family.medium, fontSize: 12, color: dark.ink },
   send: { minHeight: touch, paddingHorizontal: space.lg, borderRadius: 999, backgroundColor: tone.violet, alignItems: "center", justifyContent: "center" },
   sendLabel: { fontFamily: family.semibold, fontSize: 14, color: "#ffffff" },
   hint: { fontFamily: family.regular, fontSize: 12, lineHeight: 18, color: dark.muted },

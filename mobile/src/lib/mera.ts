@@ -8,9 +8,11 @@ import {
   importWalletKey,
   relyingPartyId,
   relyingPartyName,
+  openNamespaceSession,
   revealRecoveryPhrase,
   signInTradingAccount,
   type CredentialStore,
+  type NamespaceSession,
   type TradingAccount,
 } from "shared";
 import { createPublicClient, createWalletClient, http } from "viem";
@@ -84,4 +86,8 @@ export function walletClientFor(tradingAccount: TradingAccount) {
     chain,
     transport: http(),
   });
+}
+
+export function openNamespace(namespace: string): Promise<NamespaceSession> {
+  return openNamespaceSession(passkeyContext(), namespace);
 }

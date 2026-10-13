@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -9,12 +9,13 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { planBin, weightModes, type Bin, type BinSizingIssue, type SizedBin, type TradingAccount, type WeightMode } from "shared";
+import { planBin, weightModes, type BinPosition as HeldBin, type Bin, type BinSizingIssue, type SizedBin, type TradingAccount, type WeightMode } from "shared";
 import { toolbox } from "../lib/bots";
 import { agreementFor, flowText, loadPulses, stanceLabel } from "../lib/nansen";
 import { SelectPill } from "../components/ui";
 import { AssetMark, LegStack } from "../components/AssetMark";
-import { loadCollateralBalance, openBin, type EntryStep, type MarketData } from "../lib/perpl";
+import { BinPosition } from "../components/BinPosition";
+import { loadCollateralBalance, loadPositions, openBin, type EntryStep, type MarketData } from "../lib/perpl";
 import { dark, family, space, track } from "../theme";
 import { label as networkName } from "../lib/network";
 
@@ -36,6 +37,17 @@ const stepLabels: Record<EntryStep, string> = {
 const presets = [10, 25, 50, 100];
 
 export function BinDetail({ bin, data, balance: initialBalance, trader, onBack, onOpenAsset }: BinDetailProps) {
+  const [held, setHeld] = useState<HeldBin | null>(null);
+  const [adding, setAdding] = useState(false);
+
+  const refreshHeld = useCallback(() => {
+    loadPositions(trader.address, data)
+      .then((all) => setHeld(all.find((entry) => entry.bin.id === bin.id && entry.legs.length === bin.legs.length) ?? null))
+      .catch(() => setHeld(null));
+  }, [trader.address, data, bin]);
+
+  useEffect(refreshHeld, [refreshHeld]);
+
   const [balance, setBalance] = useState(initialBalance);
   const [openedLegs, setOpenedLegs] = useState<string[]>([]);
 
@@ -56,6 +68,7 @@ export function BinDetail({ bin, data, balance: initialBalance, trader, onBack, 
   const [result, setResult] = useState<{ sized: SizedBin; issues: BinSizingIssue[]; usedMode: WeightMode } | null>(null);
 
   const marginAmount = Number(amount) || 0;
+  const showPosition = held !== null && !adding;
   const [pulses, setPulses] = useState<Awaited<ReturnType<typeof loadPulses>>>(null);
 
   useEffect(() => {
@@ -89,6 +102,7 @@ export function BinDetail({ bin, data, balance: initialBalance, trader, onBack, 
     try {
       await openBin(trader, result.sized, data, (step) => setStatus(stepLabels[step]));
       setOpenedLegs(result.sized.legs.map((leg) => leg.leg.symbol));
+      refreshHeld();
       setAmount("");
       setStatus(`${bin.name} is open: ${result.sized.legs.map((leg) => leg.leg.symbol).join(", ")}. Manage each leg below, or from Trade.`);
     } catch (error) {
@@ -125,6 +139,10 @@ export function BinDetail({ bin, data, balance: initialBalance, trader, onBack, 
             : balance !== null && marginAmount > balance
             ? "Insufficient balance"
             : null;
+
+  if (held !== null && showPosition) {
+    return <BinPosition bin={bin} held={held} data={data} trader={trader} onBack={onBack} onAdd={() => setAdding(true)} onOpenAsset={onOpenAsset} onClosed={() => { setHeld(null); onBack(); }} />;
+  }
 
   return (
     <View style={styles.screen}>

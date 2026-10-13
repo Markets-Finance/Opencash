@@ -11,6 +11,7 @@ import {
   type BotRuntime,
   type TradingAccount,
   askAgent,
+  type AgentTurn,
 } from "shared";
 import { backendUrl } from "./config";
 import { startPaperCards, stopPaperCards } from "./paperCard";
@@ -89,9 +90,9 @@ export async function draftBot(prompt: string, mode: BotMode, signal: "nansen" |
   return null;
 }
 
-export async function draftCard(prompt: string, signal: "nansen" | null = null): Promise<{ card: Bot["card"] | null; problem: string | null; note?: string }> {
+export async function draftCard(prompt: string, signal: "nansen" | null = null, history: AgentTurn[] = []): Promise<{ card: Bot["card"] | null; problem: string | null; note?: string }> {
   if (signer !== null) {
-    const answer = await askAgent(backendUrl, signer.address, network, prompt);
+    const answer = await askAgent(backendUrl, signer.address, network, prompt, history);
     if (answer !== null) {
       const checked = answer.checked.length ? ` Checked: ${[...new Set(answer.checked)].join(", ")}.` : "";
       if (answer.card === null) return { card: null, problem: `${answer.reply}${checked}` };
