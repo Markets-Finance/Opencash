@@ -2,6 +2,7 @@ export const site = {
   name: "OpenCash",
   network: "Monad",
   dashboardPath: "/dashboard",
+  androidApkUrl: "https://github.com/Markets-Finance/Opencash/releases/latest/download/OpenCash.apk",
   launchEnabled: true,
   description:
     "OpenCash is a web and phone app for trading Monad perps and assets on Perpl. Pick a theme or a rule-based strategy, test it on real Perpl history and with fake money, then run it under a hard spending cap.",
