@@ -121,13 +121,11 @@ export function Trade({ trader, labSymbol = null, onOpenAsset, onSelectTab }: Tr
       >
         <ScreenTitle title="Trade" right={<Tag label={networkName} dot={dark.green} />} />
 
-        <Text style={styles.section}>OPEN POSITIONS</Text>
+        {(positions === null || positions.length > 0) && <Text style={styles.section}>OPEN POSITIONS</Text>}
         {status !== null && <Text style={styles.muted}>{status}</Text>}
         {positions === null ? (
           <ActivityIndicator color={dark.ink} />
-        ) : positions.length === 0 ? (
-          <Text style={styles.muted}>No open positions on {networkName} for this address.</Text>
-        ) : (
+        ) : positions.length === 0 ? null : (
           positions.map((entry) => {
             const long = entry.position.positionType === perpl.OrderType.OpenLong;
             return (

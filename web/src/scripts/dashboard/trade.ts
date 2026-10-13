@@ -212,6 +212,8 @@ export async function initTrade() {
   }
 
   function renderDesk() {
+    const card = ui.desk.closest<HTMLElement>(".card");
+    if (card) card.style.display = positions.length === 0 ? "none" : "";
     if (positions.length === 0) {
       ui.desk.className = "empty";
       ui.desk.textContent = `No open positions on ${networkName} for this address.`;
