@@ -138,11 +138,19 @@ export function Account({
       );
       return;
     }
-    const detail = error.cause instanceof Error && error.cause.message ? ` (${error.cause.message})` : "";
+    const cause = error.cause as { error?: string; message?: string } | undefined;
+    const reason = cause?.error ?? cause?.message ?? "";
+    const detail = reason === "" ? "" : ` [${reason}${cause?.message && cause.error ? `: ${cause.message}` : ""}]`;
     const creating = formMode === "create" || account !== null;
+    const createHints: Record<string, string> = {
+      UserCancelled: "The Android passkey prompt was closed. Tap Create and finish the prompt.",
+      Interrupted: "The prompt was interrupted, for example by switching apps. Tap Create again and stay in the app until it finishes.",
+      NoCreateOption: "This phone has no passkey provider turned on. Turn on Google Password Manager in Settings, then tap Create again.",
+      BadConfiguration: "The app is not set up for passkeys on this domain.",
+    };
     setStatus(
       error.code === "PASSKEY_OPERATION_FAILED" && creating
-        ? `We couldn't create your passkey${detail}. Either the prompt was closed or this phone has no passkey provider. Turn on a screen lock and Google Password Manager, then tap Create again.`
+        ? `${createHints[cause?.error ?? ""] ?? "We couldn't create your passkey. Check that a screen lock and Google Password Manager are on, then tap Create again."}${detail}`
         : (failures[error.code] ?? `${error.code}: ${error.message}`),
     );
     if (error.code === "PASSKEY_OPERATION_FAILED" && account === null && formMode === null) setMissing(true);
