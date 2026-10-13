@@ -44,7 +44,11 @@ export function NotesPanel({ trader }: { trader: TradingAccount }) {
       setLocked(false);
       setStatus({ text: "Unlocked on this device.", failed: false });
     } catch (error) {
-      setStatus({ text: error instanceof Error ? error.message : String(error), failed: true });
+      const message = error instanceof Error ? error.message : String(error);
+      if (/tag|decrypt|cipher|authenticat/i.test(message)) {
+        setLocked(false);
+        setStatus({ text: "Those notes were locked with a different passkey key than the one that just answered. This device may have two OpenCash passkeys, or the notes came from another device. Writing and saving now replaces them.", failed: true });
+      } else setStatus({ text: message, failed: true });
     } finally {
       setBusy(false);
     }

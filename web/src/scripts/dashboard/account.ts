@@ -242,7 +242,11 @@ function initNotesPane() {
       unlock.hidden = true;
       say("Unlocked on this device.");
     } catch (error) {
-      say(errorText(error), "error");
+      if (looksLikeWrongKey(error)) {
+        text.disabled = false;
+        unlock.hidden = true;
+        say("Those notes were locked with a different passkey key than the one that just answered. This device may have two OpenCash passkeys, or the notes came from another device. Writing and saving now replaces them.", "error");
+      } else say(errorText(error), "error");
     } finally {
       unlock.disabled = false;
     }
@@ -276,4 +280,8 @@ function initAutoFund() {
     setAutoFund(!autoFundOn());
     paint();
   });
+}
+
+function looksLikeWrongKey(error: unknown): boolean {
+  return /tag|decrypt|cipher|authenticat/i.test(error instanceof Error ? error.message : String(error));
 }

@@ -162,7 +162,11 @@ export function initAgent() {
       memoryButton.hidden = true;
       memoryNote.textContent = "Memory on. Your chats are sealed with your passkey and follow you to any device.";
     } catch (error) {
-      memoryNote.textContent = error instanceof Error ? error.message : String(error);
+      const message = error instanceof Error ? error.message : String(error);
+      if (/tag|decrypt|cipher|authenticat/i.test(message)) {
+        memoryButton.hidden = true;
+        memoryNote.textContent = "Your saved chats were locked with a different passkey key than the one that just answered, so they cannot be opened. New chats will be saved and the old ones replaced.";
+      } else memoryNote.textContent = message;
     } finally {
       memoryButton.disabled = false;
     }

@@ -114,7 +114,11 @@ export function Bots({ name, onSelectTab, onOpenAsset, onOpenBot }: BotsProps) {
       setMemoryOn(true);
       setMemoryNote("Memory on. Chats are sealed with your passkey and follow you to any device.");
     } catch (error) {
-      setMemoryNote(error instanceof Error ? error.message : String(error));
+      const message = error instanceof Error ? error.message : String(error);
+      if (/tag|decrypt|cipher|authenticat/i.test(message)) {
+        setMemoryOn(true);
+        setMemoryNote("Your saved chats were locked with a different passkey key than the one that just answered, so they cannot be opened. New chats will be saved and the old ones replaced.");
+      } else setMemoryNote(message);
     }
   }
 
