@@ -1,4 +1,7 @@
-import { customBin, planBin, weightModes, type WeightMode } from "shared";
+import { binSeries, binView, customBin, planBin, weightModes, type BinPosition, type WeightMode } from "shared";
+import { drawLine } from "./charts";
+import { loadCandles } from "../perplApi";
+import { esc, px } from "./dom";
 import { bins, cardFromBin, terminal, type Bin, type EntryStep } from "../perpl";
 import { toolbox } from "./agent/session";
 import { binPulse, flowText, loadPulses, stanceText } from "./nansen";
@@ -74,6 +77,8 @@ function openBinModal(bin: Bin, custom = false) {
       <div class="modal__identity">${legStackHtml(bin.legs.map((leg) => leg.symbol))}<span class="modal__title">${bin.name}</span></div>
       <button type="button" class="modal__close" data-close>×</button>
     </div>
+    <div data-bin-position hidden></div>
+    <div data-bin-form>
     <p class="quote-line">${bin.thesis}</p>
     ${custom ? `<div class="pick-grid" data-bin-picks>Loading markets…</div>` : ""}
     <div class="pulse-table" data-bin-pulse></div>
@@ -88,10 +93,112 @@ function openBinModal(bin: Bin, custom = false) {
       <button type="button" class="btn" data-bin-agent>Build a bot from this bin</button>
     </div>
     <p class="status-line" data-bin-status></p>
+    </div>
   `);
   const status = query("[data-bin-status]", detail);
   const sizingEl = query("[data-bin-sizing]", detail);
   const amountInput = query<HTMLInputElement>("[data-bin-amount]", detail);
+
+  const positionEl = query("[data-bin-position]", detail);
+  const formEl = query("[data-bin-form]", detail);
+
+  async function paintPosition() {
+    if (custom) return;
+    let held: BinPosition | undefined;
+    try {
+      held = (await getPositions(true)).find((entry) => entry.bin.id === bin.id && entry.legs.length === bin.legs.length);
+    } catch {
+      return;
+    }
+    if (!held) return;
+    const data = await getMarketData();
+    const view = binView(held, data.markets);
+    const tone = (value: number) => (value >= 0 ? "pos" : "neg");
+    positionEl.hidden = false;
+    formEl.hidden = true;
+    positionEl.innerHTML = `
+      <div class="stat-grid">
+        <div class="stat"><small>Margin in</small><b>${usd(view.margin)}</b></div>
+        <div class="stat"><small>P&amp;L</small><b class="${tone(view.pnl)}">${usd(view.pnl)}</b></div>
+        <div class="stat"><small>Return</small><b class="${tone(view.pnl)}">${view.pnlPct.toFixed(2)}%</b></div>
+        <div class="stat"><small>Legs</small><b>${view.legs.length}</b></div>
+      </div>
+      <div class="chart-head" style="margin-top:16px">
+        <span class="panel__label">Bin P&amp;L at your entry prices</span>
+        <div class="chip-row" data-bin-range><button type="button" class="chip chip--active" data-range="1d">1D</button><button type="button" class="chip" data-range="1w">1W</button></div>
+      </div>
+      <div class="chart-area" data-bin-chart></div>
+      <div class="table-wrap"><table class="table"><thead><tr><th>Asset</th><th>Allocation</th><th>Size</th><th>Avg entry</th><th>Mark</th><th>Margin</th><th>P&amp;L</th></tr></thead><tbody>
+        ${view.legs
+          .map(
+            (leg) =>
+              `<tr><td><button type="button" class="link-btn" data-manage="${esc(leg.symbol)}">${leg.direction === "long" ? "Long" : "Short"} ${esc(leg.symbol)} ↗</button></td><td>${leg.allocationPct.toFixed(0)}%</td><td>${leg.units.toLocaleString(undefined, { maximumFractionDigits: 4 })}</td><td>${px(leg.entry)}</td><td>${px(leg.mark)}</td><td>${usd(leg.margin)}</td><td class="${tone(leg.pnl)}">${usd(leg.pnl)} (${leg.pnlPct.toFixed(1)}%)</td></tr>`,
+          )
+          .join("")}
+      </tbody></table></div>
+      <p class="quote-line">Strategy: ${esc(bin.thesis)} Margin is split ${view.legs.map((leg) => `${leg.allocationPct.toFixed(0)}% ${esc(leg.symbol)}`).join(", ")}.</p>
+      <div class="btn-row">
+        <button type="button" class="btn btn--primary" data-bin-more>Add to this bin</button>
+        <button type="button" class="btn" data-bin-close-all>Close all legs</button>
+      </div>
+      <p class="status-line" data-bin-position-status></p>`;
+
+    const chart = query("[data-bin-chart]", positionEl);
+    const positionStatus = query("[data-bin-position-status]", positionEl);
+    async function drawChart(range: "1d" | "1w") {
+      chart.innerHTML = `<div class="chart-empty">Loading…</div>`;
+      try {
+        const prices = new Map<string, { time: number; close: number }[]>();
+        await Promise.all(
+          view.legs.map(async (leg) => {
+            const market = data.markets.get(leg.symbol);
+            if (market) prices.set(leg.symbol, (await loadCandles(market, range)).map((c) => ({ time: c.time, close: c.close })));
+          }),
+        );
+        drawLine(chart, binSeries(view, prices), "Not enough price history yet.");
+      } catch (error) {
+        chart.innerHTML = `<div class="chart-empty">${esc(errorText(error))}</div>`;
+      }
+    }
+    void drawChart("1d");
+    query("[data-bin-range]", positionEl).addEventListener("click", (event) => {
+      const chip = (event.target as HTMLElement).closest<HTMLElement>("[data-range]");
+      if (!chip) return;
+      positionEl.querySelectorAll("[data-bin-range] .chip").forEach((el) => el.classList.toggle("chip--active", el === chip));
+      void drawChart(chip.dataset.range as "1d" | "1w");
+    });
+    positionEl.querySelectorAll<HTMLElement>("[data-manage]").forEach((button) =>
+      button.addEventListener("click", () => {
+        closeModal();
+        openAsset(button.dataset.manage!);
+      }),
+    );
+    query("[data-bin-more]", positionEl).addEventListener("click", () => {
+      positionEl.hidden = true;
+      formEl.hidden = false;
+    });
+    const closeAll = query<HTMLButtonElement>("[data-bin-close-all]", positionEl);
+    closeAll.addEventListener("click", async () => {
+      if (!window.confirm(`Close every leg of ${bin.name} at market?`)) return;
+      closeAll.disabled = true;
+      try {
+        for (const leg of held.legs) {
+          const market = data.markets.get(leg.symbol);
+          if (!market) continue;
+          positionStatus.textContent = `Closing ${leg.symbol}…`;
+          await terminal.closePosition(requireTrader(), { market, position: leg.position });
+        }
+        positionStatus.textContent = `${bin.name} is closed.`;
+        await getPositions(true);
+        void initHome();
+      } catch (error) {
+        positionStatus.dataset.tone = "error";
+        positionStatus.textContent = errorText(error);
+        closeAll.disabled = false;
+      }
+    });
+  }
+  void paintPosition();
 
   function fail(error: unknown) {
     status.dataset.tone = "error";

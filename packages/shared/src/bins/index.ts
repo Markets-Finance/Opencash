@@ -23,3 +23,5 @@ export type { BinInputSource } from "./inputs.js";
 export { customBin } from "./custom.js";
 export { planBin } from "./plan.js";
 export type { BinPlan } from "./plan.js";
+export { binSeries, binView } from "./summary.js";
+export type { BinLegView, BinView, PricePoint } from "./summary.js";
