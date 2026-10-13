@@ -203,23 +203,23 @@ export const phone = {
 
 export const demoSteps = [
   {
-    name: "Pick a bin",
-    description: "Start with a theme: a bin pools markets that move together into one position.",
+    name: "Pick a rule",
+    description: "Start with a rule you can read: a breakout, a grid, a trailing stop or regular buying on a Perpl market.",
     next: "Test it",
   },
   {
     name: "Test it",
-    description: "Replay it on real Perpl history, then on fake money. Nothing real is spent.",
-    next: "Set the cap",
+    description: "Replay it on real Perpl history, then on fake money at live prices. Nothing real is spent.",
+    next: "Set the stop",
   },
   {
-    name: "Set the cap",
-    description: "Choose the most it may spend. The cap is yours and does not move on its own.",
-    next: "Run it",
+    name: "Set the stop",
+    description: "Choose the stop, the target and the most it may spend. They rest on the exchange and the cap does not move on its own.",
+    next: "Let it run",
   },
   {
-    name: "Run it",
-    description: "It runs inside the cap. Your passkey signs the setup; OpenCash never holds withdrawal power.",
+    name: "Let it run",
+    description: "The server runs it on Monad mainnet while your phone is off. Your passkey signs the setup once, the trade key cannot withdraw, and a kill switch stops everything.",
     next: "Start again",
   },
 ] as const;

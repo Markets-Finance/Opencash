@@ -1,0 +1,73 @@
+---
+const cards = [
+  { tag: "01", title: "Reliable execution", text: "You sign one mandate per bot. Orders go through Perpl's trade API, every leg of a bin fills together or rolls back, and a kill switch stops every route and the runner at once." },
+  { tag: "02", title: "Good risk management", text: "A stop and a target rest on the exchange, so they still hold if our server goes offline. Leverage, allocation and bot count are capped, and the trade key cannot withdraw." },
+  { tag: "03", title: "Built to be profitable", text: "Replay a strategy on real Perpl history, then paper trade it on live prices. Only what holds up goes to real money: breakout, grid, trailing stop or regular buying." },
+  { tag: "04", title: "Real on-chain activity", text: "A live bot order is a Perpl order on Monad mainnet from your own account. It shows in your history and on the explorer, not in a simulation." },
+] as const;
+---
+
+<section class="applications section-frame" id="assets" aria-labelledby="bots-title">
+  <div class="section-heading">
+    <h2 id="bots-title">A bot you can<br />leave running.</h2>
+    <p>Rule-based bots on Perpl, on Monad mainnet, from a server that keeps working while your phone is off. You approve once. After that, every order is guarded.</p>
+  </div>
+
+  <div class="bot-status" data-bot-status>
+    <span class="bot-dot" data-bot-dot></span>
+    <b data-bot-line>Checking the runner…</b>
+    <small data-bot-sub>Monad mainnet · Perpl</small>
+  </div>
+
+  <div class="bot-grid">
+    {cards.map((card) => (
+      <article class="bot-card">
+        <span>{card.tag}</span>
+        <h3>{card.title}</h3>
+        <p>{card.text}</p>
+      </article>
+    ))}
+  </div>
+  <p class="bot-cta"><a class="text-link" href="/dashboard/">Start a bot <span aria-hidden="true">↗</span></a></p>
+</section>
+
+<script>
+  const backend = import.meta.env.PUBLIC_BACKEND_URL ?? "http://localhost:8787";
+  const line = document.querySelector<HTMLElement>("[data-bot-line]");
+  const sub = document.querySelector<HTMLElement>("[data-bot-sub]");
+  const dot = document.querySelector<HTMLElement>("[data-bot-dot]");
+
+  async function load() {
+    try {
+      const [health, status] = await Promise.all([
+        fetch(`${backend}/health`).then((r) => r.json() as Promise<{ chainId: number; killed: boolean }>),
+        fetch(`${backend}/bots/status`).then((r) => r.json() as Promise<{ runner: boolean }>),
+      ]);
+      const live = status.runner && !health.killed;
+      if (line) line.textContent = live ? "Bot runner is live" : "Bot runner is paused";
+      if (sub) sub.textContent = `${health.chainId === 143 ? "Monad mainnet" : "Monad testnet"} · chain ${health.chainId} · Perpl`;
+      if (dot) dot.dataset.on = live ? "1" : "0";
+    } catch {
+      if (line) line.textContent = "Runner status unavailable";
+    }
+  }
+  void load();
+</script>
+
+<style>
+  .bot-status { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 32px; padding: 16px 20px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); }
+  .bot-dot { width: 10px; height: 10px; border-radius: 50%; background: #8a928f; }
+  .bot-dot[data-on="1"] { background: #3ecf8e; box-shadow: 0 0 0 4px rgba(62, 207, 142, 0.2); }
+  .bot-dot[data-on="0"] { background: #ef5b5b; }
+  .bot-status b { font-weight: 600; }
+  .bot-status small { opacity: 0.6; }
+  .bot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 24px; }
+  .bot-card { padding: 24px; border-radius: 24px; background: #c4f299; color: #10210a; display: flex; flex-direction: column; gap: 8px; }
+  .bot-card:nth-child(2) { background: #f2d16b; }
+  .bot-card:nth-child(3) { background: #f2b98b; }
+  .bot-card:nth-child(4) { background: #cfe6ff; }
+  .bot-card span { font-size: 12px; letter-spacing: 0.14em; opacity: 0.6; }
+  .bot-card h3 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; }
+  .bot-card p { margin: 0; font-size: 15px; line-height: 1.5; }
+  .bot-cta { margin-top: 24px; }
+</style>

@@ -38,7 +38,7 @@
 .nav-links a.active { color: var(--ink); }
 .nav-cta { width: 100%; justify-content: space-between; padding: 15px 14px; border: 1px solid #b7a8ff; border-radius: 10px; font-size: 15px; font-weight: 650; color: #100d19; background: #c4b5fd; box-shadow: 0 4px 22px #9c80ff20; }
 .nav-cta:hover { background: #ded4ff; color: #100d19; }
-.nav-cta.nav-cta--app { margin-top: -12px; background: transparent; color: var(--ink); border-color: var(--line); box-shadow: none; }
+.nav-cta.nav-cta--app { margin-top: -12px; box-sizing: border-box; white-space: nowrap; gap: 8px; background: transparent; color: var(--ink); border-color: var(--line); box-shadow: none; }
 .nav-cta.nav-cta--app:hover { background: var(--surface); color: var(--ink); }
 .nav-app-link { display: none; }
 .hero { height: auto; min-height: 0; padding: 32px 0 64px; text-align: center; display: flex; flex-direction: column; align-items: center; }
