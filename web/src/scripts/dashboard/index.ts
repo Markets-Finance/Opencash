@@ -13,7 +13,7 @@ import "./modal";
 import { initFunds } from "./funds";
 import { initChartSize } from "./chartSize";
 import { initSwitchers } from "./switcher";
-import { initAccountMenu, initTabs } from "./tabs";
+import { activateTab, initAccountMenu, initTabs } from "./tabs";
 import { startSweep } from "./sweep";
 import { initTrade, openAsset, setTradeQuery } from "./trade";
 
@@ -35,7 +35,10 @@ document.addEventListener("click", (event) => {
 });
 initBots();
 initChartSize();
+const hostTab = location.hostname.startsWith("bot.") ? "agent" : location.hostname.startsWith("analytics.") ? "analytics" : null;
+
 initGate(() => {
+  if (hostTab) activateTab(hostTab);
   void initHome();
   void startBots();
   startSweep();

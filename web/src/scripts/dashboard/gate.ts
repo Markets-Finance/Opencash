@@ -41,7 +41,15 @@ function say(message: string, tone: "info" | "error" = "info") {
   status.dataset.tone = tone;
 }
 
+const mainHost = "monad.opencash.in";
+
 function explain(error: unknown, mode: Mode): string {
+  const text = explainError(error, mode);
+  const away = location.hostname.endsWith(".opencash.in") && location.hostname !== mainHost;
+  return away ? `${text} If this keeps failing, this browser may not allow passkeys across opencash.in sites. Continue at https://${mainHost}/dashboard/.` : text;
+}
+
+function explainError(error: unknown, mode: Mode): string {
   if (!isMeraError(error)) {
     return error instanceof Error ? error.message : "Something went wrong.";
   }

@@ -24,7 +24,9 @@ async function switchedOn(env: MiddlewareEnv): Promise<boolean> {
 }
 
 export async function onRequest(context: { request: Request; env: MiddlewareEnv; next: () => Promise<Response> }): Promise<Response> {
-  const path = new URL(context.request.url).pathname;
+  const url = new URL(context.request.url);
+  const path = url.pathname;
+  if (path === "/" && /^(bot|analytics)\./.test(url.hostname)) return Response.redirect(`${url.origin}/dashboard/`, 302);
   if (open.some((pattern) => pattern.test(path)) || !(await switchedOn(context.env))) return context.next();
   const page = await context.env.ASSETS.fetch(new URL("/404.html", context.request.url));
   return new Response(page.body, { status: 404, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
