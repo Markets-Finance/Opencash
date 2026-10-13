@@ -11,6 +11,8 @@ export {
   clearImportedWallet,
   importWalletKey,
   journalNamespace,
+  addressForKey,
+  normalizePrivateKey,
   openImportedKey,
   sealImportedKey,
   namespaceSalt,

@@ -24,7 +24,7 @@ export function esc(text: string): string {
 export function markForSymbol(symbol: string): string {
   const letter = esc(symbol.slice(0, 1).toUpperCase());
   const url = perpl.marketLogoUrl(symbol);
-  return `<span class="row-mark row-mark--logo"><img src="${url}" alt="" loading="lazy" onerror="this.remove();this.nextElementSibling.hidden=false" /><span hidden>${letter}</span></span>`;
+  return `<span class="row-mark row-mark--logo"><img src="${url}" alt="" loading="lazy" onerror="var s=this.nextElementSibling;this.parentNode.className='row-mark row-mark--letter';this.remove();s.hidden=false" /><span hidden>${letter}</span></span>`;
 }
 
 export function legStackHtml(symbols: string[]): string {

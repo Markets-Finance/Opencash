@@ -145,6 +145,9 @@
   background: #fff;
   border: 1px solid var(--surface-line);
 }
+.row-mark--letter {
+  border-radius: 50%;
+}
 .row-mark img {
   width: 100%;
   height: 100%;
@@ -390,3 +393,12 @@
 .warn-box ul { margin: 8px 0 0; padding-left: 18px; }
 .btn--danger { background: #ef5b5b; color: #1a0b0b; }
 .btn--danger:disabled { opacity: 0.4; }
+
+.bots-note {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(123, 115, 240, 0.16);
+  font-size: 13px;
+  line-height: 1.45;
+}

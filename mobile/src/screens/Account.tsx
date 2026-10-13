@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { isDevAuth, perpl, type TradingAccount } from "shared";
+import { addressForKey, isDevAuth, perpl, type TradingAccount } from "shared";
 import { PassCard } from "../components/PassCard";
 import { AuthShell, type AuthMode } from "../components/AuthShell";
 import { ImportPanel } from "../components/ImportPanel";
@@ -124,8 +124,8 @@ export function Account({
   const [copied, setCopied] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
   const [importOpen, setImportOpen] = useState(false);
-  const [importAddress, setImportAddress] = useState("");
   const [importKey, setImportKey] = useState("");
+  const [missing, setMissing] = useState(false);
 
   function explain(error: unknown) {
     setFailed(true);
@@ -136,6 +136,7 @@ export function Account({
       return;
     }
     setStatus(failures[error.code] ?? `${error.code}: ${error.message}`);
+    if (error.code === "PASSKEY_OPERATION_FAILED" && account === null && formMode === null) setMissing(true);
   }
 
   async function loadProfile(next: TradingAccount): Promise<Profile | null> {
@@ -247,13 +248,13 @@ export function Account({
       return;
     }
     const key = importOpen ? importKey.trim() : "";
-    if (importOpen && (key === "" || importAddress.trim() === "")) {
+    if (importOpen && addressForKey(key) === null) {
       setFailed(true);
-      setStatus("Enter the wallet address and its private key, or skip the import.");
+      setStatus("Enter a valid private key, or skip the import.");
       return;
     }
     void run(
-      () => createAccount(entered.email, entered.name, key === "" ? undefined : { privateKey: key, expectedAddress: importAddress.trim() }),
+      () => createAccount(entered.email, entered.name, key === "" ? undefined : { privateKey: key }),
       "Creating a passkey…",
       entered,
     ).finally(() => setImportKey(""));
@@ -324,14 +325,14 @@ export function Account({
         failed={failed}
         onName={setName}
         onEmail={setEmail}
-        onSwitch={account === null ? () => setFormMode(formMode === "create" ? null : "create") : undefined}
-        onSubmit={() => (authMode === "signin" ? void run(signIn, "Waiting for your passkey…") : submit())}
         importOpen={importOpen}
-        importAddress={importAddress}
+        importAddress={importKey.trim() === "" ? null : addressForKey(importKey)}
         importKey={importKey}
-        onImportOpen={account === null ? (open) => { setImportOpen(open); if (open) setFormMode("create"); } : undefined}
-        onImportAddress={setImportAddress}
+        onImportOpen={account === null ? (open) => { setImportOpen(open); setMissing(false); if (open) setFormMode("create"); } : undefined}
         onImportKey={setImportKey}
+        onSwitch={account === null ? () => { setMissing(false); setFailed(false); setStatus(""); setFormMode(formMode === "create" ? null : "create"); } : undefined}
+        onSubmit={() => { setMissing(false); if (authMode === "signin") void run(signIn, "Waiting for your passkey…"); else submit(); }}
+        missing={missing}
       />
     );
   }
