@@ -2,6 +2,8 @@ import { botActionMessage, botDigest, botMandateMessage, type Bot, type BotActio
 import { currentTrader } from "./bots";
 import { backendUrl } from "./config";
 import { network } from "./network";
+import { loadAccount } from "./perpl";
+import { turnOnServerRunning } from "./serverAccess";
 
 export type ServerBotView = Omit<Bot, "mandate">;
 
@@ -35,4 +37,21 @@ export async function actServerBot(id: string, action: BotAction): Promise<void>
   const issuedAt = Date.now();
   const signature = await signer().account.signMessage({ message: botActionMessage(id, action, issuedAt) });
   await post(`/bots/${id}/${action}`, { issuedAt, signature });
+}
+
+export const botMinUsd = 10;
+
+export async function startLiveFromCard(card: Bot["card"], mode: BotMode, onStep: (text: string) => void): Promise<string> {
+  const trader = signer();
+  const account = await loadAccount(trader.address).catch(() => null);
+  const free = account === null ? 0 : account.balance - account.lockedBalance;
+  if (free < botMinUsd) throw new Error(`A live bot trades from your Perpl account and needs at least $${botMinUsd} there. You have $${free.toFixed(2)}. Move AUSD in from Account, or test it in Paper first.`);
+  if (card.marginUsd > free) throw new Error(`This bot wants $${card.marginUsd} margin but Perpl has $${free.toFixed(2)} free. Lower the margin.`);
+  const status = await loadServerBots();
+  if (!status.hasKey) await turnOnServerRunning(onStep);
+  onStep("Approve the bot with your passkey…");
+  const created = await createServerBot(card, mode);
+  onStep("Starting it…");
+  await actServerBot(created.id, "enable");
+  return "Live bot started. It trades from the server, even when the app is closed.";
 }

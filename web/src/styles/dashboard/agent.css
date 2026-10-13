@@ -289,3 +289,11 @@
 .agent__bots .empty { padding: 14px 16px; margin: 0; border-radius: 14px; font-size: 13px; grid-column: 1 / -1; }
 .agent__bots .agent__hint:empty { display: none; }
 .agent__chatcard { padding: 16px 18px; }
+
+.agent { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.agent__card[data-agent-card] { padding: 16px 18px; gap: 10px; }
+.agent__card [data-card-body]:not([hidden]) { display: block; }
+.newbot { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.newbot__col { display: grid; gap: 12px; align-content: start; }
+@media (max-width: 900px) { .newbot { grid-template-columns: minmax(0, 1fr); } }
+.agent__bots .bots__list { grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); }

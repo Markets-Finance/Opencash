@@ -49,39 +49,45 @@ import StrategyLab from "./StrategyLab.astro";
       <span class="card__label">New bot</span>
       <p class="empty" data-card-empty>Ask the agent for a trade and the bot appears here.</p>
       <div data-card-body hidden>
-        <label class="field"><span>Name</span><input data-card-name /></label>
-        <div class="agent__row">
-          <label class="field"><span>Margin $</span><input data-card-margin type="number" min="0" step="any" /></label>
-          <label class="field"><span>Stop %</span><input data-card-stop type="number" min="0" step="any" /></label>
-          <label class="field"><span>Target %</span><input data-card-tp type="number" min="0" step="any" /></label>
+        <div class="newbot">
+          <div class="newbot__col">
+            <label class="field"><span>Name</span><input data-card-name /></label>
+            <div class="agent__row">
+              <label class="field"><span>Margin $</span><input data-card-margin type="number" min="0" step="any" /></label>
+              <label class="field"><span>Stop %</span><input data-card-stop type="number" min="0" step="any" /></label>
+              <label class="field"><span>Target %</span><input data-card-tp type="number" min="0" step="any" /></label>
+            </div>
+            <div data-card-legs class="agent__legs"></div>
+            <button type="button" class="link-btn" data-card-add>+ Add leg</button>
+            <details class="agent__more">
+              <summary>More rules</summary>
+              <label class="field">
+                <span>Signal (optional)</span>
+                <select data-card-signal aria-label="Signal">
+                  <option value="">None</option>
+                  <option value="nansen">Nansen smart money must agree</option>
+                </select>
+              </label>
+              <p class="quote-line" data-card-signal-note></p>
+              <label class="field">
+                <span>What it does</span>
+                <select data-card-mode aria-label="Bot mode">
+                  <option value="auto">Open a position for me and guard it</option>
+                  <option value="guard">Only guard a position I already hold</option>
+                </select>
+              </label>
+            </details>
+          </div>
+          <div class="newbot__col">
+            <div data-card-preview class="agent__preview"></div>
+            <div class="seg seg--wide" role="group" aria-label="Bot type">
+              <button type="button" class="seg__btn" data-card-kind="paper" aria-pressed="true">Paper · fake money</button>
+              <button type="button" class="seg__btn" data-card-kind="live" aria-pressed="false">Live · real money</button>
+            </div>
+            <button type="button" class="btn btn--primary" data-card-start>Start paper bot</button>
+            <p class="status-line" data-card-status></p>
+          </div>
         </div>
-        <div data-card-legs class="agent__legs"></div>
-        <button type="button" class="link-btn" data-card-add>+ Add leg</button>
-        <div data-card-preview class="agent__preview"></div>
-        <details class="agent__more">
-          <summary>More rules</summary>
-          <label class="field">
-            <span>Signal (optional)</span>
-            <select data-card-signal aria-label="Signal">
-              <option value="">None</option>
-              <option value="nansen">Nansen smart money must agree</option>
-            </select>
-          </label>
-          <p class="quote-line" data-card-signal-note></p>
-          <label class="field">
-            <span>What it does</span>
-            <select data-card-mode aria-label="Bot mode">
-              <option value="auto">Open a position for me and guard it</option>
-              <option value="guard">Only guard a position I already hold</option>
-            </select>
-          </label>
-        </details>
-        <div class="seg seg--wide" role="group" aria-label="Bot type">
-          <button type="button" class="seg__btn" data-card-kind="paper" aria-pressed="true">Paper · fake money</button>
-          <button type="button" class="seg__btn" data-card-kind="live" aria-pressed="false">Live · real money</button>
-        </div>
-        <button type="button" class="btn btn--primary" data-card-start>Start paper bot</button>
-        <p class="status-line" data-card-status></p>
       </div>
     </aside>
   </div>

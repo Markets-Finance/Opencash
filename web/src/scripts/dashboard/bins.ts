@@ -3,7 +3,6 @@ import { bins, cardFromBin, terminal, type Bin, type EntryStep } from "../perpl"
 import { toolbox } from "./agent/session";
 import { binPulse, flowText, loadPulses, stanceText } from "./nansen";
 import { setCard } from "./agent/card";
-import { addBotFromCard } from "./bots";
 import { errorText, legStackHtml, query, usd } from "./dom";
 import { initHome } from "./home";
 import { getMarketData, getPositions } from "./market";
@@ -83,11 +82,10 @@ function openBinModal(bin: Bin, custom = false) {
       <span>$</span>
       <input type="number" min="0" step="any" placeholder="0" data-bin-amount />
     </div>
-    <button type="button" class="btn btn--primary" data-bin-size>Size this bin</button>
+    <button type="button" class="btn btn--primary" data-bin-size>Trade this bin</button>
     <div data-bin-sizing></div>
     <div class="btn-row">
-      <button type="button" class="btn" data-bin-agent>Edit in Agent</button>
-      <button type="button" class="btn" data-bin-bot>Run as guard bot</button>
+      <button type="button" class="btn" data-bin-agent>Build a bot from this bin</button>
     </div>
     <p class="status-line" data-bin-status></p>
   `);
@@ -160,18 +158,7 @@ function openBinModal(bin: Bin, custom = false) {
   query<HTMLButtonElement>("[data-bin-agent]", detail).addEventListener("click", () => {
     closeModal();
     activateTab("agent");
-    document.querySelector<HTMLElement>('[data-switcher="agent"] [data-switch="agent"]')?.click();
     setCard(binCard());
-  });
-
-  query<HTMLButtonElement>("[data-bin-bot]", detail).addEventListener("click", async () => {
-    try {
-      await addBotFromCard(binCard(), "guard");
-      status.dataset.tone = "";
-      status.textContent = "Guard bot added under Your bots in the Agent tab. Press Start there.";
-    } catch (error) {
-      fail(error);
-    }
   });
 
   query<HTMLButtonElement>("[data-bin-size]", detail).addEventListener("click", async () => {
@@ -187,7 +174,7 @@ function openBinModal(bin: Bin, custom = false) {
       status.dataset.tone = "error";
       return;
     }
-    status.textContent = "Reading every leg…";
+    status.textContent = "Reading every market…";
     status.dataset.tone = "";
     sizingEl.innerHTML = "";
     try {
@@ -221,7 +208,7 @@ function openBinModal(bin: Bin, custom = false) {
         (warnings ? `<p class="warn-line">${warnings}</p>` : "") +
         (incomplete
           ? `<p class="warn-line">${needs}</p>`
-          : `<button type="button" class="btn btn--primary" data-bin-confirm style="margin-top:12px">Open bin with my passkey</button>`);
+          : `<button type="button" class="btn btn--primary" data-bin-confirm style="margin-top:12px">Confirm and trade with my passkey</button>`);
       if (incomplete) return;
       const confirm = query<HTMLButtonElement>("[data-bin-confirm]", sizingEl);
       confirm.addEventListener("click", async () => {

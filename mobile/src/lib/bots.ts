@@ -13,6 +13,7 @@ import {
   askAgent,
 } from "shared";
 import { backendUrl } from "./config";
+import { startPaperCards, stopPaperCards } from "./paperCard";
 import { pulseList } from "./nansen";
 import { terminal } from "./perpl";
 import { deployment, network } from "./network";
@@ -63,6 +64,7 @@ export async function startBots(trader: TradingAccount): Promise<void> {
   });
   await runtime.init();
   runtime.start();
+  void startPaperCards(trader.address);
 }
 
 export const currentOwner = () => owner;
@@ -73,6 +75,7 @@ export function stopBots(): void {
   owner = null;
   signer = null;
   runtime = null;
+  stopPaperCards();
   notify([]);
 }
 
