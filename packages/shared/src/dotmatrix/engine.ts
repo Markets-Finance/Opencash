@@ -17,14 +17,21 @@ export function createLoaderEngine(width: number, height: number, start: number)
   let done: (() => void) | null = null;
   let finished = false;
 
-  function counter(percent: number): Dot[] {
-    const text = percentLabel(percent);
-    const originX = width - margin - textWidth(text.length, pitch);
-    const small = pitch * 0.55;
-    const wordTop = height * 0.14;
+  const small = pitch * 0.55;
+  const wordTop = height * 0.14;
+
+  function words(): Dot[] {
     return [
       ...textDots("MERA", small, margin, wordTop, small * 0.38),
       ...textDots("PASSKEY", small, margin, wordTop + small * 9, small * 0.38),
+    ];
+  }
+
+  function counter(percent: number): Dot[] {
+    const text = percentLabel(percent);
+    const originX = width - margin - textWidth(text.length, pitch);
+    return [
+      ...words(),
       ...textDots(text, pitch, originX, height * 0.42),
       ...textDots(">", pitch, margin, height * 0.62),
     ];
@@ -37,9 +44,9 @@ export function createLoaderEngine(width: number, height: number, start: number)
         const slot = Math.floor(elapsed / 110);
         if (slot !== scatterSlot) {
           scatterSlot = slot;
-          scatter = scatterDots(width, height, pitch, 6);
+          scatter = scatterDots(width, height - 120, pitch, 6);
         }
-        return scatter;
+        return [...words(), ...scatter];
       }
       rushFrom = pendingPercent(elapsed - loaderTiming.scrambleMs);
       return counter(rushFrom);

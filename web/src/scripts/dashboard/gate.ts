@@ -23,6 +23,7 @@ const otherLink = query<HTMLButtonElement>("[data-gate-other]");
 
 function hasStoredAccount(): boolean {
   try {
+    if (sessionStorage.getItem("opencash.signedout") !== null) return false;
     return localStorage.getItem("monad.passkey.credential") !== null || localStorage.getItem("monad.import.v1") !== null;
   } catch {
     return false;

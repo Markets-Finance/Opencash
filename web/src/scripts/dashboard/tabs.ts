@@ -24,6 +24,9 @@ export function activateTab(key: string) {
 export function disconnect() {
   session.trader?.end();
   session.trader = null;
+  try {
+    sessionStorage.setItem("opencash.signedout", "1");
+  } catch {}
   location.reload();
 }
 

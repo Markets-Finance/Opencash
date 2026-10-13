@@ -48,6 +48,6 @@ export function DotLoader() {
 
 const styles = StyleSheet.create({
   overlay: { ...(StyleSheet.absoluteFill as object), zIndex: 100, elevation: 100, backgroundColor: dark.paper },
-  label: { position: "absolute", left: 24, top: 56, fontFamily: family.semibold, fontSize: 11, letterSpacing: 1.3, color: "#7165ed" },
+  label: { position: "absolute", left: 24, top: 56, fontFamily: family.semibold, fontSize: 14, letterSpacing: 1.6, color: "#7165ed" },
   dot: { position: "absolute", backgroundColor: dark.ink },
 });

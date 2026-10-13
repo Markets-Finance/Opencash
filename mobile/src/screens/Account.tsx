@@ -223,6 +223,7 @@ export function Account({
     account?.end();
     setAccount(null);
     onAuthenticated(null);
+    setReturning(false);
     setProfile(null);
     onProfileChange(null);
     setVariant(0);
