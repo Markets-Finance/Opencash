@@ -4,6 +4,7 @@ import { initAgent } from "./agent";
 import { initBins } from "./bins";
 import { initBots, startBots } from "./bots";
 import { initGate } from "./gate";
+import { startTourOnce } from "./tour";
 import { initRanks } from "./ranks";
 import { initHome } from "./home";
 import "./modal";
@@ -34,4 +35,5 @@ initGate(() => {
   void initHome();
   void startBots();
   startSweep();
+  startTourOnce();
 });

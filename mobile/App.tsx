@@ -16,6 +16,8 @@ import { BinDetail } from "./src/screens/BinDetail";
 import { Bins } from "./src/screens/Bins";
 import { Bots } from "./src/screens/Bots";
 import { startBots, stopBots } from "./src/lib/bots";
+import { Onboarding } from "./src/components/Onboarding";
+import { finishOnboarding, needsOnboarding } from "./src/lib/onboarding";
 import { forgetAll } from "./src/lib/memo";
 import { startSweep, stopSweep } from "./src/lib/sweep";
 import { Asset } from "./src/screens/Asset";
@@ -58,6 +60,7 @@ export default function App() {
   const [asset, setAsset] = useState<string | null>(null);
   const [cameFrom, setCameFrom] = useState<Screen>("home");
   const [labSymbol, setLabSymbol] = useState<string | null>(null);
+  const [touring, setTouring] = useState(false);
   const [loaded, error] = useFonts({
     DMSans_300Light,
     DMSans_400Regular,
@@ -117,6 +120,7 @@ export default function App() {
     setBalance(null);
     setPortfolio(null);
     if (account === null) return;
+    void needsOnboarding().then(setTouring);
 
     loadCollateralBalance(account.address)
       .then((ausd) => setBalance(ausd))
@@ -205,6 +209,7 @@ export default function App() {
         />
       ) : null}
       <DotLoader />
+      {touring && <Onboarding onDone={() => { setTouring(false); void finishOnboarding(); }} />}
       <Toast />
       <UpdatePrompt />
     </SafeAreaProvider>
