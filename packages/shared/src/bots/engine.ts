@@ -95,9 +95,6 @@ export async function tickBot(input: Bot, deps: BotDeps): Promise<Bot> {
     const today = dayKey(now);
     const opens = bot.opensToday.day === today ? bot.opensToday.count : 0;
     const coolingUntil = bot.lastOpenAt === null ? 0 : bot.lastOpenAt + bot.rules.cooldownMin * 60_000;
-    if (opens >= bot.rules.maxOpensPerDay) {
-      return { ...bot, status: "watching", lastCheck: { at: now, message: "Daily open limit reached" } };
-    }
     if (now < coolingUntil) {
       return { ...bot, status: "watching", lastCheck: { at: now, message: "Cooling down after the last open" } };
     }

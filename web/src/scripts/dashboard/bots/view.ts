@@ -29,7 +29,6 @@ function rulesRow(bot: Bot): string {
   return `<div class="bot__rules">
     <label class="field"><span>Min carry % APR</span><input data-rule="minCarryAprPct" type="number" step="any" value="${bot.rules.minCarryAprPct}" /></label>
     <label class="field"><span>Cooldown min</span><input data-rule="cooldownMin" type="number" min="0" value="${bot.rules.cooldownMin}" /></label>
-    <label class="field"><span>Opens / day</span><input data-rule="maxOpensPerDay" type="number" min="1" value="${bot.rules.maxOpensPerDay}" /></label>
   </div>`;
 }
 

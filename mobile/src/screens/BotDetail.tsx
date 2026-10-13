@@ -25,7 +25,7 @@ function describe(bot: Bot): string {
   if (bot.mode === "guard") {
     return `Guard bot. It does not open trades. When you hold ${legs}, it places a ${bot.card.stopLossPct}% stop${target} on Perpl and cancels them if the position closes.`;
   }
-  return `Auto bot. It opens ${legs} on its own with ${usd(bot.card.marginUsd)} margin when funding carry is at least ${bot.rules.minCarryAprPct}% APR. It waits ${bot.rules.cooldownMin} minutes between opens and opens at most ${bot.rules.maxOpensPerDay} a day. It places a ${bot.card.stopLossPct}% stop${target}.`;
+  return `Auto bot. It opens ${legs} on its own with ${usd(bot.card.marginUsd)} margin when funding carry is at least ${bot.rules.minCarryAprPct}% APR. It waits ${bot.rules.cooldownMin} minutes between opens. It places a ${bot.card.stopLossPct}% stop${target}.`;
 }
 
 type Check = { ok: boolean | null; label: string; fix: string };
