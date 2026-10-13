@@ -28,8 +28,11 @@ export {
   signInTradingAccount,
   checkReferral,
   isUnlocked,
+  agentMemoryNamespace,
+  legacyNotesNamespace,
   loadVault,
   notesNamespace,
+  vaultExists,
   redeemReferral,
   saveVault,
 } from "./mera/index.js";

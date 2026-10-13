@@ -4,8 +4,10 @@ import {
   importWalletKey,
   relyingPartyId,
   relyingPartyName,
+  openNamespaceSession,
   signInTradingAccount,
   type CredentialStore,
+  type NamespaceSession,
   type TradingAccount,
 } from "shared";
 
@@ -56,4 +58,8 @@ export function importWallet(privateKey: string): Promise<`0x${string}`> {
 
 export function clearImport(): Promise<void> {
   return clearImportedWallet(passkeyContext());
+}
+
+export function openNamespace(namespace: string): Promise<NamespaceSession> {
+  return openNamespaceSession(passkeyContext(), namespace);
 }

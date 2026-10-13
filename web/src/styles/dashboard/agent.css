@@ -353,3 +353,5 @@
 
 .bots-row > .agent:has([data-agent-card]:has([data-card-empty]:not([hidden]))) { display: none; }
 [data-panel="agent"] > .switcher { margin-bottom: 14px; }
+
+.agent-memory { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; opacity: 0.85; }

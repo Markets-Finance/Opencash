@@ -74,10 +74,13 @@ function describeArgs(args: Record<string, unknown>): string {
   return Object.values(args).filter((value) => typeof value === "string" || typeof value === "number").join(" ");
 }
 
-export async function draftWithAgent(prompt: string, chat: Chat, toolbox: Toolbox, account: () => Promise<AccountView>): Promise<DraftResult> {
+export type Turn = { role: "user" | "assistant"; content: string };
+
+export async function draftWithAgent(prompt: string, chat: Chat, toolbox: Toolbox, account: () => Promise<AccountView>, history: Turn[] = []): Promise<DraftResult> {
   const checked: string[] = [];
   const messages: ChatMessage[] = [
     { role: "system", content: system },
+    ...history.map((turn): ChatMessage => ({ role: turn.role, content: turn.content })),
     { role: "user", content: prompt },
   ];
   const specs = [accountSpec, ...toolSpecs(), submitSpec];

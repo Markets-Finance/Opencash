@@ -3,7 +3,7 @@ import { createToolbox, defaultLimits, perpl } from "shared";
 import { isAddress, type Address } from "viem";
 import { contextFor, parseNet } from "../analytics/context.js";
 import { limited } from "../runner/route.js";
-import { draftWithAgent, type AccountView, type Chat } from "./loop.js";
+import { draftWithAgent, type AccountView, type Chat, type Turn } from "./loop.js";
 
 function provider() {
   if (process.env.OPENAI_API_KEY) {
@@ -44,16 +44,19 @@ async function accountView(owner: Address, net: ReturnType<typeof parseNet>): Pr
 }
 
 export function registerAgentRoute(app: FastifyInstance): void {
-  app.post<{ Body: { prompt?: string; owner?: string; network?: string } }>("/agent/draft", async (request, reply) => {
+  app.post<{ Body: { prompt?: string; owner?: string; network?: string; history?: { role?: string; content?: string }[] } }>("/agent/draft", async (request, reply) => {
     if (!provider()) return reply.status(503).send({ error: "agent is not configured" });
     if (limited(request.ip)) return reply.status(429).send({ error: "too many requests" });
     const { prompt = "", owner = "" } = request.body ?? {};
     if (prompt.trim() === "" || prompt.length > 600) return reply.status(400).send({ error: "describe the trade in under 600 characters" });
     if (!isAddress(owner)) return reply.status(400).send({ error: "owner must be an address" });
     const net = parseNet(request.body?.network);
+    const history = (request.body?.history ?? [])
+      .filter((turn): turn is Turn => (turn.role === "user" || turn.role === "assistant") && typeof turn.content === "string" && turn.content.length > 0 && turn.content.length <= 800)
+      .slice(-8);
     const toolbox = createToolbox(contextFor(net).api, defaultLimits);
     try {
-      return await draftWithAgent(prompt, chatModel, toolbox, () => accountView(owner, net));
+      return await draftWithAgent(prompt, chatModel, toolbox, () => accountView(owner, net), history);
     } catch (error) {
       return reply.status(502).send({ error: error instanceof Error ? error.message : "agent failed" });
     }

@@ -1,8 +1,8 @@
-import { addressForKey, loadVault, notesNamespace, saveVault, tradeKeyRemoveMessage } from "shared";
+import { addressForKey, legacyNotesNamespace, loadVault, notesNamespace, saveVault, tradeKeyRemoveMessage, vaultExists, type NamespaceSession } from "shared";
 import { network } from "../../data/network";
 import { avatars, errorText, query } from "./dom";
 import { openDeleteAccount } from "./deleteAccount";
-import { clearImport, importWallet } from "../mera";
+import { clearImport, importWallet, openNamespace } from "../mera";
 import { initIdentity } from "./identity";
 import { disconnect } from "./tabs";
 import { initShareCard } from "./shareCard";
@@ -204,28 +204,55 @@ function initNotesPane() {
   const trader = requireTrader();
   const text = query<HTMLTextAreaElement>("[data-notes-text]");
   const save = query<HTMLButtonElement>("[data-notes-save]");
+  const unlock = query<HTMLButtonElement>("[data-notes-unlock]");
   const status = query("[data-notes-status]");
+  let session: NamespaceSession | null = null;
   const say = (message: string, tone = "") => {
     status.textContent = message;
     status.dataset.tone = tone;
   };
 
-  async function restore() {
-    say("Unlocking…");
+  async function ensureSession(): Promise<NamespaceSession> {
+    session ??= await openNamespace(notesNamespace);
+    return session;
+  }
+
+  async function check() {
     try {
-      const saved = await loadVault(backend, trader, notesNamespace);
-      text.value = saved ?? "";
-      say(saved === null ? "Nothing saved yet." : "Unlocked on this device.");
+      const saved = await vaultExists(backend, trader.address, notesNamespace);
+      const old = !saved && (await vaultExists(backend, trader.address, legacyNotesNamespace));
+      unlock.hidden = !saved && !old;
+      text.disabled = saved && session === null;
+      say(saved ? "Your notes are locked. Unlock with your passkey to read them." : old ? "Older notes found. Unlock to read them, then save to upgrade the lock." : "Nothing saved yet. Writing and saving asks for your passkey once.");
     } catch (error) {
       say(errorText(error), "error");
     }
   }
 
+  unlock.addEventListener("click", async () => {
+    unlock.disabled = true;
+    say("Waiting for your passkey…");
+    try {
+      const saved = await vaultExists(backend, trader.address, notesNamespace);
+      if (saved) text.value = (await loadVault(backend, trader, notesNamespace, await ensureSession())) ?? "";
+      else text.value = (await loadVault(backend, trader, legacyNotesNamespace)) ?? "";
+      text.disabled = false;
+      unlock.hidden = true;
+      say("Unlocked on this device.");
+    } catch (error) {
+      say(errorText(error), "error");
+    } finally {
+      unlock.disabled = false;
+    }
+  });
+
   save.addEventListener("click", async () => {
     save.disabled = true;
-    say("Locking…");
+    say("Waiting for your passkey…");
     try {
-      await saveVault(backend, trader, notesNamespace, text.value);
+      await saveVault(backend, trader, notesNamespace, text.value, await ensureSession());
+      text.disabled = false;
+      unlock.hidden = true;
       say("Locked and saved. Only your passkey can open it.");
     } catch (error) {
       say(errorText(error), "error");
@@ -234,5 +261,5 @@ function initNotesPane() {
     }
   });
 
-  document.querySelector('[data-acct-open="notes"]')?.addEventListener("click", () => void restore());
+  document.querySelector('[data-acct-open="notes"]')?.addEventListener("click", () => void check());
 }

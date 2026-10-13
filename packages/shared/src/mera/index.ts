@@ -31,5 +31,5 @@ export {
   seal,
 } from "./namespace.js";
 export type { SealedRecord } from "./namespace.js";
-export { loadVault, notesNamespace, saveVault } from "./vault.js";
+export { agentMemoryNamespace, legacyNotesNamespace, loadVault, notesNamespace, saveVault, vaultExists } from "./vault.js";
 export { checkReferral, isUnlocked, redeemReferral } from "./referral.js";

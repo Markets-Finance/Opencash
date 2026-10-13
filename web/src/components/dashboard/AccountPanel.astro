@@ -126,8 +126,9 @@ import AccountCard from "../AccountCard.astro";
 
       <div class="card acct-page" data-acct-pane="notes" hidden>
         <div class="acct-page__head"><button type="button" class="back-btn" data-acct-back><span aria-hidden="true">←</span> Account</button><span class="acct-page__title">Private notes</span></div>
-        <p class="agent__hint">Written here, locked with a key your passkey makes, then stored on our server as ciphertext. We cannot read it. Sign in with the same passkey on any device to open it.</p>
+        <p class="agent__hint">Written here, locked with a key your passkey makes just for notes (its own passkey salt), then stored on our server as ciphertext. We cannot read it. Sign in with the same passkey on any device to open it.</p>
         <label class="field"><span>Notes</span><textarea data-notes-text rows="8" maxlength="20000" placeholder="Trade ideas, levels, reminders"></textarea></label>
+        <button type="button" class="btn" data-notes-unlock hidden>Unlock with passkey</button>
         <button type="button" class="btn btn--primary" data-notes-save>Lock and save</button>
         <p class="status-line" data-notes-status></p>
       </div>

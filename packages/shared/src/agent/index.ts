@@ -3,4 +3,4 @@ export type { Toolbox } from "./toolbox.js";
 export { runTool, toolSpecs, tools } from "./tools.js";
 export type { AgentTool, ToolOutcome, ToolSpec } from "./tools.js";
 export { askAgent } from "./remote.js";
-export type { AgentDraft } from "./remote.js";
+export type { AgentDraft, AgentTurn } from "./remote.js";
