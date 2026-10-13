@@ -17,14 +17,15 @@ export async function fetchBinPosition(
   markets: Map<string, PerpMarket>,
   accountId: bigint,
 ): Promise<BinPosition | null> {
-  const legs: { symbol: string; position: PerpPosition }[] = [];
-
-  for (const leg of bin.legs) {
-    const market = markets.get(leg.symbol);
-    if (!market) continue;
-    const position = await fetchPosition(client, exchange, market, accountId);
-    if (position) legs.push({ symbol: leg.symbol, position });
-  }
+  const found = await Promise.all(
+    bin.legs.map(async (leg) => {
+      const market = markets.get(leg.symbol);
+      if (!market) return null;
+      const position = await fetchPosition(client, exchange, market, accountId);
+      return position ? { symbol: leg.symbol, position } : null;
+    }),
+  );
+  const legs = found.filter((entry): entry is { symbol: string; position: PerpPosition } => entry !== null);
 
   if (legs.length === 0) return null;
 
