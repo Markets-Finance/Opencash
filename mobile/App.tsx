@@ -143,7 +143,7 @@ export default function App() {
 
   function strategiesFor(symbol: string) {
     setLabSymbol(symbol);
-    setScreen("bots");
+    setScreen("trade");
   }
 
   function goTab(key: TabKey) {
@@ -181,7 +181,7 @@ export default function App() {
         />
       ) : screen === "trade" ? (
         trader !== null ? (
-          <Trade trader={trader} onOpenAsset={openAsset} onSelectTab={goTab} />
+          <Trade trader={trader} labSymbol={labSymbol} onOpenAsset={openAsset} onSelectTab={goTab} />
         ) : null
       ) : screen === "deposit" ? (
         trader !== null ? <Deposit trader={trader} onBack={() => setScreen("home")} onSelectTab={goTab} /> : null
@@ -198,7 +198,7 @@ export default function App() {
           />
         ) : null
       ) : screen === "bots" ? (
-        <Bots name={profile?.name} labSymbol={labSymbol} onSelectTab={goTab} onOpenAsset={openAsset} onOpenBot={(id, kind) => { setOpenedBot({ id, kind }); setScreen("botDetail"); }} />
+        <Bots name={profile?.name} onSelectTab={goTab} onOpenAsset={openAsset} onOpenBot={(id, kind) => { setOpenedBot({ id, kind }); setScreen("botDetail"); }} />
       ) : screen === "botDetail" ? (
         trader !== null && openedBot !== null ? (
           <BotDetail trader={trader} botId={openedBot.id} kind={openedBot.kind} onBack={() => setScreen("bots")} onOpenAsset={openAsset} onSelectTab={goTab} />

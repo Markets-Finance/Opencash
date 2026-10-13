@@ -7,6 +7,9 @@ import { toolbox } from "../lib/bots";
 import { AssetMark } from "../components/AssetMark";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { Insights } from "../components/Insights";
+import { LiveBots } from "../components/LiveBots";
+import { PaperBots } from "../components/PaperBots";
+import { StrategyLab } from "../components/StrategyLab";
 import { ScreenTitle, Switcher, Tag, ToneCard, tone } from "../components/ui";
 import { closePosition, loadMarkets, loadOpenPositions, type MarketData, type OpenPosition } from "../lib/perpl";
 import { dark, family, space, touch } from "../theme";
@@ -25,11 +28,12 @@ const gradeColor: Record<LiquidityGrade, string> = { deep: tone.lime, okay: tone
 
 type TradeProps = {
   trader: TradingAccount;
+  labSymbol?: string | null;
   onOpenAsset: (symbol: string) => void;
   onSelectTab: (key: TabKey) => void;
 };
 
-export function Trade({ trader, onOpenAsset, onSelectTab }: TradeProps) {
+export function Trade({ trader, labSymbol = null, onOpenAsset, onSelectTab }: TradeProps) {
   const insets = useSafeAreaInsets();
   const [data, setData] = useState<MarketData | null>(() => peek("markets"));
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -38,7 +42,8 @@ export function Trade({ trader, onOpenAsset, onSelectTab }: TradeProps) {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [view, setView] = useState<"assets" | "insights">("assets");
+  const [view, setView] = useState<"assets" | "insights" | "strategies">(labSymbol !== null ? "strategies" : "assets");
+  const [liveKey, setLiveKey] = useState(0);
   const [grades, setGrades] = useState<Record<string, LiquidityGrade>>({});
 
   const refreshPositions = useCallback(
@@ -151,6 +156,7 @@ export function Trade({ trader, onOpenAsset, onSelectTab }: TradeProps) {
           items={[
             { key: "assets", label: "Assets", dot: tone.butter },
             { key: "insights", label: "Insights", dot: tone.violet },
+            { key: "strategies", label: "Strategies", dot: tone.lime },
           ]}
           value={view}
           onChange={setView}
@@ -158,6 +164,12 @@ export function Trade({ trader, onOpenAsset, onSelectTab }: TradeProps) {
 
         {view === "insights" ? (
           <Insights onOpenAsset={onOpenAsset} />
+        ) : view === "strategies" ? (
+          <>
+            <StrategyLab initialSymbol={labSymbol} onOpenAsset={onOpenAsset} onLive={() => setLiveKey((k) => k + 1)} />
+            <PaperBots onOpenAsset={onOpenAsset} />
+            <LiveBots refreshKey={liveKey} onOpenAsset={onOpenAsset} />
+          </>
         ) : (
           <>
         <View style={styles.search}>

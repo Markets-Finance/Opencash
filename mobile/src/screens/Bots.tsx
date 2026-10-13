@@ -2,11 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Bot, BotMode } from "shared";
-import { LiveBots } from "../components/LiveBots";
 import { Mark } from "../components/Mark";
-import { PaperBots } from "../components/PaperBots";
 import { ServerRunning } from "../components/ServerRunning";
-import { StrategyLab } from "../components/StrategyLab";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { ScreenTitle, SelectPill, Tag, ToneCard, tone } from "../components/ui";
 import { currentTrader, draftCard, subscribeBots } from "../lib/bots";
@@ -38,13 +35,12 @@ function statusDot(bot: Bot): string {
 
 type BotsProps = {
   name?: string;
-  labSymbol?: string | null;
   onSelectTab: (key: TabKey) => void;
   onOpenAsset: (symbol: string) => void;
   onOpenBot: (id: string, kind: BotKind) => void;
 };
 
-export function Bots({ name, labSymbol, onSelectTab, onOpenAsset, onOpenBot }: BotsProps) {
+export function Bots({ name, onSelectTab, onOpenAsset, onOpenBot }: BotsProps) {
   const insets = useSafeAreaInsets();
   const [localBots, setLocalBots] = useState<Bot[]>([]);
   const [serverBots, setServerBots] = useState<Bot[]>([]);
@@ -59,8 +55,6 @@ export function Bots({ name, labSymbol, onSelectTab, onOpenAsset, onOpenBot }: B
   const [mode, setMode] = useState<BotMode>("auto");
   const [starting, setStarting] = useState(false);
   const [startNote, setStartNote] = useState<{ text: string; failed: boolean } | null>(null);
-  const [advanced, setAdvanced] = useState(false);
-  const [liveKey, setLiveKey] = useState(0);
 
   useEffect(() => subscribeBots(setLocalBots), []);
   useEffect(() => subscribePaperCards(setPapers), []);
@@ -286,16 +280,6 @@ export function Bots({ name, labSymbol, onSelectTab, onOpenAsset, onOpenBot }: B
           })
         )}
 
-        <Pressable onPress={() => setAdvanced(!advanced)} style={styles.advancedToggle}>
-          <Text style={styles.advancedLabel}>{advanced ? "−" : "+"} Rule strategies: backtest, paper and live</Text>
-        </Pressable>
-        {advanced && (
-          <>
-            <StrategyLab initialSymbol={labSymbol} onOpenAsset={onOpenAsset} onLive={() => setLiveKey((k) => k + 1)} />
-            <PaperBots onOpenAsset={onOpenAsset} />
-            <LiveBots refreshKey={liveKey} onOpenAsset={onOpenAsset} />
-          </>
-        )}
       </ScrollView>
 
       <TabBar active="bots" onSelect={onSelectTab} />
@@ -346,6 +330,4 @@ const styles = StyleSheet.create({
   down: { color: dark.red },
   depositNote: { padding: space.md, borderRadius: 16, backgroundColor: "rgba(123, 115, 240, 0.16)" },
   depositNoteText: { fontFamily: family.regular, fontSize: 13, lineHeight: 19, color: dark.ink },
-  advancedToggle: { paddingVertical: space.md },
-  advancedLabel: { fontFamily: family.medium, fontSize: 14, color: dark.muted },
 });
