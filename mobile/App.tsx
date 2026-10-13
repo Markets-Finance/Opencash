@@ -23,6 +23,7 @@ import { Send } from "./src/screens/Send";
 import { Trade } from "./src/screens/Trade";
 import type { TabKey } from "./src/components/TabBar";
 import { Home } from "./src/screens/Home";
+import { UpdatePrompt } from "./src/components/UpdatePrompt";
 import {
   loadCollateralBalance,
   loadMarkets,
@@ -189,6 +190,7 @@ export default function App() {
           onOpenAsset={openAsset}
         />
       ) : null}
+      <UpdatePrompt />
     </SafeAreaProvider>
   );
 }
