@@ -8,6 +8,8 @@ import { ScreenTitle, Tag, ToneCard, tone } from "../components/ui";
 import { removeBot, setBotEnabled, subscribeBots } from "../lib/bots";
 import { loadAccount } from "../lib/perpl";
 import { actServerBot, loadServerBots } from "../lib/serverBots";
+import { removePaperCard, subscribePaperCards, togglePaperCard } from "../lib/paperCard";
+import type { BotKind } from "./Bots";
 import { explorer as networkExplorer } from "../lib/network";
 import { dark, family, space, touch } from "../theme";
 
@@ -31,14 +33,15 @@ type Check = { ok: boolean | null; label: string; fix: string };
 type BotDetailProps = {
   trader: TradingAccount;
   botId: string;
-  server: boolean;
+  kind: BotKind;
   onBack: () => void;
   onOpenAsset: (symbol: string) => void;
   onSelectTab: (key: TabKey) => void;
 };
 
-export function BotDetail({ trader, botId, server, onBack, onOpenAsset, onSelectTab }: BotDetailProps) {
+export function BotDetail({ trader, botId, kind, onBack, onOpenAsset, onSelectTab }: BotDetailProps) {
   const insets = useSafeAreaInsets();
+  const server = kind === "live";
   const [bot, setBot] = useState<Bot | null>(null);
   const [hasKey, setHasKey] = useState<boolean | null>(null);
   const [runner, setRunner] = useState<boolean | null>(null);
@@ -63,8 +66,9 @@ export function BotDetail({ trader, botId, server, onBack, onOpenAsset, onSelect
       const timer = setInterval(() => void refresh(), 10_000);
       return () => clearInterval(timer);
     }
+    if (kind === "paper") return subscribePaperCards((all) => setBot((all.find((entry) => entry.id === botId) as Bot | undefined) ?? null));
     return subscribeBots((all) => setBot(all.find((entry) => entry.id === botId) ?? null));
-  }, [server, refresh, botId]);
+  }, [server, kind, refresh, botId]);
 
   useEffect(() => {
     loadAccount(trader.address)
@@ -76,7 +80,8 @@ export function BotDetail({ trader, botId, server, onBack, onOpenAsset, onSelect
     if (!bot) return;
     setHint(null);
     try {
-      if (server) await actServerBot(bot.id, bot.enabled ? "disable" : "enable");
+      if (kind === "paper") await togglePaperCard(bot.id);
+      else if (server) await actServerBot(bot.id, bot.enabled ? "disable" : "enable");
       else await setBotEnabled(bot.id, !bot.enabled);
       await refresh();
     } catch (error) {
@@ -87,7 +92,8 @@ export function BotDetail({ trader, botId, server, onBack, onOpenAsset, onSelect
   async function discard() {
     if (!bot) return;
     try {
-      if (server) await actServerBot(bot.id, "remove");
+      if (kind === "paper") removePaperCard(bot.id);
+      else if (server) await actServerBot(bot.id, "remove");
       else await removeBot(bot.id);
       onBack();
     } catch (error) {
@@ -97,17 +103,23 @@ export function BotDetail({ trader, botId, server, onBack, onOpenAsset, onSelect
 
   const checks: Check[] = bot
     ? [
-        ...(server
+        ...(kind === "paper"
+          ? [{ ok: true, label: "Paper bot: fake money, no server needed", fix: "" }]
+          : server
           ? [
               { ok: hasKey, label: "Server running is on", fix: "Open the Agent tab and tap Turn on server running." },
               { ok: runner, label: "The server bot runner is live", fix: "The runner is paused. Try again shortly." },
             ]
           : [{ ok: true, label: "Runs inside this app", fix: "Keep the app open for it to act." }]),
-        {
-          ok: balance === null ? null : balance >= bot.card.marginUsd,
-          label: `Perpl account holds ${usd(bot.card.marginUsd)} AUSD (now ${balance === null ? "…" : usd(balance)})`,
-          fix: "Move AUSD into your Perpl account from Account, Move between accounts, or open any trade once to fund it.",
-        },
+        ...(kind === "paper"
+          ? []
+          : [
+              {
+                ok: balance === null ? null : balance >= bot.card.marginUsd,
+                label: `Perpl account holds ${usd(bot.card.marginUsd)} AUSD (now ${balance === null ? "…" : usd(balance)})`,
+                fix: "Move AUSD into your Perpl account from Account, Move between accounts, or open any trade once to fund it.",
+              },
+            ]),
         { ok: bot.enabled, label: "The bot is started", fix: "Tap Start below." },
       ]
     : [];
@@ -126,7 +138,7 @@ export function BotDetail({ trader, botId, server, onBack, onOpenAsset, onSelect
         ) : (
           <>
             <View style={styles.tags}>
-              <Tag label={server ? "Server" : "In app"} />
+              <Tag label={kind === "live" ? "Live" : kind === "paper" ? "Paper" : "In app"} />
               <Tag label={bot.mode === "auto" ? "Auto" : "Guard"} />
               <Tag label={bot.status} dot={bot.status === "halted" || bot.status === "stopped" ? dark.red : bot.status === "idle" ? dark.muted : dark.green} />
             </View>
@@ -163,7 +175,7 @@ export function BotDetail({ trader, botId, server, onBack, onOpenAsset, onSelect
               <View style={styles.stat}><Text style={styles.statLabel}>Margin</Text><Text style={styles.statValue}>{usd(bot.card.marginUsd)}</Text></View>
               <View style={styles.stat}><Text style={styles.statLabel}>Stop</Text><Text style={styles.statValue}>{bot.card.stopLossPct}%</Text></View>
               <View style={styles.stat}><Text style={styles.statLabel}>Target</Text><Text style={styles.statValue}>{bot.card.takeProfitPct ? `${bot.card.takeProfitPct}%` : "—"}</Text></View>
-              <View style={styles.stat}><Text style={styles.statLabel}>Realised</Text><Text style={[styles.statValue, { color: bot.realizedPnlUsd >= 0 ? dark.green : dark.red }]}>{usd(bot.realizedPnlUsd)}</Text></View>
+              <View style={styles.stat}><Text style={styles.statLabel}>{kind === "paper" ? "Paper result" : "Realised"}</Text><Text style={[styles.statValue, { color: bot.realizedPnlUsd >= 0 ? dark.green : dark.red }]}>{usd(bot.realizedPnlUsd)}</Text></View>
             </View>
             {bot.lastCheck !== null && <Text style={styles.muted}>Last check {new Date(bot.lastCheck.at).toLocaleTimeString()}: {bot.lastCheck.message}</Text>}
 

@@ -15,7 +15,7 @@ import { Account, type Profile } from "./src/screens/Account";
 import { BinDetail } from "./src/screens/BinDetail";
 import { Bins } from "./src/screens/Bins";
 import { BotDetail } from "./src/screens/BotDetail";
-import { Bots } from "./src/screens/Bots";
+import { Bots, type BotKind } from "./src/screens/Bots";
 import { startBots, stopBots } from "./src/lib/bots";
 import { Onboarding } from "./src/components/Onboarding";
 import { finishOnboarding, needsOnboarding } from "./src/lib/onboarding";
@@ -63,7 +63,7 @@ export default function App() {
   const [cameFrom, setCameFrom] = useState<Screen>("home");
   const [labSymbol, setLabSymbol] = useState<string | null>(null);
   const [touring, setTouring] = useState(false);
-  const [openedBot, setOpenedBot] = useState<{ id: string; server: boolean } | null>(null);
+  const [openedBot, setOpenedBot] = useState<{ id: string; kind: BotKind } | null>(null);
   const [loaded, error] = useFonts({
     DMSans_300Light,
     DMSans_400Regular,
@@ -198,10 +198,10 @@ export default function App() {
           />
         ) : null
       ) : screen === "bots" ? (
-        <Bots name={profile?.name} labSymbol={labSymbol} onSelectTab={goTab} onOpenAsset={openAsset} onOpenBot={(id, server) => { setOpenedBot({ id, server }); setScreen("botDetail"); }} />
+        <Bots name={profile?.name} labSymbol={labSymbol} onSelectTab={goTab} onOpenAsset={openAsset} onOpenBot={(id, kind) => { setOpenedBot({ id, kind }); setScreen("botDetail"); }} />
       ) : screen === "botDetail" ? (
         trader !== null && openedBot !== null ? (
-          <BotDetail trader={trader} botId={openedBot.id} server={openedBot.server} onBack={() => setScreen("bots")} onOpenAsset={openAsset} onSelectTab={goTab} />
+          <BotDetail trader={trader} botId={openedBot.id} kind={openedBot.kind} onBack={() => setScreen("bots")} onOpenAsset={openAsset} onSelectTab={goTab} />
         ) : null
       ) : screen === "home" ? (
         trader !== null ? <Home trader={trader} name={profile?.name} onSelectTab={goTab} onOpenAsset={openAsset} onDeposit={() => setScreen("deposit")} onSend={() => setScreen("send")} /> : null

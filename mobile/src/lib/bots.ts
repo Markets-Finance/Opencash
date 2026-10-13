@@ -89,13 +89,13 @@ export async function draftBot(prompt: string, mode: BotMode, signal: "nansen" |
   return null;
 }
 
-export async function draftCard(prompt: string, signal: "nansen" | null = null): Promise<{ card: Bot["card"] | null; problem: string | null }> {
+export async function draftCard(prompt: string, signal: "nansen" | null = null): Promise<{ card: Bot["card"] | null; problem: string | null; note?: string }> {
   if (signer !== null) {
     const answer = await askAgent(backendUrl, signer.address, network, prompt);
     if (answer !== null) {
       const checked = answer.checked.length ? ` Checked: ${[...new Set(answer.checked)].join(", ")}.` : "";
       if (answer.card === null) return { card: null, problem: `${answer.reply}${checked}` };
-      return { card: signal ? { ...answer.card, signal } : answer.card, problem: null };
+      return { card: signal ? { ...answer.card, signal } : answer.card, problem: null, note: `${answer.reply}${checked}` };
     }
   }
   const symbols = (await toolbox.getMarkets()).map((m) => m.symbol);

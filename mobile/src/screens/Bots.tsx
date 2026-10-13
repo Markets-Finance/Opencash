@@ -1,28 +1,30 @@
 import { useCallback, useEffect, useState } from "react";
-import { Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Bot, BotMode } from "shared";
-import { Mark } from "../components/Mark";
 import { LiveBots } from "../components/LiveBots";
+import { Mark } from "../components/Mark";
 import { PaperBots } from "../components/PaperBots";
+import { ServerRunning } from "../components/ServerRunning";
 import { StrategyLab } from "../components/StrategyLab";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
-import { CardTitle, RoundButton, ScreenTitle, SelectPill, Switcher, Tag, ToneCard, tone } from "../components/ui";
+import { ScreenTitle, SelectPill, Tag, ToneCard, tone } from "../components/ui";
+import { currentTrader, draftCard, subscribeBots } from "../lib/bots";
 import { loadAccount, loadCollateralBalance } from "../lib/perpl";
-import { currentTrader, draftBot, draftCard, removeBot, setBotEnabled, subscribeBots, updateBotRules } from "../lib/bots";
-import { actServerBot, createServerBot, loadServerBots } from "../lib/serverBots";
-import { ServerRunning } from "../components/ServerRunning";
+import { addPaperCard, subscribePaperCards, type PaperBot } from "../lib/paperCard";
+import { botMinUsd, loadServerBots, startLiveFromCard } from "../lib/serverBots";
 import { dark, family, space, touch } from "../theme";
-import { explorer as networkExplorer } from "../lib/network";
 
-const explorer = `${networkExplorer}/tx/`;
-const botMinUsd = 10;
+export type BotKind = "live" | "paper" | "app";
 
 const ideas = [
-  { text: "long MON short BTC 2x $100 stop 8%", fill: tone.sky },
-  { text: "long ETH 3x $50 stop 6% tp 12%", fill: tone.lime },
-  { text: "short SOL 2x $80 stop 10%", fill: tone.butter },
+  { text: "Long BTC with the smallest safe size, 2x, stop 6%", label: "Safe BTC long", fill: tone.lime },
+  { text: "Pair trade: long MON, short BTC, 2x, stop 8%", label: "MON vs BTC pair", fill: tone.sky },
+  { text: "Short PUMP 2x with a tight stop and a 10% target", label: "Short PUMP", fill: tone.butter },
+  { text: "Use my whole free Perpl balance on the best funding carry right now", label: "Best funding carry", fill: tone.peach },
 ];
+
+type Message = { role: "me" | "agent"; text: string };
 
 function usd(value: number): string {
   return `${value < 0 ? "−" : ""}$${Math.abs(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -34,31 +36,34 @@ function statusDot(bot: Bot): string {
   return dark.muted;
 }
 
-type BotsProps = { name?: string; labSymbol?: string | null; onSelectTab: (key: TabKey) => void; onOpenAsset: (symbol: string) => void; onOpenBot: (id: string, server: boolean) => void };
+type BotsProps = {
+  name?: string;
+  labSymbol?: string | null;
+  onSelectTab: (key: TabKey) => void;
+  onOpenAsset: (symbol: string) => void;
+  onOpenBot: (id: string, kind: BotKind) => void;
+};
 
 export function Bots({ name, labSymbol, onSelectTab, onOpenAsset, onOpenBot }: BotsProps) {
   const insets = useSafeAreaInsets();
-  const [bots, setBots] = useState<Bot[]>([]);
-  const [prompt, setPrompt] = useState("");
-  const [mode, setMode] = useState<BotMode>("guard");
-  const [signal, setSignal] = useState<"nansen" | null>(null);
-  const [hint, setHint] = useState<string | null>(null);
-  const [view, setView] = useState<"strategies" | "agent">("strategies");
-  const [liveKey, setLiveKey] = useState(0);
-  const [runOn, setRunOn] = useState<"server" | "app">("server");
+  const [localBots, setLocalBots] = useState<Bot[]>([]);
   const [serverBots, setServerBots] = useState<Bot[]>([]);
-  const [hasKey, setHasKey] = useState(true);
+  const [papers, setPapers] = useState<PaperBot[]>([]);
+  const [hasKey, setHasKey] = useState(false);
   const [funding, setFunding] = useState({ perpl: 0, wallet: 0 });
+  const [prompt, setPrompt] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [thinking, setThinking] = useState(false);
+  const [draft, setDraft] = useState<Bot["card"] | null>(null);
+  const [kind, setKind] = useState<"paper" | "live">("paper");
+  const [mode, setMode] = useState<BotMode>("auto");
+  const [starting, setStarting] = useState(false);
+  const [startNote, setStartNote] = useState<{ text: string; failed: boolean } | null>(null);
+  const [advanced, setAdvanced] = useState(false);
+  const [liveKey, setLiveKey] = useState(0);
 
-  useEffect(() => {
-    const trader = currentTrader();
-    if (!trader) return;
-    void Promise.all([loadAccount(trader.address).catch(() => null), loadCollateralBalance(trader.address).catch(() => 0)]).then(([account, wallet]) =>
-      setFunding({ perpl: account === null ? 0 : account.balance - account.lockedBalance, wallet }),
-    );
-  }, []);
-
-  useEffect(() => subscribeBots(setBots), []);
+  useEffect(() => subscribeBots(setLocalBots), []);
+  useEffect(() => subscribePaperCards(setPapers), []);
 
   const refreshServer = useCallback(async () => {
     try {
@@ -76,58 +81,68 @@ export function Bots({ name, labSymbol, onSelectTab, onOpenAsset, onOpenBot }: B
     return () => clearInterval(timer);
   }, [refreshServer]);
 
-  async function toggle(bot: Bot, server: boolean) {
-    setHint(null);
+  useEffect(() => {
+    const trader = currentTrader();
+    if (!trader) return;
+    void Promise.all([loadAccount(trader.address).catch(() => null), loadCollateralBalance(trader.address).catch(() => 0)]).then(([account, wallet]) =>
+      setFunding({ perpl: account === null ? 0 : account.balance - account.lockedBalance, wallet }),
+    );
+  }, [serverBots.length]);
+
+  async function ask(text: string) {
+    const trimmed = text.trim();
+    if (trimmed === "" || thinking) return;
+    setPrompt("");
+    setStartNote(null);
+    setMessages((current) => [...current, { role: "me", text: trimmed }]);
+    setThinking(true);
     try {
-      if (server) await actServerBot(bot.id, bot.enabled ? "disable" : "enable");
-      else await setBotEnabled(bot.id, !bot.enabled);
+      const { card, problem, note } = await draftCard(trimmed);
+      if (card === null) {
+        setMessages((current) => [...current, { role: "agent", text: problem ?? "I could not draft that." }]);
+      } else {
+        setDraft(card);
+        setMessages((current) => [...current, { role: "agent", text: note && note !== "" ? note : "Drafted. Check the bot below, then start it in Paper or Live." }]);
+      }
     } catch (error) {
-      setHint(error instanceof Error ? error.message : String(error));
+      setMessages((current) => [...current, { role: "agent", text: error instanceof Error ? error.message : String(error) }]);
+    } finally {
+      setThinking(false);
     }
-    if (server) await refreshServer();
   }
 
-  async function discard(bot: Bot, server: boolean) {
-    try {
-      if (server) await actServerBot(bot.id, "remove");
-      else await removeBot(bot.id);
-    } catch (error) {
-      setHint(error instanceof Error ? error.message : String(error));
-    }
-    if (server) await refreshServer();
+  function edit(field: "marginUsd" | "stopLossPct" | "takeProfitPct", value: string) {
+    if (!draft) return;
+    const number = Number(value);
+    setDraft({ ...draft, [field]: value.trim() === "" && field === "takeProfitPct" ? undefined : Number.isFinite(number) ? number : 0 });
   }
 
-  async function create() {
-    setHint(null);
-    if (prompt.trim() === "") {
-      setHint("Describe a trade first, or tap one of the ideas.");
-      return;
-    }
+  async function start() {
+    if (!draft || starting) return;
+    setStarting(true);
+    setStartNote(null);
     try {
-      if (runOn === "server") {
-        const { card, problem: unclear } = await draftCard(prompt, signal);
-        if (card === null) {
-          setHint(unclear);
-          return;
-        }
-        await createServerBot(card, mode);
+      if (kind === "paper") {
+        await addPaperCard(draft, mode);
+        setStartNote({ text: "Paper bot is running with fake money. Watch it under Your bots.", failed: false });
+      } else {
+        const text = await startLiveFromCard(draft, mode, (step) => setStartNote({ text: step, failed: false }));
+        setStartNote({ text, failed: false });
         await refreshServer();
-        setPrompt("");
-        setHint(hasKey ? "Bot saved on the server. Press Start to run it." : "Bot saved. Turn on server running below, then press Start.");
-        return;
       }
-      const problem = await draftBot(prompt, mode, signal);
-      if (problem) setHint(problem);
-      else {
-        setPrompt("");
-        setHint("Bot added below. Press Start to run it.");
-      }
+      setDraft(null);
     } catch (error) {
-      setHint(error instanceof Error ? error.message : String(error));
+      setStartNote({ text: error instanceof Error ? error.message : String(error), failed: true });
+    } finally {
+      setStarting(false);
     }
   }
 
-  const items = [...serverBots.map((bot) => ({ bot, server: true })), ...bots.map((bot) => ({ bot, server: false }))];
+  const items = [
+    ...serverBots.map((bot) => ({ bot: bot as Bot, kind: "live" as BotKind })),
+    ...papers.map((bot) => ({ bot: bot as Bot, kind: "paper" as BotKind })),
+    ...localBots.map((bot) => ({ bot, kind: "app" as BotKind })),
+  ];
   const running = items.filter((item) => item.bot.enabled).length;
 
   return (
@@ -138,200 +153,148 @@ export function Bots({ name, labSymbol, onSelectTab, onOpenAsset, onOpenBot }: B
         showsVerticalScrollIndicator={false}
       >
         <ScreenTitle title="Bots" right={<Tag label={`${running} running`} dot={running > 0 ? dark.green : dark.muted} />} />
+
+        <ToneCard>
+          <View style={styles.statusRow}>
+            <View style={[styles.dot, { backgroundColor: hasKey ? dark.green : dark.muted }]} />
+            <Text style={styles.cardTitle}>Autonomous trading {hasKey ? "is on" : "is off"}</Text>
+          </View>
+          <ServerRunning hasKey={hasKey} onChanged={() => void refreshServer()} />
+        </ToneCard>
+
         {funding.perpl < botMinUsd && (
           <View style={styles.depositNote}>
             <Text style={styles.depositNoteText}>
               {funding.wallet >= botMinUsd
-                ? `You have ${usd(funding.wallet)} AUSD in your wallet but ${usd(funding.perpl)} in Perpl. Bots trade from your Perpl account, so move at least $${botMinUsd} there first (Account, Move between accounts).`
-                : `Deposit at least $${botMinUsd} before starting a bot. A bot skips any order under $${botMinUsd}, so it can't trade with less.`}
+                ? `You have ${usd(funding.wallet)} AUSD in your wallet but ${usd(funding.perpl)} in Perpl. Live bots trade from Perpl, so move at least $${botMinUsd} there first (Account, Move between accounts). Paper bots need no money.`
+                : `Live bots need at least $${botMinUsd} in Perpl. Paper bots need no money.`}
             </Text>
           </View>
         )}
 
-        <Switcher
-          items={[
-            { key: "strategies", label: "Strategies", dot: tone.butter, count: 4 },
-            { key: "agent", label: "Agent", dot: tone.violet, count: items.length },
-          ]}
-          value={view}
-          onChange={setView}
-        />
-
-        {view === "strategies" && (
-          <>
-            <StrategyLab initialSymbol={labSymbol} onOpenAsset={onOpenAsset} onLive={() => setLiveKey((k) => k + 1)} />
-            <PaperBots onOpenAsset={onOpenAsset} />
-            <LiveBots refreshKey={liveKey} onOpenAsset={onOpenAsset} />
-          </>
-        )}
-
-        {view === "agent" && (
-        <>
         <ToneCard>
-          <CardTitle>Agent</CardTitle>
+          <Text style={styles.cardTitle}>Agent</Text>
           <View style={styles.messageRow}>
             <View style={styles.avatar}>
               <Mark size={20} tint={dark.onAccent} />
             </View>
             <View style={styles.bubble}>
               <Text style={styles.bubbleText}>
-                Hi{name ? `, ${name}` : ""}. Tell me a trade in one line. I turn it into a card with a stop, and a bot guards it. On the server it keeps running when the app is closed.
-                {items.length > 0 ? ` You have ${items.length} bot${items.length === 1 ? "" : "s"} set up.` : ""}
+                Hi{name ? `, ${name}` : ""}. Tell me a trade in plain words. I check your balance and the markets, then draft a bot. You choose Paper or Live. I only draft and never move funds.
               </Text>
             </View>
           </View>
-
+          {messages.map((message, index) => (
+            <View key={index} style={[styles.messageRow, message.role === "me" && styles.messageMe]}>
+              <View style={[styles.bubble, message.role === "me" && styles.bubbleMe]}>
+                <Text style={[styles.bubbleText, message.role === "me" && styles.bubbleMeText]}>{message.text}</Text>
+              </View>
+            </View>
+          ))}
+          {thinking && <Text style={styles.hint}>Checking your balances and the markets…</Text>}
           <View style={styles.ideas}>
             {ideas.map((idea) => (
-              <Pressable
-                key={idea.text}
-                onPress={() => setPrompt(idea.text)}
-                style={({ pressed }) => [styles.idea, { backgroundColor: idea.fill }, pressed && styles.pressed]}
-              >
-                <Text style={styles.ideaText}>{idea.text}</Text>
+              <Pressable key={idea.label} onPress={() => void ask(idea.text)} style={({ pressed }) => [styles.idea, { backgroundColor: idea.fill }, pressed && styles.pressed]}>
+                <Text style={styles.ideaText}>{idea.label}</Text>
               </Pressable>
             ))}
           </View>
-
-          <View style={styles.modes}>
-            <SelectPill label="On server" active={runOn === "server"} onPress={() => setRunOn("server")} />
-            <SelectPill label="In app" active={runOn === "app"} onPress={() => setRunOn("app")} />
-            <Text style={styles.modeNote} numberOfLines={2}>
-              {runOn === "server" ? "Keeps running when the app is closed." : "Runs only while the app is open."}
-            </Text>
-          </View>
-
-          <View style={styles.modes}>
-            <SelectPill label="Guard" active={mode === "guard"} onPress={() => setMode("guard")} />
-            <SelectPill label="Auto" active={mode === "auto"} onPress={() => setMode("auto")} />
-            <Text style={styles.modeNote} numberOfLines={2}>
-              {mode === "guard" ? "Closes at your stop or target." : "Opens on funding carry, then guards."}
-            </Text>
-          </View>
-
-          <View style={styles.modes}>
-            <SelectPill label="No signal" active={signal === null} onPress={() => setSignal(null)} />
-            <SelectPill label="Nansen" active={signal === "nansen"} onPress={() => setSignal("nansen")} />
-            <Text style={styles.modeNote} numberOfLines={2}>
-              {signal === "nansen" ? "Opens only when smart money agrees." : "Optional: gate trades on smart money."}
-            </Text>
-          </View>
-
           <View style={styles.inputRow}>
-            <RoundButton glyph="+" label="Create bot" fill={tone.coral} onPress={() => void create()} />
             <TextInput
               value={prompt}
               onChangeText={setPrompt}
-              placeholder="Describe a trade to start"
+              placeholder="Ask for a trade, e.g. long MON 2x stop 8%"
               placeholderTextColor={dark.muted}
               autoCapitalize="none"
               autoCorrect={false}
-              onSubmitEditing={() => void create()}
+              onSubmitEditing={() => void ask(prompt)}
               style={styles.input}
             />
+            <Pressable onPress={() => void ask(prompt)} style={({ pressed }) => [styles.send, pressed && styles.pressed]}>
+              <Text style={styles.sendLabel}>Send</Text>
+            </Pressable>
           </View>
-          {hint !== null && <Text style={styles.hint}>{hint}</Text>}
         </ToneCard>
 
-        {runOn === "server" && !hasKey && (
-          <ToneCard>
-            <ServerRunning hasKey={hasKey} onChanged={() => void refreshServer()} />
+        {draft !== null && (
+          <ToneCard fill={tone.lime}>
+            <Text style={styles.draftTitle}>{draft.name}</Text>
+            <View style={styles.tags}>
+              {draft.legs.map((leg) => (
+                <Text key={`${leg.symbol}-${leg.direction}`} style={styles.draftLeg}>
+                  {leg.direction === "long" ? "Long" : "Short"} {leg.symbol} {leg.leverage}x · {leg.weightBps / 100}%
+                </Text>
+              ))}
+            </View>
+            <View style={styles.fields}>
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Margin $</Text>
+                <TextInput defaultValue={String(draft.marginUsd)} keyboardType="decimal-pad" onEndEditing={(event) => edit("marginUsd", event.nativeEvent.text)} style={styles.fieldInput} />
+              </View>
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Stop %</Text>
+                <TextInput defaultValue={String(draft.stopLossPct)} keyboardType="decimal-pad" onEndEditing={(event) => edit("stopLossPct", event.nativeEvent.text)} style={styles.fieldInput} />
+              </View>
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Target %</Text>
+                <TextInput defaultValue={draft.takeProfitPct === undefined ? "" : String(draft.takeProfitPct)} keyboardType="decimal-pad" onEndEditing={(event) => edit("takeProfitPct", event.nativeEvent.text)} style={styles.fieldInput} />
+              </View>
+            </View>
+            <View style={styles.pills}>
+              <SelectPill label="Paper · fake money" active={kind === "paper"} onPress={() => setKind("paper")} />
+              <SelectPill label="Live · real money" active={kind === "live"} onPress={() => setKind("live")} />
+            </View>
+            <View style={styles.pills}>
+              <SelectPill label="Opens for me" active={mode === "auto"} onPress={() => setMode("auto")} />
+              <SelectPill label="Guards my position" active={mode === "guard"} onPress={() => setMode("guard")} />
+            </View>
+            <Pressable disabled={starting} onPress={() => void start()} style={({ pressed }) => [styles.startButton, (pressed || starting) && styles.pressed]}>
+              <Text style={styles.startLabel}>{starting ? "Working…" : kind === "paper" ? "Start paper bot" : "Start live bot"}</Text>
+            </Pressable>
           </ToneCard>
         )}
+        {startNote !== null && <Text style={[styles.hint, startNote.failed && styles.down]}>{startNote.text}</Text>}
 
         <Text style={styles.section}>YOUR BOTS</Text>
         {items.length === 0 ? (
-          <Text style={styles.empty}>No bots yet. Describe a trade above or start a paper bot.</Text>
+          <Text style={styles.empty}>No bots yet. Ask the agent for a trade, then start it in Paper or Live.</Text>
         ) : (
-          items.map(({ bot, server }) => (
-            <ToneCard key={bot.id}>
-              <Pressable onPress={() => onOpenBot(bot.id, server)} accessibilityRole="button" accessibilityLabel={`Open ${bot.name}`} style={styles.botHead}>
-                <Text style={styles.botName} numberOfLines={1}>
-                  {bot.name.toUpperCase()} ↗
-                </Text>
-                <Tag label={server ? "Server" : "In app"} />
-                <Tag label={bot.mode === "auto" ? "Auto" : "Guard"} />
-                <Tag label={bot.status} dot={statusDot(bot)} />
-              </Pressable>
-              <View style={styles.tags}>
-                {bot.card.legs.map((leg) => (
-                  <Pressable key={`${leg.symbol}-${leg.direction}`} onPress={() => onOpenAsset(leg.symbol)} accessibilityLabel={`Trade ${leg.symbol}`}>
-                    <Tag label={`${leg.direction === "long" ? "Long" : "Short"} ${leg.symbol} ${leg.leverage}x ↗`} dot={leg.direction === "long" ? dark.green : dark.red} />
-                  </Pressable>
-                ))}
-              </View>
-              <View style={styles.stats}>
-                <View style={styles.stat}>
-                  <Text style={styles.statLabel}>Margin</Text>
-                  <Text style={styles.statValue}>{usd(bot.card.marginUsd)}</Text>
-                </View>
-                <View style={styles.stat}>
-                  <Text style={styles.statLabel}>Stop</Text>
-                  <Text style={styles.statValue}>{bot.card.stopLossPct}%</Text>
-                </View>
-                <View style={styles.stat}>
-                  <Text style={styles.statLabel}>Realised</Text>
-                  <Text style={[styles.statValue, { color: bot.realizedPnlUsd >= 0 ? dark.green : dark.red }]}>{usd(bot.realizedPnlUsd)}</Text>
-                </View>
-              </View>
-
-              {bot.mode === "auto" && !server && (
-                <View style={styles.rules}>
-                  <View style={styles.rule}>
-                    <Text style={styles.statLabel}>Min carry %</Text>
-                    <TextInput
-                      defaultValue={String(bot.rules.minCarryAprPct)}
-                      keyboardType="numbers-and-punctuation"
-                      onEndEditing={(event) => void updateBotRules(bot.id, { minCarryAprPct: Number(event.nativeEvent.text) || 0 })}
-                      style={styles.smallInput}
-                    />
-                  </View>
-                  <View style={styles.rule}>
-                    <Text style={styles.statLabel}>Opens / day</Text>
-                    <TextInput
-                      defaultValue={String(bot.rules.maxOpensPerDay)}
-                      keyboardType="number-pad"
-                      onEndEditing={(event) => void updateBotRules(bot.id, { maxOpensPerDay: Math.max(1, Number(event.nativeEvent.text) || 1) })}
-                      style={styles.smallInput}
-                    />
-                  </View>
-                </View>
-              )}
-
-              {bot.lastCheck !== null && (
-                <Text style={styles.muted}>
-                  Checked {new Date(bot.lastCheck.at).toLocaleTimeString()}: {bot.lastCheck.message}
-                </Text>
-              )}
-
-              {bot.log.slice(0, 4).map((entry) => (
-                <Pressable
-                  key={`${entry.at}-${entry.message}`}
-                  disabled={!entry.txHash}
-                  onPress={() => entry.txHash && void Linking.openURL(`${explorer}${entry.txHash}`)}
-                >
-                  <Text style={[styles.log, entry.level === "error" && styles.down, entry.level === "action" && styles.logAction]}>
-                    {new Date(entry.at).toLocaleTimeString()} {entry.message}
-                    {entry.txHash ? " · tx" : ""}
+          items.map(({ bot, kind: botKind }) => {
+            const open = (bot as Partial<PaperBot>).unrealisedUsd;
+            return (
+              <Pressable key={bot.id} onPress={() => onOpenBot(bot.id, botKind)} accessibilityRole="button" accessibilityLabel={`Open ${bot.name}`} style={({ pressed }) => [styles.botRow, pressed && styles.pressed]}>
+                <View style={styles.botTop}>
+                  <Text style={styles.botName} numberOfLines={1}>
+                    {bot.name.toUpperCase()}
                   </Text>
-                </Pressable>
-              ))}
-
-              <View style={styles.actions}>
-                <Pressable
-                  onPress={() => void toggle(bot, server)}
-                  style={({ pressed }) => [styles.action, { backgroundColor: bot.enabled ? tone.paper : tone.coral }, pressed && styles.pressed]}
-                >
-                  <Text style={styles.actionLabel}>{bot.enabled ? "Stop" : "Start"}</Text>
-                </Pressable>
-                <Pressable onPress={() => void discard(bot, server)} style={({ pressed }) => [styles.action, styles.actionQuiet, pressed && styles.pressed]}>
-                  <Text style={styles.actionQuietLabel}>Delete</Text>
-                </Pressable>
-              </View>
-            </ToneCard>
-          ))
+                  <Tag label={botKind === "live" ? "Live" : botKind === "paper" ? "Paper" : "In app"} />
+                  <Tag label={bot.status} dot={statusDot(bot)} />
+                </View>
+                <Text style={styles.muted} numberOfLines={1}>
+                  {bot.card.legs.map((leg) => `${leg.direction === "long" ? "Long" : "Short"} ${leg.symbol} ${leg.leverage}x`).join(" · ")} · {usd(bot.card.marginUsd)}
+                </Text>
+                <View style={styles.botBottom}>
+                  <Text style={[styles.pnl, { color: bot.realizedPnlUsd + (open ?? 0) >= 0 ? dark.green : dark.red }]}>
+                    {usd(bot.realizedPnlUsd + (open ?? 0))}
+                  </Text>
+                  <Text style={styles.muted} numberOfLines={1}>
+                    {bot.lastCheck ? bot.lastCheck.message : "Not started yet"}
+                  </Text>
+                </View>
+              </Pressable>
+            );
+          })
         )}
-        </>
+
+        <Pressable onPress={() => setAdvanced(!advanced)} style={styles.advancedToggle}>
+          <Text style={styles.advancedLabel}>{advanced ? "−" : "+"} Rule strategies: backtest, paper and live</Text>
+        </Pressable>
+        {advanced && (
+          <>
+            <StrategyLab initialSymbol={labSymbol} onOpenAsset={onOpenAsset} onLive={() => setLiveKey((k) => k + 1)} />
+            <PaperBots onOpenAsset={onOpenAsset} />
+            <LiveBots refreshKey={liveKey} onOpenAsset={onOpenAsset} />
+          </>
         )}
       </ScrollView>
 
@@ -342,41 +305,47 @@ export function Bots({ name, labSymbol, onSelectTab, onOpenAsset, onOpenBot }: B
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: dark.paper },
-  content: { paddingHorizontal: space.lg, gap: space.lg },
+  content: { paddingHorizontal: space.lg, gap: space.md },
   pressed: { opacity: 0.75 },
-  messageRow: { flexDirection: "row", alignItems: "flex-start", gap: space.md },
-  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: tone.violet, alignItems: "center", justifyContent: "center" },
-  bubble: { flex: 1, padding: space.md, borderRadius: 20, borderTopLeftRadius: 6, backgroundColor: tone.raised },
-  bubbleText: { fontFamily: family.regular, fontSize: 14, lineHeight: 21, color: dark.ink },
-  ideas: { alignItems: "flex-end", gap: space.sm },
+  statusRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
+  dot: { width: 10, height: 10, borderRadius: 5 },
+  cardTitle: { fontFamily: family.semibold, fontSize: 18, letterSpacing: -0.4, color: dark.ink },
+  messageRow: { flexDirection: "row", alignItems: "flex-start", gap: space.sm },
+  messageMe: { justifyContent: "flex-end" },
+  avatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: tone.violet, alignItems: "center", justifyContent: "center" },
+  bubble: { flexShrink: 1, padding: space.md, borderRadius: 18, borderTopLeftRadius: 6, backgroundColor: tone.raised },
+  bubbleMe: { backgroundColor: tone.lime, borderTopLeftRadius: 18, borderTopRightRadius: 6 },
+  bubbleText: { fontFamily: family.regular, fontSize: 14, lineHeight: 20, color: dark.ink },
+  bubbleMeText: { color: tone.ink },
+  ideas: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
   idea: { paddingVertical: space.sm, paddingHorizontal: space.md, borderRadius: 999 },
   ideaText: { fontFamily: family.medium, fontSize: 13, color: tone.ink },
-  modes: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  modeNote: { flex: 1, fontFamily: family.regular, fontSize: 12, lineHeight: 16, color: dark.muted },
   inputRow: { flexDirection: "row", alignItems: "center", gap: space.sm, padding: space.xs, borderRadius: 999, backgroundColor: dark.paper },
-  input: { flex: 1, minHeight: touch, fontFamily: family.regular, fontSize: 14, color: dark.ink, paddingHorizontal: space.sm },
+  input: { flex: 1, minHeight: touch, fontFamily: family.regular, fontSize: 14, color: dark.ink, paddingHorizontal: space.md },
+  send: { minHeight: touch, paddingHorizontal: space.lg, borderRadius: 999, backgroundColor: tone.violet, alignItems: "center", justifyContent: "center" },
+  sendLabel: { fontFamily: family.semibold, fontSize: 14, color: "#ffffff" },
   hint: { fontFamily: family.regular, fontSize: 12, lineHeight: 18, color: dark.muted },
-  section: { fontFamily: family.semibold, fontSize: 22, letterSpacing: -0.8, color: dark.ink, marginTop: space.sm },
+  draftTitle: { fontFamily: family.semibold, fontSize: 22, letterSpacing: -0.6, color: tone.ink },
+  tags: { gap: 2 },
+  draftLeg: { fontFamily: family.medium, fontSize: 14, color: tone.ink },
+  fields: { flexDirection: "row", gap: space.sm },
+  field: { flex: 1, gap: 4 },
+  fieldLabel: { fontFamily: family.regular, fontSize: 11, color: "rgba(20, 24, 26, 0.65)" },
+  fieldInput: { fontFamily: family.semibold, fontSize: 16, color: tone.ink, padding: space.sm, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.55)" },
+  pills: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
+  startButton: { minHeight: 52, borderRadius: 26, backgroundColor: tone.ink, alignItems: "center", justifyContent: "center" },
+  startLabel: { fontFamily: family.semibold, fontSize: 16, color: "#ffffff" },
+  section: { fontFamily: family.semibold, fontSize: 20, letterSpacing: -0.6, color: dark.ink, marginTop: space.sm },
   empty: { fontFamily: family.regular, fontSize: 13, color: dark.muted },
-  botHead: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  botName: { flex: 1, fontFamily: family.semibold, fontSize: 18, letterSpacing: -0.6, color: dark.ink },
-  tags: { flexDirection: "row", flexWrap: "wrap", gap: space.xs },
-  stats: { flexDirection: "row", gap: space.sm },
-  stat: { flex: 1, padding: space.md, borderRadius: 18, backgroundColor: tone.raised, gap: 2 },
-  statLabel: { fontFamily: family.regular, fontSize: 11, color: dark.muted },
-  statValue: { fontFamily: family.medium, fontSize: 15, color: dark.ink },
-  rules: { flexDirection: "row", gap: space.sm },
-  rule: { flex: 1, gap: space.xs },
-  smallInput: { fontFamily: family.regular, fontSize: 14, color: dark.ink, padding: space.sm, borderRadius: 12, backgroundColor: tone.raised },
-  muted: { fontFamily: family.regular, fontSize: 12, lineHeight: 18, color: dark.muted },
+  botRow: { padding: space.md, borderRadius: 20, backgroundColor: tone.card, gap: space.xs },
+  botTop: { flexDirection: "row", alignItems: "center", gap: space.sm },
+  botName: { flex: 1, fontFamily: family.semibold, fontSize: 16, letterSpacing: -0.4, color: dark.ink },
+  botBottom: { flexDirection: "row", alignItems: "center", gap: space.md },
+  pnl: { fontFamily: family.semibold, fontSize: 15 },
+  muted: { flexShrink: 1, fontFamily: family.regular, fontSize: 12, lineHeight: 17, color: dark.muted },
+  down: { color: dark.red },
   depositNote: { padding: space.md, borderRadius: 16, backgroundColor: "rgba(123, 115, 240, 0.16)" },
   depositNoteText: { fontFamily: family.regular, fontSize: 13, lineHeight: 19, color: dark.ink },
-  log: { fontFamily: family.regular, fontSize: 11, color: dark.muted },
-  logAction: { color: dark.ink },
-  down: { color: dark.red },
-  actions: { flexDirection: "row", gap: space.sm },
-  action: { flex: 1, minHeight: touch + space.xs, borderRadius: 999, alignItems: "center", justifyContent: "center" },
-  actionLabel: { fontFamily: family.semibold, fontSize: 14, color: tone.ink },
-  actionQuiet: { backgroundColor: tone.raised },
-  actionQuietLabel: { fontFamily: family.medium, fontSize: 14, color: dark.muted },
+  advancedToggle: { paddingVertical: space.md },
+  advancedLabel: { fontFamily: family.medium, fontSize: 14, color: dark.muted },
 });
