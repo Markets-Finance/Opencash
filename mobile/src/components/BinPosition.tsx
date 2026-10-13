@@ -6,6 +6,7 @@ import { closePosition, loadCandles, type CandleRangeKey, type MarketData } from
 import { dark, family, space, touch } from "../theme";
 import { AssetMark, LegStack } from "./AssetMark";
 import { LineChart } from "./LineChart";
+import { ProtectSheet } from "./ProtectSheet";
 import { tone } from "./ui";
 
 function usd(value: number): string {
@@ -35,6 +36,7 @@ export function BinPosition({ bin, held, data, trader, onBack, onAdd, onOpenAsse
   const [series, setSeries] = useState<{ time: number; value: number }[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [protecting, setProtecting] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -79,6 +81,11 @@ export function BinPosition({ bin, held, data, trader, onBack, onAdd, onOpenAsse
     ]);
   }
 
+  const protectLegs = (() => {
+    const legs = view.legs.map((leg) => ({ symbol: leg.symbol, direction: leg.direction, leverage: Math.max(1, Math.round((leg.units * leg.mark) / (leg.margin || 1))), weightBps: Math.round(leg.allocationPct * 100) }));
+    if (legs.length > 0) legs[legs.length - 1]!.weightBps += 10000 - legs.reduce((sum, leg) => sum + leg.weightBps, 0);
+    return legs;
+  })();
   const up = view.pnl >= 0;
   const color = up ? dark.green : dark.red;
 
@@ -144,9 +151,13 @@ export function BinPosition({ bin, held, data, trader, onBack, onAdd, onOpenAsse
         {status !== null && <Text style={styles.muted}>{status}</Text>}
       </ScrollView>
 
+      {protecting && <ProtectSheet visible title={`${bin.name} guard`} legs={protectLegs} marginUsd={view.margin} allowTarget={false} onClose={() => setProtecting(false)} />}
       <View style={[styles.footer, { paddingBottom: insets.bottom + space.md }]}>
         <Pressable onPress={onAdd} disabled={busy} style={({ pressed }) => [styles.primary, pressed && { opacity: 0.8 }]}>
           <Text style={styles.primaryLabel}>Add to this bin</Text>
+        </Pressable>
+        <Pressable onPress={() => setProtecting(true)} disabled={busy} style={({ pressed }) => [styles.secondary, pressed && { opacity: 0.8 }]}>
+          <Text style={styles.secondaryLabel}>Stop loss for all legs</Text>
         </Pressable>
         <Pressable onPress={confirmClose} disabled={busy} style={({ pressed }) => [styles.secondary, pressed && { opacity: 0.8 }]}>
           <Text style={styles.secondaryLabel}>{busy ? "Working…" : "Close all legs"}</Text>

@@ -55,3 +55,24 @@ export async function startLiveFromCard(card: Bot["card"], mode: BotMode, onStep
   await actServerBot(created.id, "enable");
   return "Live bot started. It trades from the server, even when the app is closed.";
 }
+
+export type ProtectLeg = { symbol: string; direction: "long" | "short"; leverage: number; weightBps: number };
+
+export async function protectPosition(name: string, legs: ProtectLeg[], marginUsd: number, stopLossPct: number, takeProfitPct: number | undefined, onStep: (text: string) => void): Promise<string> {
+  const status = await loadServerBots();
+  if (!status.hasKey) await turnOnServerRunning(onStep);
+  onStep("Approve the protection with your passkey…");
+  const card: Bot["card"] = {
+    name,
+    thesis: "Stop and target on a position you already hold",
+    kind: legs.length === 1 ? "directional" : "basket",
+    marginUsd,
+    legs,
+    stopLossPct,
+    ...(takeProfitPct !== undefined && legs.length === 1 ? { takeProfitPct } : {}),
+  };
+  const created = await createServerBot(card, "guard");
+  onStep("Placing the stop on Perpl…");
+  await actServerBot(created.id, "enable");
+  return legs.length > 1 && takeProfitPct !== undefined ? "Stop is on Perpl. A target needs a single-market position, so it was skipped." : "Protection is on. The stop and target now rest on Perpl.";
+}

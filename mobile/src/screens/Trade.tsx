@@ -6,6 +6,7 @@ import { peek, remember } from "../lib/memo";
 import { toolbox } from "../lib/bots";
 import { AssetMark } from "../components/AssetMark";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
+import { ProtectSheet } from "../components/ProtectSheet";
 import { Insights } from "../components/Insights";
 import { LiveBots } from "../components/LiveBots";
 import { PaperBots } from "../components/PaperBots";
@@ -43,6 +44,7 @@ export function Trade({ trader, labSymbol = null, onOpenAsset, onSelectTab }: Tr
   const [status, setStatus] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"assets" | "insights" | "strategies">(labSymbol !== null ? "strategies" : "assets");
+  const [protecting, setProtecting] = useState<OpenPosition | null>(null);
   const [liveKey, setLiveKey] = useState(0);
   const [grades, setGrades] = useState<Record<string, LiquidityGrade>>({});
 
@@ -142,9 +144,17 @@ export function Trade({ trader, labSymbol = null, onOpenAsset, onSelectTab }: Tr
                   <Tag label={`Entry ${px(entry.position.entryPrice)}`} />
                   <Tag label={`Margin ${usd(entry.position.deposit)} AUSD`} />
                 </View>
-                <Pressable disabled={busy} onPress={() => void close(entry)} style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}>
-                  <Text style={styles.closeLabel}>Close position</Text>
-                </Pressable>
+                <View style={styles.positionActions}>
+                  <Pressable onPress={() => onOpenAsset(entry.market.symbol)} style={({ pressed }) => [styles.smallButton, pressed && styles.pressed]}>
+                    <Text style={styles.closeLabel}>Add</Text>
+                  </Pressable>
+                  <Pressable onPress={() => setProtecting(entry)} style={({ pressed }) => [styles.smallButton, pressed && styles.pressed]}>
+                    <Text style={styles.closeLabel}>Stop / target</Text>
+                  </Pressable>
+                  <Pressable disabled={busy} onPress={() => void close(entry)} style={({ pressed }) => [styles.smallButton, pressed && styles.pressed]}>
+                    <Text style={styles.closeLabel}>Close</Text>
+                  </Pressable>
+                </View>
               </ToneCard>
             );
           })
@@ -220,6 +230,16 @@ export function Trade({ trader, labSymbol = null, onOpenAsset, onSelectTab }: Tr
         )}
       </ScrollView>
 
+      {protecting !== null && (
+        <ProtectSheet
+          visible
+          title={`${protecting.position.positionType === perpl.OrderType.OpenLong ? "Long" : "Short"} ${protecting.market.symbol} guard`}
+          legs={[{ symbol: protecting.market.symbol, direction: protecting.position.positionType === perpl.OrderType.OpenLong ? "long" : "short", leverage: Math.max(1, Math.round((protecting.position.lots / 10 ** protecting.market.lotDecimals * protecting.position.entryPrice) / (protecting.position.deposit || 1))), weightBps: 10000 }]}
+          marginUsd={protecting.position.deposit}
+          allowTarget
+          onClose={() => setProtecting(null)}
+        />
+      )}
       <TabBar active="trade" onSelect={onSelectTab} />
     </View>
   );
@@ -243,6 +263,8 @@ const styles = StyleSheet.create({
   positionHead: { flexDirection: "row", alignItems: "center", gap: space.md },
   positionTitle: { flex: 1, fontFamily: family.semibold, fontSize: 18, letterSpacing: -0.5, color: dark.ink },
   pnl: { fontFamily: family.semibold, fontSize: 16 },
+  positionActions: { flexDirection: "row", gap: space.sm },
+  smallButton: { flex: 1, minHeight: touch, borderRadius: 999, backgroundColor: tone.raised, alignItems: "center", justifyContent: "center" },
   closeButton: { minHeight: touch, borderRadius: 999, backgroundColor: tone.raised, alignItems: "center", justifyContent: "center" },
   closeLabel: { fontFamily: family.medium, fontSize: 14, color: dark.ink },
   section: { fontFamily: family.semibold, fontSize: 22, letterSpacing: -0.8, color: dark.ink },

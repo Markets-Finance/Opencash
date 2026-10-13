@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { estimateExecution, liquidationDistancePct, slippageWarnBps, type MarketSnapshot, type perpl, type TradingAccount } from "shared";
 import { toolbox } from "../lib/bots";
 import { loadAccount, loadSpendableBalance, openBin, singleLegBin, sizeBinFor, type MarketData } from "../lib/perpl";
+import { protectPosition } from "../lib/serverBots";
 import { dark, family, space, touch, track } from "../theme";
 import { LeverageSlider, riskColor } from "./LeverageSlider";
 import { CardTitle, ToneCard, tone } from "./ui";
@@ -40,6 +41,8 @@ type OrderTicketProps = {
 export function OrderTicket({ trader, data, symbol, initialDirection, onOpened }: OrderTicketProps) {
   const [direction, setDirection] = useState<Direction>(initialDirection ?? "long");
   const [leverage, setLeverage] = useState(3);
+  const [stopText, setStopText] = useState("");
+  const [targetText, setTargetText] = useState("");
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<Status>(null);
@@ -120,7 +123,19 @@ export function OrderTicket({ trader, data, symbol, initialDirection, onOpened }
         setStatus({ text: step === "orders" ? "Opening position…" : "Funding account…", failed: false }),
       );
       setStatus({ text: `${direction === "long" ? "Long" : "Short"} ${symbol} is open.`, failed: false });
+      const stopValue = Number(stopText);
+      const targetValue = Number(targetText);
+      if (stopValue > 0 || targetValue > 0) {
+        try {
+          const text = await protectPosition(`${direction === "long" ? "Long" : "Short"} ${symbol} guard`, [{ symbol, direction, leverage: level, weightBps: 10000 }], preview.sized.margin, stopValue > 0 ? stopValue : 10, targetValue > 0 ? targetValue : undefined, (step) => setStatus({ text: step, failed: false }));
+          setStatus({ text, failed: false });
+        } catch (error) {
+          setStatus({ text: `Position is open, but the stop and target could not be set: ${errorText(error)}`, failed: true });
+        }
+      }
       setAmount("");
+      setStopText("");
+      setTargetText("");
       onOpened();
     } catch (error) {
       setStatus({ text: errorText(error), failed: true });
@@ -197,6 +212,15 @@ export function OrderTicket({ trader, data, symbol, initialDirection, onOpened }
         )}
       </View>
 
+      <View style={styles.box}>
+        <Text style={styles.fieldLabel}>STOP LOSS % AND TARGET % (OPTIONAL)</Text>
+        <View style={styles.stopRow}>
+          <TextInput value={stopText} onChangeText={setStopText} keyboardType="decimal-pad" placeholder="Stop e.g. 10" placeholderTextColor={dark.muted} style={styles.stopInput} />
+          <TextInput value={targetText} onChangeText={setTargetText} keyboardType="decimal-pad" placeholder="Target e.g. 20" placeholderTextColor={dark.muted} style={styles.stopInput} />
+        </View>
+        <Text style={styles.muted}>Percent of margin. They rest on Perpl after one approval.</Text>
+      </View>
+
       {leg !== null && (
         <Text style={styles.muted}>
           {leg.lots} {symbol} · {usd(leg.notional)} position
@@ -256,6 +280,8 @@ const styles = StyleSheet.create({
   costWarn: { color: dark.red },
   warn: { fontFamily: family.regular, fontSize: 12, lineHeight: 18, color: dark.red },
   fieldLabel: { fontFamily: family.medium, fontSize: 11, letterSpacing: track(11, 0.12), color: dark.muted },
+  stopRow: { flexDirection: "row", gap: space.sm },
+  stopInput: { flex: 1, minHeight: touch, paddingHorizontal: space.md, borderRadius: 14, backgroundColor: dark.paper, fontFamily: family.medium, fontSize: 15, color: dark.ink },
   input: { flex: 1, fontFamily: family.light, fontSize: 38, letterSpacing: track(38, -0.04), color: dark.ink, padding: 0 },
   primary: { minHeight: touch + space.md, borderRadius: 999, alignItems: "center", justifyContent: "center" },
   primaryLabel: { fontFamily: family.semibold, fontSize: 15, color: tone.ink },
