@@ -8,6 +8,8 @@ import { changeClass, legStackHtml, markForSymbol, px, query, usd } from "./dom"
 import { getMarketData, getPositions } from "./market";
 import { requireTrader } from "./state";
 
+const lowGasMon = 0.08;
+
 const featuredSymbols = [...new Set(bins.flatMap((bin) => bin.legs.map((leg) => leg.symbol)))];
 
 function listedSymbols(data: MarketData): string[] {
@@ -119,7 +121,15 @@ export async function initHome() {
     updatedEl.textContent = new Date().toLocaleTimeString();
   }
 
+  async function checkGas() {
+    const warning = query("[data-gas-warning]");
+    const mon = await terminal.loadNativeBalance(trader.address).catch(() => null);
+    warning.hidden = mon === null || mon >= lowGasMon;
+    warning.textContent = `Low on gas: ${(mon ?? 0).toFixed(3)} MON left. Add MON to ${trader.address.slice(0, 6)}…${trader.address.slice(-4)} so your next trades go through.`;
+  }
+
   async function refreshBalance() {
+    void checkGas();
     const data = await getMarketData();
     const summary = await terminal.loadSummary(trader.address, data);
     paintTotal(summary.total, summary.unrealizedPnl, summary.symbols.length ? summary.symbols : listedSymbols(data));

@@ -7,8 +7,11 @@ import { AssetMark, LegStack } from "../components/AssetMark";
 import { VolumeBars } from "../components/VolumeBars";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { ArrowBadge, CardTitle, RoundButton, Tag, ToneCard, tone } from "../components/ui";
+import { terminal } from "../lib/perpl";
 import { loadMarkets, loadPositions, loadSummary, type MarketData, type PortfolioSummary } from "../lib/perpl";
 import { dark, family, space, touch, track } from "../theme";
+
+const lowGasMon = 0.08;
 
 const featuredSymbols = [...new Set(bins.flatMap((bin) => bin.legs.map((leg) => leg.symbol)))];
 
@@ -43,9 +46,11 @@ export function Home({ trader, name, onSelectTab, onOpenAsset, onDeposit, onSend
   const [positions, setPositions] = useState<BinPosition[] | null>(null);
   const [data, setData] = useState<MarketData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mon, setMon] = useState<number | null>(null);
 
   useEffect(() => {
     let live = true;
+    terminal.loadNativeBalance(trader.address).then((next) => live && setMon(next)).catch(() => {});
     loadMarkets()
       .then((markets) => {
         if (live) setData(markets);
@@ -119,6 +124,12 @@ export function Home({ trader, name, onSelectTab, onOpenAsset, onDeposit, onSend
             </Pressable>
           </View>
         </View>
+
+        {mon !== null && mon < lowGasMon && (
+          <Text style={styles.gasWarning}>
+            Low on gas: {mon.toFixed(3)} MON left. Add MON to {trader.address.slice(0, 6)}…{trader.address.slice(-4)} so your next trades go through.
+          </Text>
+        )}
 
         {summary !== null && summary.symbols.length === 0 && <VolumeBars />}
 
@@ -198,6 +209,7 @@ export function Home({ trader, name, onSelectTab, onOpenAsset, onDeposit, onSend
 }
 
 const styles = StyleSheet.create({
+  gasWarning: { padding: space.md, borderRadius: 14, backgroundColor: "rgba(240, 190, 90, 0.14)", color: "#f5d28a", fontFamily: family.regular, fontSize: 13, lineHeight: 19, overflow: "hidden" },
   screen: { flex: 1, backgroundColor: dark.paper },
   content: { paddingHorizontal: space.lg, gap: space.lg },
   pressed: { opacity: 0.75 },

@@ -928,3 +928,5 @@
 .acct-page__head { display: flex; align-items: center; gap: 14px; }
 .acct-page__title { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
 .acct-page .back-btn { margin: 0; }
+
+.gas-warning { margin: 12px 0 0; padding: 12px 14px; border-radius: 14px; background: rgba(240, 190, 90, 0.14); color: #f5d28a; font-size: 13px; line-height: 1.45; }
