@@ -32,9 +32,9 @@ function statusDot(bot: Bot): string {
   return dark.muted;
 }
 
-type BotsProps = { name?: string; labSymbol?: string | null; onSelectTab: (key: TabKey) => void; onOpenAsset: (symbol: string) => void };
+type BotsProps = { name?: string; labSymbol?: string | null; onSelectTab: (key: TabKey) => void; onOpenAsset: (symbol: string) => void; onOpenBot: (id: string, server: boolean) => void };
 
-export function Bots({ name, labSymbol, onSelectTab, onOpenAsset }: BotsProps) {
+export function Bots({ name, labSymbol, onSelectTab, onOpenAsset, onOpenBot }: BotsProps) {
   const insets = useSafeAreaInsets();
   const [bots, setBots] = useState<Bot[]>([]);
   const [prompt, setPrompt] = useState("");
@@ -228,14 +228,14 @@ export function Bots({ name, labSymbol, onSelectTab, onOpenAsset }: BotsProps) {
         ) : (
           items.map(({ bot, server }) => (
             <ToneCard key={bot.id}>
-              <View style={styles.botHead}>
+              <Pressable onPress={() => onOpenBot(bot.id, server)} accessibilityRole="button" accessibilityLabel={`Open ${bot.name}`} style={styles.botHead}>
                 <Text style={styles.botName} numberOfLines={1}>
-                  {bot.name.toUpperCase()}
+                  {bot.name.toUpperCase()} ↗
                 </Text>
                 <Tag label={server ? "Server" : "In app"} />
                 <Tag label={bot.mode === "auto" ? "Auto" : "Guard"} />
                 <Tag label={bot.status} dot={statusDot(bot)} />
-              </View>
+              </Pressable>
               <View style={styles.tags}>
                 {bot.card.legs.map((leg) => (
                   <Pressable key={`${leg.symbol}-${leg.direction}`} onPress={() => onOpenAsset(leg.symbol)} accessibilityLabel={`Trade ${leg.symbol}`}>
