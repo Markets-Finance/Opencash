@@ -95,7 +95,7 @@ export async function startFromCard(card: Bot["card"], mode: BotMode, kind: "pap
   const trader = requireTrader();
   const account = await terminal.loadAccount(trader.address).catch(() => null);
   const free = account === null ? 0 : account.balance - account.lockedBalance;
-  if (free < botMinUsd) throw new Error(`A live bot trades from your Perpl account and needs at least $${botMinUsd} there. You have $${free.toFixed(2)}. Move AUSD in from Account, Move between accounts, or test it in Paper first.`);
+  if (free < botMinUsd) throw new Error(`A live bot trades from your Perpl account and needs at least $${botMinUsd} there. You have $${free.toFixed(2)}. Move AUSD in from Account, Move between wallet and Perpl, or test it in Paper first.`);
   if (card.marginUsd > free) throw new Error(`This bot wants $${card.marginUsd} margin but Perpl has $${free.toFixed(2)} free. Lower the margin.`);
   const status = await call<{ hasKey: boolean }>(`/bots?owner=${trader.address}&network=${network}`);
   if (!status.hasKey) await turnOnServerRunning(onStep);
@@ -122,7 +122,7 @@ async function paintFundingNote() {
   const perpl = account === null ? 0 : account.balance - account.lockedBalance;
   note.hidden = perpl >= botMinUsd;
   if (wallet >= botMinUsd && perpl < botMinUsd) {
-    note.textContent = `You have $${wallet.toFixed(2)} AUSD in your wallet but $${perpl.toFixed(2)} in Perpl. Bots trade from your Perpl account, so move at least $${botMinUsd} there first (Account, Move between accounts).`;
+    note.textContent = `You have $${wallet.toFixed(2)} AUSD in your wallet but $${perpl.toFixed(2)} in Perpl. Bots trade from your Perpl account, so move at least $${botMinUsd} there first (Account, Move between wallet and Perpl).`;
   } else {
     note.textContent = `Deposit at least $${botMinUsd} before starting a bot. A bot skips any order under $${botMinUsd}, so it can't trade with less.`;
   }

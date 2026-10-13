@@ -42,6 +42,8 @@ function settled<Args extends unknown[], Result>(action: (...args: Args) => Prom
 }
 
 export const openBin = settled(terminal.openBin);
+export const depositToPerpl = settled(terminal.depositToPerpl);
+export const withdrawToWallet = settled(terminal.withdrawToWallet);
 export const closePosition = settled(terminal.closePosition);
 export const sendAsset = settled(terminal.sendAsset);
 export const withdrawFromPerpl = settled(terminal.withdrawFromPerpl);

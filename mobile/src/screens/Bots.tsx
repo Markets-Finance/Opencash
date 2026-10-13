@@ -201,7 +201,7 @@ export function Bots({ name, onSelectTab, onOpenAsset, onOpenBot }: BotsProps) {
           <View style={styles.depositNote}>
             <Text style={styles.depositNoteText}>
               {funding.wallet >= botMinUsd
-                ? `You have ${usd(funding.wallet)} AUSD in your wallet but ${usd(funding.perpl)} in Perpl. Live bots trade from Perpl, so move at least $${botMinUsd} there first (Account, Move between accounts). Paper bots need no money.`
+                ? `You have ${usd(funding.wallet)} AUSD in your wallet but ${usd(funding.perpl)} in Perpl. Live bots trade from Perpl, so move at least $${botMinUsd} there first (Account, Move between wallet and Perpl). Paper bots need no money.`
                 : `Live bots need at least $${botMinUsd} in Perpl. Paper bots need no money.`}
             </Text>
           </View>

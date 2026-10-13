@@ -117,7 +117,7 @@ export function BotDetail({ trader, botId, kind, onBack, onOpenAsset, onSelectTa
               {
                 ok: balance === null ? null : balance >= bot.card.marginUsd,
                 label: `Perpl account holds ${usd(bot.card.marginUsd)} AUSD (now ${balance === null ? "…" : usd(balance)})`,
-                fix: "Move AUSD into your Perpl account from Account, Move between accounts, or open any trade once to fund it.",
+                fix: "Move AUSD into your Perpl account from Account, Move between wallet and Perpl, or open any trade once to fund it.",
               },
             ]),
         { ok: bot.enabled, label: "The bot is started", fix: "Tap Start below." },

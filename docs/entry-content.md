@@ -76,7 +76,7 @@ No test login is needed. OpenCash uses passkeys, so you create your own account 
 2. From another chain? Open **Deposit**, then **Another chain**, pick what you hold, get the one-time address and send. The app converts USDC to AUSD.
 3. Open **Bins**, pick one (for example Chain Gang), enter an amount of at least the minimum shown, and tap **Trade this bin**. Review the legs and confirm. Every leg opens in one transaction.
 4. Open the same bin again. It now shows your position: average entry, allocation, P&L per asset and a chart. **Add to this bin** or **Close all legs** from there.
-5. For a live bot, move at least $10 into Perpl (Account, Move between accounts), go to **Bots**, draft a bot, choose **Live**, and approve once with your passkey.
+5. For a live bot, move at least $10 into Perpl (Account, Move between wallet and Perpl), go to **Bots**, draft a bot, choose **Live**, and approve once with your passkey.
 
 **Mera features to check**
 

@@ -110,7 +110,7 @@ function openSend() {
 function openMove() {
   const trader = requireTrader();
   const panel = openModal(`
-    <div class="modal__head"><span class="modal__title">Move between accounts</span><button type="button" class="modal__close" data-close>×</button></div>
+    <div class="modal__head"><span class="modal__title">Move between wallet and Perpl</span><button type="button" class="modal__close" data-close>×</button></div>
     <p class="quote-line">Your wallet holds AUSD. Your Perpl account holds the AUSD you trade with. Both belong to ${esc(short(trader.address))}.</p>
     <div class="send-sources" data-move-ways></div>
     <label class="field"><span>Amount <b>(AUSD)</b></span><div class="field-row"><input data-move-amount type="number" min="0" step="any" placeholder="0" /><button type="button" class="btn" data-move-max>Max</button></div></label>

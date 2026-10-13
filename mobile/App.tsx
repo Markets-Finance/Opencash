@@ -167,6 +167,8 @@ export default function App() {
           onAuthenticated={onAuthenticated}
           onInitialised={() => setScreen("home")}
           onSelectTab={goTab}
+          onDeposit={() => setScreen("deposit")}
+          onSend={() => setScreen("send")}
         />
       ) : screen === "bins" ? (
         <Bins

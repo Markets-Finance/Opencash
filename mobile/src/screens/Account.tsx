@@ -15,6 +15,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { addressForKey, checkReferral, isDevAuth, perpl, redeemReferral, type TradingAccount } from "shared";
 import { PassCard } from "../components/PassCard";
 import { AuthShell, type AuthMode } from "../components/AuthShell";
+import { DeleteDataPanel } from "../components/DeleteDataPanel";
+import { MovePanel } from "../components/MovePanel";
 import { NotesPanel } from "../components/NotesPanel";
 import { ImportPanel } from "../components/ImportPanel";
 import { SettingIcon, type SettingIconKind } from "../components/SettingIcon";
@@ -31,7 +33,7 @@ const profileKey = "opencash.profile";
 
 export type Profile = { name: string; email: string; variant?: number };
 
-type Panel = "profile" | "history" | "wallets" | "phrase" | "network" | "import" | "notes" | null;
+type Panel = "profile" | "history" | "wallets" | "phrase" | "network" | "import" | "notes" | "move" | "delete" | null;
 
 const failures: Record<string, string> = {
   PRF_UNAVAILABLE:
@@ -108,6 +110,8 @@ export function Account({
   onProfileChange,
   onInitialised,
   onSelectTab,
+  onDeposit,
+  onSend,
 }: {
   initialAccount: TradingAccount | null;
   initialProfile: Profile | null;
@@ -116,6 +120,8 @@ export function Account({
   onProfileChange: (profile: Profile | null) => void;
   onInitialised: () => void;
   onSelectTab: (key: TabKey) => void;
+  onDeposit: () => void;
+  onSend: () => void;
 }) {
   const insets = useSafeAreaInsets();
   const [account, setAccount] = useState<TradingAccount | null>(initialAccount);
@@ -353,6 +359,8 @@ export function Account({
     network: "Network",
     import: "Import a wallet",
     notes: "Private notes",
+    move: "Wallet and Perpl",
+    delete: "Delete my data",
   };
 
   useEffect(() => {
@@ -434,6 +442,8 @@ export function Account({
             </View>
           )}
           {panel === "notes" && account !== null && <NotesPanel trader={account} />}
+          {panel === "move" && account !== null && <MovePanel trader={account} />}
+          {panel === "delete" && account !== null && <DeleteDataPanel trader={account} onDeleted={signOut} />}
           {panel === "import" && account !== null && <ImportPanel trader={account} onDone={() => void run(signIn, "Signing in with your passkey…")} />}
           {panel === "phrase" && (
             <View style={styles.card}>
@@ -559,6 +569,13 @@ export function Account({
                     <Row icon="history" tint="lime" label="History" onPress={() => openPanel("history")} last />
                   </View>
 
+                  <Text style={styles.sectionLabel}>Money</Text>
+                  <View style={styles.group}>
+                    <Row icon="wallet" tint="lime" label="Add funds" onPress={onDeposit} />
+                    <Row icon="exit" tint="blue" label="Send" onPress={onSend} />
+                    <Row icon="wallet" tint="purple" label="Move between wallet and Perpl" onPress={() => openPanel("move")} last />
+                  </View>
+
                   <Text style={styles.sectionLabel}>Security</Text>
                   <View style={styles.group}>
                     <Row icon="lock" tint="peach" label="Recovery phrase" onPress={() => openPanel("phrase")} last />
@@ -568,6 +585,11 @@ export function Account({
                   <View style={styles.group}>
                     <Row icon="globe" tint="blue" label="Network" value={networkName} onPress={() => openPanel("network")} />
                     <Row icon="exit" tint="peach" label="Sign out" onPress={signOut} last />
+                  </View>
+
+                  <Text style={styles.sectionLabel}>Danger zone</Text>
+                  <View style={styles.group}>
+                    <Row icon="lock" tint="peach" label="Delete my data" onPress={() => openPanel("delete")} last />
                   </View>
                 </>
               )}
