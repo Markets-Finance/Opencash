@@ -26,6 +26,10 @@ import AccountCard from "../AccountCard.astro";
           <span class="setting-row__icon setting-row__icon--blue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14" stroke-width="2" fill="none"/></svg></span>
           <span class="setting-row__label">Import a wallet</span><span class="setting-row__chev" aria-hidden="true">›</span>
         </button>
+        <button type="button" class="setting-row" data-acct-open="notes">
+          <span class="setting-row__icon setting-row__icon--blue"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="16" rx="2" stroke-width="2" fill="none"/><path d="M9 9h6M9 13h6" stroke-width="2" fill="none"/></svg></span>
+          <span class="setting-row__label">Private notes</span><span class="setting-row__chev" aria-hidden="true">›</span>
+        </button>
         <button type="button" class="setting-row" data-acct-open="keys">
           <span class="setting-row__icon setting-row__icon--lime"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="3.5" stroke-width="2" fill="none"/><path d="M11.5 12H20m-3 0v3m-3-3v2" stroke-width="2" fill="none"/></svg></span>
           <span class="setting-row__label">Perpl trade key</span><span class="setting-row__chev" aria-hidden="true">›</span>
@@ -115,6 +119,14 @@ import AccountCard from "../AccountCard.astro";
         <button type="button" class="btn btn--primary" data-import-go>Import with my passkey</button>
         <button type="button" class="btn" data-import-remove hidden>Use my passkey account instead</button>
         <p class="status-line" data-import-status></p>
+      </div>
+
+      <div class="card acct-page" data-acct-pane="notes" hidden>
+        <div class="acct-page__head"><button type="button" class="back-btn" data-acct-back><span aria-hidden="true">←</span> Account</button><span class="acct-page__title">Private notes</span></div>
+        <p class="agent__hint">Written here, locked with a key your passkey makes, then stored on our server as ciphertext. We cannot read it. Sign in with the same passkey on any device to open it.</p>
+        <label class="field"><span>Notes</span><textarea data-notes-text rows="8" maxlength="20000" placeholder="Trade ideas, levels, reminders"></textarea></label>
+        <button type="button" class="btn btn--primary" data-notes-save>Lock and save</button>
+        <p class="status-line" data-notes-status></p>
       </div>
 
       <div class="card acct-page" data-acct-pane="keys" hidden>

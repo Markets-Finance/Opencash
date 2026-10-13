@@ -7,6 +7,7 @@ import { deleteIdentityLink } from "../identity/route.js";
 import { deleteLive, listLive } from "../live/store.js";
 import { deleteSnapshotsForOwner } from "../portfolio/store.js";
 import { deleteBot, listBots } from "../runner/store.js";
+import { deleteVaultFor } from "../vault/store.js";
 import { removeKey } from "../runner/vault.js";
 import { deleteStrategyData } from "../strategies/store.js";
 
@@ -36,6 +37,7 @@ export function registerAccountRoute(app: FastifyInstance): void {
         sharedStrategies: strategyData.strategies,
         copyRecords: strategyData.copies,
         xLink: await deleteIdentityLink(owner),
+        vault: await deleteVaultFor(owner),
       },
     };
   });

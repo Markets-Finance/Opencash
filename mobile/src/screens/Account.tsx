@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { addressForKey, isDevAuth, perpl, type TradingAccount } from "shared";
 import { PassCard } from "../components/PassCard";
 import { AuthShell, type AuthMode } from "../components/AuthShell";
+import { NotesPanel } from "../components/NotesPanel";
 import { ImportPanel } from "../components/ImportPanel";
 import { SettingIcon, type SettingIconKind } from "../components/SettingIcon";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
@@ -27,7 +28,7 @@ const profileKey = "opencash.profile";
 
 export type Profile = { name: string; email: string; variant?: number };
 
-type Panel = "profile" | "history" | "wallets" | "phrase" | "network" | "import" | null;
+type Panel = "profile" | "history" | "wallets" | "phrase" | "network" | "import" | "notes" | null;
 
 const failures: Record<string, string> = {
   PRF_UNAVAILABLE:
@@ -337,6 +338,7 @@ export function Account({
     phrase: "Recovery phrase",
     network: "Network",
     import: "Import a wallet",
+    notes: "Private notes",
   };
 
   useEffect(() => {
@@ -415,6 +417,7 @@ export function Account({
               </Text>
             </View>
           )}
+          {panel === "notes" && account !== null && <NotesPanel trader={account} />}
           {panel === "import" && account !== null && <ImportPanel trader={account} onDone={() => void run(signIn, "Signing in with your passkey…")} />}
           {panel === "phrase" && (
             <View style={styles.card}>
@@ -532,6 +535,7 @@ export function Account({
                   <View style={styles.group}>
                     <Row icon="profile" tint="purple" label="Profile" onPress={() => openPanel("profile")} />
                     <Row icon="wallet" tint="blue" label="Wallets" onPress={() => openPanel("wallets")} />
+                    <Row icon="profile" tint="purple" label="Private notes" onPress={() => openPanel("notes")} />
                     <Row icon="wallet" tint="lime" label="Import a wallet" onPress={() => openPanel("import")} />
                     <Row icon="history" tint="lime" label="History" onPress={() => openPanel("history")} last />
                   </View>

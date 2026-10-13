@@ -1,4 +1,4 @@
-import { addressForKey, tradeKeyRemoveMessage } from "shared";
+import { addressForKey, loadVault, notesNamespace, saveVault, tradeKeyRemoveMessage } from "shared";
 import { network } from "../../data/network";
 import { avatars, errorText, query } from "./dom";
 import { openDeleteAccount } from "./deleteAccount";
@@ -62,6 +62,7 @@ export function initAccount() {
   document.querySelectorAll<HTMLButtonElement>("[data-acct-back]").forEach((button) => button.addEventListener("click", () => showPage(null)));
   initImportPane();
   initKeyPane();
+  initNotesPane();
   document.querySelector("[data-delete-account]")?.addEventListener("click", openDeleteAccount);
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !home.offsetParent) showPage(null);
@@ -195,4 +196,41 @@ function initKeyPane() {
   });
 
   document.querySelector('[data-acct-open="keys"]')?.addEventListener("click", () => void load());
+}
+
+function initNotesPane() {
+  const trader = requireTrader();
+  const text = query<HTMLTextAreaElement>("[data-notes-text]");
+  const save = query<HTMLButtonElement>("[data-notes-save]");
+  const status = query("[data-notes-status]");
+  const say = (message: string, tone = "") => {
+    status.textContent = message;
+    status.dataset.tone = tone;
+  };
+
+  async function restore() {
+    say("Unlocking…");
+    try {
+      const saved = await loadVault(backend, trader, notesNamespace);
+      text.value = saved ?? "";
+      say(saved === null ? "Nothing saved yet." : "Unlocked on this device.");
+    } catch (error) {
+      say(errorText(error), "error");
+    }
+  }
+
+  save.addEventListener("click", async () => {
+    save.disabled = true;
+    say("Locking…");
+    try {
+      await saveVault(backend, trader, notesNamespace, text.value);
+      say("Locked and saved. Only your passkey can open it.");
+    } catch (error) {
+      say(errorText(error), "error");
+    } finally {
+      save.disabled = false;
+    }
+  });
+
+  document.querySelector('[data-acct-open="notes"]')?.addEventListener("click", () => void restore());
 }

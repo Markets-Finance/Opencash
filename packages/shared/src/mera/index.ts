@@ -31,3 +31,4 @@ export {
   seal,
 } from "./namespace.js";
 export type { SealedRecord } from "./namespace.js";
+export { loadVault, notesNamespace, saveVault } from "./vault.js";

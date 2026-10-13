@@ -54,6 +54,8 @@ export type TradingAccount = {
   account: LocalAccount<"mera">;
   sealProfile(plaintext: string): SealedRecord;
   openProfile(record: SealedRecord): string;
+  seal(namespace: string, plaintext: string): SealedRecord;
+  open(namespace: string, record: SealedRecord): string;
   end(): void;
 };
 
@@ -102,6 +104,7 @@ function deriveTradingAccount(prfOutput: Uint8Array, imported?: Uint8Array): Tra
   const session = imported ? createSecp256k1SigningSession({ privateKey: imported }) : passkeySession;
   if (imported) passkeySession.end();
   const profileKey = deriveNamespaceKey(prfOutput, profileNamespace);
+  const root = Uint8Array.from(prfOutput);
 
   seed.fill(0);
   node.wipePrivateData();
@@ -116,7 +119,25 @@ function deriveTradingAccount(prfOutput: Uint8Array, imported?: Uint8Array): Tra
     sealProfile: (plaintext) =>
       sealPlaintext(profileKey, profileNamespace, plaintext),
     openProfile: (record) => openSealed(profileKey, record),
+    seal: (namespace, plaintext) => {
+      const key = deriveNamespaceKey(root, namespace);
+      try {
+        return sealPlaintext(key, namespace, plaintext);
+      } finally {
+        key.fill(0);
+      }
+    },
+    open: (namespace, record) => {
+      if (record.namespace !== namespace) throw new Error("record belongs to another namespace");
+      const key = deriveNamespaceKey(root, namespace);
+      try {
+        return openSealed(key, record);
+      } finally {
+        key.fill(0);
+      }
+    },
     end: () => {
+      root.fill(0);
       profileKey.fill(0);
       session.end();
     },

@@ -23,8 +23,12 @@ export {
   relyingPartyId,
   relyingPartyName,
   revealRecoveryPhrase,
+  open as openSealed,
   seal,
   signInTradingAccount,
+  loadVault,
+  notesNamespace,
+  saveVault,
 } from "./mera/index.js";
 export type {
   CredentialStore,
