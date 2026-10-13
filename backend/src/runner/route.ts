@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { isUnlockedOwner } from "../referral/store.js";
 import { isAddress, verifyMessage, type Address } from "viem";
 import {
   botActionMessage,
@@ -128,7 +129,7 @@ export function registerBotRoute(app: FastifyInstance): void {
     if (issues.length > 0) return reply.status(400).send({ error: issues.join(" ") });
     const digest = botDigest(card, mode);
     if (!(await signedBy(owner, botMandateMessage(owner, net, digest, issuedAt), signature))) return reply.status(401).send({ error: "signature does not match the owner" });
-    if ((await listBots({ owner, net })).length + (await listLive({ owner, net })).length >= maxBotsPerOwner) return reply.status(400).send({ error: `At most ${maxBotsPerOwner} bots per wallet` });
+    if ((await listBots({ owner, net })).length + (await listLive({ owner, net })).length >= maxBotsPerOwner && !(await isUnlockedOwner(owner))) return reply.status(400).send({ error: `At most ${maxBotsPerOwner} bots per wallet` });
     const bot: ServerBot = { ...createBot(card.name, mode, card, Date.now()), owner, net, mandate: { digest, signature, issuedAt } };
     await saveBot(bot);
     return publicBot(bot);

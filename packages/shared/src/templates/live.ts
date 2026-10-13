@@ -76,13 +76,13 @@ export function liveDigest(spec: LiveSpec): string {
   return bytesToHex(sha256(utf8.decode(JSON.stringify(body))));
 }
 
-export function liveIssues(spec: LiveSpec, marketMaxLeverage: number = maxLiveLeverage): string[] {
+export function liveIssues(spec: LiveSpec, marketMaxLeverage: number = maxLiveLeverage, leverageCap: number = maxLiveLeverage): string[] {
   const issues: string[] = [];
   if (!liveTemplates.includes(spec.templateId)) issues.push(`${spec.templateId} cannot run live.`);
   if (!spec.symbol) issues.push("Choose a market.");
   if (!liveResolutions.includes(spec.resolution)) issues.push(`Candle size must be one of ${liveResolutions.join(", ")} seconds.`);
   if (!Number.isFinite(spec.allocationUsd) || spec.allocationUsd < minLiveAllocationUsd) issues.push(`Allocation must be at least $${minLiveAllocationUsd}.`);
-  const cap = Math.min(maxLiveLeverage, marketMaxLeverage);
+  const cap = Math.min(leverageCap, marketMaxLeverage);
   if (!Number.isInteger(spec.leverage) || spec.leverage < 1 || spec.leverage > cap) issues.push(`Leverage must be a whole number from 1 to ${cap}.`);
   return issues;
 }

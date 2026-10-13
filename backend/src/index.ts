@@ -2,6 +2,7 @@ import cors from "@fastify/cors";
 import Fastify from "fastify";
 import { chainFor, networkFrom } from "shared";
 import { registerAccountRoute } from "./account/route.js";
+import { registerReferralRoute } from "./referral/route.js";
 import { registerVaultRoute } from "./vault/route.js";
 import { registerAnalyticsRoute } from "./analytics/route.js";
 import { registerBoardsRoute } from "./boards/route.js";
@@ -47,6 +48,7 @@ registerBotRoute(app);
 registerLiveRoute(app);
 registerAccountRoute(app);
 registerVaultRoute(app);
+registerReferralRoute(app);
 
 app.listen({ port, host: "0.0.0.0" }).catch((err) => {
   app.log.error(err);

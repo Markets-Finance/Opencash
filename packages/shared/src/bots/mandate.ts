@@ -44,6 +44,10 @@ export function vaultWriteMessage(owner: string, namespace: string, digest: stri
   return `Save my encrypted vault on OpenCash.\nOwner: ${owner.toLowerCase()}\nNamespace: ${namespace}\nDigest: ${digest}\nIssued: ${iso(issuedAt)}`;
 }
 
+export function referralMessage(owner: string, code: string, issuedAt: number): string {
+  return `Redeem referral code ${code.trim().toUpperCase()} on OpenCash.\nOwner: ${owner.toLowerCase()}\nIssued: ${iso(issuedAt)}`;
+}
+
 export function vaultDigest(record: unknown): string {
   return bytesToHex(sha256(utf8.decode(JSON.stringify(record))));
 }

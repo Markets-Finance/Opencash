@@ -26,6 +26,8 @@ type AuthShellProps = {
   missing?: boolean;
   returning?: boolean;
   onUseOther?: () => void;
+  referral?: string;
+  onReferral?: (value: string) => void;
 };
 
 const copy: Record<AuthMode, { title: string; hint: string; go: string }> = {
@@ -37,7 +39,7 @@ const copy: Record<AuthMode, { title: string; hint: string; go: string }> = {
 const white = "#ffffff";
 const line = "rgba(255, 255, 255, 0.14)";
 
-export function AuthShell({ mode, dev, name, email, status, failed, onName, onEmail, onSwitch, onSubmit, importOpen = false, importAddress = null, importKey = "", onImportOpen, onImportKey, missing = false, returning = false, onUseOther }: AuthShellProps) {
+export function AuthShell({ mode, dev, name, email, status, failed, onName, onEmail, onSwitch, onSubmit, importOpen = false, importAddress = null, importKey = "", onImportOpen, onImportKey, missing = false, returning = false, onUseOther, referral = "", onReferral }: AuthShellProps) {
   const insets = useSafeAreaInsets();
   const draw = useRef(new Animated.Value(0)).current;
   const fields = mode !== "signin";
@@ -100,6 +102,12 @@ export function AuthShell({ mode, dev, name, email, status, failed, onName, onEm
                 style={styles.input}
               />
             </View>
+            {mode === "create" && onReferral && (
+              <View style={styles.field}>
+                <Text style={styles.label}>Referral code (optional)</Text>
+                <TextInput value={referral} onChangeText={onReferral} placeholder="Unlocks every limit" placeholderTextColor="rgba(255,255,255,0.28)" autoCapitalize="characters" autoCorrect={false} style={styles.input} />
+              </View>
+            )}
             {mode === "create" && onImportOpen && (
               <Pressable onPress={() => onImportOpen(!importOpen)} hitSlop={8}>
                 <Text style={styles.switch}>{importOpen ? "− Skip wallet import" : "+ Have a wallet? Import it"}</Text>

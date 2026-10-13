@@ -1,5 +1,5 @@
 import { isMeraError } from "@category-labs/mera";
-import { addressForKey, type TradingAccount } from "shared";
+import { addressForKey, checkReferral, redeemReferral, type TradingAccount } from "shared";
 import { createAccount, signIn } from "../mera";
 import { avatars, query } from "./dom";
 import { startDotLoader } from "./dotLoader";
@@ -30,6 +30,8 @@ function hasStoredAccount(): boolean {
   }
 }
 const importPreview = query("[data-gate-import-preview]");
+
+const backend = import.meta.env.PUBLIC_BACKEND_URL ?? "http://localhost:8787";
 
 type Mode = "signin" | "create";
 
@@ -106,7 +108,7 @@ export function initGate(onEnter: () => void) {
     if (creating) form.querySelector("input")?.focus();
   }
 
-  async function run(action: () => Promise<TradingAccount>, pending: string, profile?: { name: string; email: string }) {
+  async function run(action: () => Promise<TradingAccount>, pending: string, profile?: { name: string; email: string }, referral = "") {
     missingEl.hidden = true;
     say(pending);
     goButton.disabled = true;
@@ -115,6 +117,7 @@ export function initGate(onEnter: () => void) {
       const account = await action();
       await loader.resolve();
       session.trader = account;
+      if (referral !== "") await redeemReferral(backend, account, referral).catch(() => {});
       if (profile) localStorage.setItem("opencash.profile", JSON.stringify(account.sealProfile(JSON.stringify({ ...profile, variant: 0 }))));
       gate.hidden = true;
       dash.hidden = false;
@@ -169,6 +172,7 @@ export function initGate(onEnter: () => void) {
     const data = new FormData(form);
     const name = String(data.get("name") ?? "").trim();
     const email = String(data.get("email") ?? "").trim();
+    const referral = String(data.get("referral") ?? "").trim();
     const bringing = importToggle.checked;
     if (bringing && addressForKey(String(data.get("importKey") ?? "")) === null) {
       say("Enter a valid private key, or untick the wallet box.", "error");
@@ -176,13 +180,14 @@ export function initGate(onEnter: () => void) {
     }
     const importKey = bringing ? { privateKey: String(data.get("importKey") ?? "") } : undefined;
     void run(async () => {
+      if (referral !== "") await checkReferral(backend, referral);
       try {
         return await createAccount(email, name, importKey);
       } finally {
         const field = form.querySelector<HTMLInputElement>('[name="importKey"]');
         if (field) field.value = "";
       }
-    }, bringing ? "Creating your passkey and importing your wallet…" : "Creating your passkey…", { name, email });
+    }, bringing ? "Creating your passkey and importing your wallet…" : "Creating your passkey…", { name, email }, referral);
   });
   setMode("signin");
 }

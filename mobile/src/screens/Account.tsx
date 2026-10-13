@@ -11,13 +11,14 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { addressForKey, isDevAuth, perpl, type TradingAccount } from "shared";
+import { addressForKey, checkReferral, isDevAuth, perpl, redeemReferral, type TradingAccount } from "shared";
 import { PassCard } from "../components/PassCard";
 import { AuthShell, type AuthMode } from "../components/AuthShell";
 import { NotesPanel } from "../components/NotesPanel";
 import { ImportPanel } from "../components/ImportPanel";
 import { SettingIcon, type SettingIconKind } from "../components/SettingIcon";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
+import { backendUrl } from "../lib/config";
 import { createAccount, hasStoredAccount, revealPhrase, signIn } from "../lib/mera";
 import { startDotLoader } from "../lib/dotLoader";
 import { setBackOverride } from "../lib/nav";
@@ -128,6 +129,7 @@ export function Account({
   const [panel, setPanel] = useState<Panel>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [importKey, setImportKey] = useState("");
+  const [referral, setReferral] = useState("");
   const [missing, setMissing] = useState(false);
   const working = useRef(false);
   const [returning, setReturning] = useState(false);
@@ -286,8 +288,14 @@ export function Account({
       setStatus("Enter a valid private key, or skip the import.");
       return;
     }
+    const code = referral.trim();
     void run(
-      () => createAccount(entered.email, entered.name, key === "" ? undefined : { privateKey: key }),
+      async () => {
+        if (code !== "") await checkReferral(backendUrl, code);
+        const made = await createAccount(entered.email, entered.name, key === "" ? undefined : { privateKey: key });
+        if (code !== "") await redeemReferral(backendUrl, made, code).catch(() => {});
+        return made;
+      },
       "Creating a passkey…",
       entered,
     ).finally(() => setImportKey(""));
@@ -378,6 +386,8 @@ export function Account({
         importKey={importKey}
         onImportOpen={account === null ? (open) => { setImportOpen(open); setMissing(false); if (open) setFormMode("create"); } : undefined}
         onImportKey={setImportKey}
+        referral={referral}
+        onReferral={setReferral}
         onSwitch={account === null ? () => { setMissing(false); setFailed(false); setStatus(""); setFormMode(formMode === "create" ? null : "create"); } : undefined}
         onSubmit={() => { setMissing(false); if (authMode === "signin") void run(signIn, "Waiting for your passkey…"); else submit(); }}
         missing={missing}

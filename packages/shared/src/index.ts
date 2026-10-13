@@ -26,8 +26,11 @@ export {
   open as openSealed,
   seal,
   signInTradingAccount,
+  checkReferral,
+  isUnlocked,
   loadVault,
   notesNamespace,
+  redeemReferral,
   saveVault,
 } from "./mera/index.js";
 export type {
