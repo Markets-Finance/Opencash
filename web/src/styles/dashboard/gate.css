@@ -17,7 +17,7 @@
   overflow: hidden;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
-.gate__brand { position: absolute; top: 32px; left: 36px; display: inline-flex; align-items: center; gap: 6px; font-size: 22px; font-weight: 650; letter-spacing: -0.04em; z-index: 2; }
+.gate__brand { color: inherit; text-decoration: none; position: absolute; top: 32px; left: 36px; display: inline-flex; align-items: center; gap: 6px; font-size: 22px; font-weight: 650; letter-spacing: -0.04em; z-index: 2; }
 .gate__brand svg { width: 20px; height: 20px; }
 .gate__brand em { font-style: normal; opacity: 0.55; font-weight: 400; }
 .gate__legal { position: absolute; left: 36px; bottom: 28px; font-size: 11px; color: rgba(255, 255, 255, 0.35); z-index: 2; }
