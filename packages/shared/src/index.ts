@@ -35,6 +35,8 @@ export type {
 } from "./mera/index.js";
 export * from "./hood/index.js";
 export * as perpl from "./perpl/index.js";
+export * as dotmatrix from "./dotmatrix/index.js";
+export { createLoaderEngine, type LoaderEngine } from "./dotmatrix/engine.js";
 export * from "./bins/index.js";
 export * from "./terminal/index.js";
 export * from "./analysis/index.js";

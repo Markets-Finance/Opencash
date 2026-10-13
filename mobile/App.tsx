@@ -23,6 +23,7 @@ import { Send } from "./src/screens/Send";
 import { Trade } from "./src/screens/Trade";
 import type { TabKey } from "./src/components/TabBar";
 import { Home } from "./src/screens/Home";
+import { DotLoader } from "./src/components/DotLoader";
 import { UpdatePrompt } from "./src/components/UpdatePrompt";
 import {
   loadCollateralBalance,
@@ -190,6 +191,7 @@ export default function App() {
           onOpenAsset={openAsset}
         />
       ) : null}
+      <DotLoader />
       <UpdatePrompt />
     </SafeAreaProvider>
   );

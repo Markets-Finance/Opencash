@@ -18,6 +18,7 @@ import { ImportPanel } from "../components/ImportPanel";
 import { SettingIcon, type SettingIconKind } from "../components/SettingIcon";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { createAccount, revealPhrase, signIn } from "../lib/mera";
+import { startDotLoader } from "../lib/dotLoader";
 import { setBackOverride } from "../lib/nav";
 import { dark, family, space, track } from "../theme";
 import { deployment, label as networkName } from "../lib/network";
@@ -157,6 +158,7 @@ export function Account({
   ) {
     setFailed(false);
     setStatus(pending);
+    const loader = startDotLoader();
     try {
       const next = await action();
       const resolved = created ?? (await loadProfile(next));
@@ -166,6 +168,7 @@ export function Account({
           JSON.stringify(next.sealProfile(JSON.stringify(created))),
         );
       }
+      await loader.resolve();
       setAccount(next);
       onAuthenticated(next);
       setProfile(resolved);
@@ -177,7 +180,10 @@ export function Account({
           ? "Signed in. This device has no profile yet — save one below. Your address is already correct."
           : "Signed in. Your profile was decrypted locally; the key came from your passkey.",
       );
+      if (resolved !== null) onInitialised();
+      await loader.dismiss();
     } catch (error) {
+      await loader.dismiss();
       explain(error);
     }
   }

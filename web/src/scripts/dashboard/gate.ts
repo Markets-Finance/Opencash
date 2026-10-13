@@ -2,6 +2,7 @@ import { isMeraError } from "@category-labs/mera";
 import { addressForKey, type TradingAccount } from "shared";
 import { createAccount, signIn } from "../mera";
 import { avatars, query } from "./dom";
+import { startDotLoader } from "./dotLoader";
 import { session } from "./state";
 
 const gate = query("[data-gate]");
@@ -94,15 +95,19 @@ export function initGate(onEnter: () => void) {
     missingEl.hidden = true;
     say(pending);
     goButton.disabled = true;
+    const loader = startDotLoader();
     try {
       const account = await action();
+      await loader.resolve();
       session.trader = account;
       if (profile) localStorage.setItem("opencash.profile", JSON.stringify(account.sealProfile(JSON.stringify({ ...profile, variant: 0 }))));
       gate.hidden = true;
       dash.hidden = false;
       await paintIdentity(account);
       onEnter();
+      await loader.dismiss();
     } catch (error) {
+      await loader.dismiss();
       if (mode === "signin" && isMeraError(error) && error.code === "PASSKEY_OPERATION_FAILED") {
         say("");
         missingEl.hidden = false;
