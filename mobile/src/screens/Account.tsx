@@ -1,7 +1,7 @@
 import { isMeraError } from "@category-labs/mera";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Clipboard from "expo-clipboard";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -128,6 +128,7 @@ export function Account({
   const [importOpen, setImportOpen] = useState(false);
   const [importKey, setImportKey] = useState("");
   const [missing, setMissing] = useState(false);
+  const working = useRef(false);
 
   function explain(error: unknown) {
     setFailed(true);
@@ -162,6 +163,8 @@ export function Account({
     pending: string,
     created: Profile | null = null,
   ) {
+    if (working.current) return;
+    working.current = true;
     setFailed(false);
     setStatus(pending);
     const loader = startDotLoader();
@@ -191,6 +194,8 @@ export function Account({
     } catch (error) {
       await loader.dismiss();
       explain(error);
+    } finally {
+      working.current = false;
     }
   }
 
