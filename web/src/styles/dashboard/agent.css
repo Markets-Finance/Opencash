@@ -337,3 +337,5 @@
 .newbot { grid-template-columns: minmax(0, 1fr); }
 .agent-panel { grid-template-rows: auto 1fr auto auto auto; }
 .agent-panel .agent-chat { align-self: stretch; }
+
+.share-card { width: 100%; max-width: 340px; margin-top: 12px; }

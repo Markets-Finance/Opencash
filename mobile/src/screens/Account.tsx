@@ -4,6 +4,7 @@ import * as Clipboard from "expo-clipboard";
 import { useEffect, useRef, useState } from "react";
 import {
   Pressable,
+  Share,
   ScrollView,
   StyleSheet,
   Text,
@@ -521,6 +522,9 @@ export function Account({
             copied={copied}
             onCopyAddress={() => void copyAddress()}
           />
+        )}
+        {account !== null && (
+          <Action label="Share on X" emphasis="primary" onPress={() => void Share.share({ message: "I'm trading on OpenCash. Join me: https://monad.opencash.in" })} />
         )}
 
         <View style={styles.actions}>

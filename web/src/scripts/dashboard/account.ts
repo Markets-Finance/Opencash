@@ -5,6 +5,7 @@ import { openDeleteAccount } from "./deleteAccount";
 import { clearImport, importWallet } from "../mera";
 import { initIdentity } from "./identity";
 import { disconnect } from "./tabs";
+import { initShareCard } from "./shareCard";
 import { requireTrader } from "./state";
 
 type Profile = { name: string; email: string; variant?: number };
@@ -63,6 +64,7 @@ export function initAccount() {
   initImportPane();
   initKeyPane();
   initNotesPane();
+  initShareCard();
   document.querySelector("[data-delete-account]")?.addEventListener("click", openDeleteAccount);
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !home.offsetParent) showPage(null);
