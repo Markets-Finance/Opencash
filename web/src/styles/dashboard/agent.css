@@ -279,3 +279,13 @@
 .trade-agent__row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 16px; border-radius: 16px; background: rgba(123, 115, 240, 0.14); font-size: 13px; }
 .trade-agent__row b { font-weight: 600; }
 .trade-agent__row span { opacity: 0.75; }
+
+.agent__bots { gap: 10px; padding: 16px 18px; }
+.agent__bots .bots__list:empty { display: none; }
+.agent__bots .bots__list { gap: 10px; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); }
+.agent__bots .bot { padding: 12px 14px; gap: 6px; border-radius: 16px; background: rgba(255, 255, 255, 0.05); box-shadow: none; border: 0; }
+.agent__bots .bot__head { gap: 6px; }
+.agent__bots .bot__log { max-height: 120px; overflow: auto; }
+.agent__bots .empty { padding: 14px 16px; margin: 0; border-radius: 14px; font-size: 13px; grid-column: 1 / -1; }
+.agent__bots .agent__hint:empty { display: none; }
+.agent__chatcard { padding: 16px 18px; }
