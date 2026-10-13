@@ -5,7 +5,7 @@ import { createBot, createBotRuntime, type Bot, type BotMode, type BotRuntime } 
 import { terminal } from "../../perpl";
 import { query } from "../dom";
 import { toolbox } from "../agent/session";
-import { requireTrader } from "../state";
+import { requireTrader, session } from "../state";
 import { publishStrategy } from "../strategies";
 import { initLiveBots, paintLiveBots, startLiveBots } from "../lab/live";
 import { localBotStorage } from "./storage";
@@ -88,7 +88,25 @@ export function exitsFor(symbol: string) {
     .map((bot) => ({ stopLossPct: bot.card.stopLossPct, takeProfitPct: bot.card.takeProfitPct }));
 }
 
+const botMinUsd = 10;
+
+async function paintFundingNote() {
+  const note = document.querySelector<HTMLElement>("[data-bots-note]");
+  const trader = session.trader;
+  if (!note || !trader) return;
+  const [account, wallet] = await Promise.all([terminal.loadAccount(trader.address).catch(() => null), terminal.loadCollateralBalance(trader.address).catch(() => 0)]);
+  const perpl = account === null ? 0 : account.balance - account.lockedBalance;
+  note.hidden = perpl >= botMinUsd;
+  if (wallet >= botMinUsd && perpl < botMinUsd) {
+    note.textContent = `You have $${wallet.toFixed(2)} AUSD in your wallet but $${perpl.toFixed(2)} in Perpl. Bots trade from your Perpl account, so move at least $${botMinUsd} there first (Account, Move between accounts).`;
+  } else {
+    note.textContent = `Deposit at least $${botMinUsd} before starting a bot. A bot skips any order under $${botMinUsd}, so it can't trade with less.`;
+  }
+}
+
 export function initBots() {
+  document.addEventListener("balance:changed", () => void paintFundingNote());
+  setTimeout(() => void paintFundingNote(), 1500);
   const list = query("[data-bot-list]");
   const hint = () => query("[data-bot-hint]");
   initLiveBots(

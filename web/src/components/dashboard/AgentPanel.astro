@@ -6,7 +6,7 @@ import StrategyLab from "./StrategyLab.astro";
     <button type="button" data-switch="strategies" aria-pressed="true"><i class="switcher__dot switcher__dot--butter"></i>Strategies</button>
     <button type="button" data-switch="agent" aria-pressed="false"><i class="switcher__dot switcher__dot--violet"></i>Agent</button>
   </div>
-  <p class="bots-note">Deposit at least $10 before starting a bot. A bot skips any order under $10, so it can't trade with less.</p>
+  <p class="bots-note" data-bots-note>Deposit at least $10 before starting a bot. A bot skips any order under $10, so it can't trade with less.</p>
   <div data-pane="agent:strategies"><StrategyLab /></div>
   <div data-pane="agent:agent" hidden>
   <div class="agent">

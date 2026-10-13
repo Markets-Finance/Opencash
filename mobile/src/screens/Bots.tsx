@@ -8,13 +8,15 @@ import { PaperBots } from "../components/PaperBots";
 import { StrategyLab } from "../components/StrategyLab";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { CardTitle, RoundButton, ScreenTitle, SelectPill, Switcher, Tag, ToneCard, tone } from "../components/ui";
-import { draftBot, draftCard, removeBot, setBotEnabled, subscribeBots, updateBotRules } from "../lib/bots";
+import { loadAccount, loadCollateralBalance } from "../lib/perpl";
+import { currentTrader, draftBot, draftCard, removeBot, setBotEnabled, subscribeBots, updateBotRules } from "../lib/bots";
 import { actServerBot, createServerBot, loadServerBots } from "../lib/serverBots";
 import { ServerRunning } from "../components/ServerRunning";
 import { dark, family, space, touch } from "../theme";
 import { explorer as networkExplorer } from "../lib/network";
 
 const explorer = `${networkExplorer}/tx/`;
+const botMinUsd = 10;
 
 const ideas = [
   { text: "long MON short BTC 2x $100 stop 8%", fill: tone.sky },
@@ -46,6 +48,15 @@ export function Bots({ name, labSymbol, onSelectTab, onOpenAsset, onOpenBot }: B
   const [runOn, setRunOn] = useState<"server" | "app">("server");
   const [serverBots, setServerBots] = useState<Bot[]>([]);
   const [hasKey, setHasKey] = useState(true);
+  const [funding, setFunding] = useState({ perpl: 0, wallet: 0 });
+
+  useEffect(() => {
+    const trader = currentTrader();
+    if (!trader) return;
+    void Promise.all([loadAccount(trader.address).catch(() => null), loadCollateralBalance(trader.address).catch(() => 0)]).then(([account, wallet]) =>
+      setFunding({ perpl: account === null ? 0 : account.balance - account.lockedBalance, wallet }),
+    );
+  }, []);
 
   useEffect(() => subscribeBots(setBots), []);
 
@@ -127,9 +138,15 @@ export function Bots({ name, labSymbol, onSelectTab, onOpenAsset, onOpenBot }: B
         showsVerticalScrollIndicator={false}
       >
         <ScreenTitle title="Bots" right={<Tag label={`${running} running`} dot={running > 0 ? dark.green : dark.muted} />} />
-        <View style={styles.depositNote}>
-          <Text style={styles.depositNoteText}>Deposit at least $10 before starting a bot. A bot skips any order under $10, so it can't trade with less.</Text>
-        </View>
+        {funding.perpl < botMinUsd && (
+          <View style={styles.depositNote}>
+            <Text style={styles.depositNoteText}>
+              {funding.wallet >= botMinUsd
+                ? `You have ${usd(funding.wallet)} AUSD in your wallet but ${usd(funding.perpl)} in Perpl. Bots trade from your Perpl account, so move at least $${botMinUsd} there first (Account, Move between accounts).`
+                : `Deposit at least $${botMinUsd} before starting a bot. A bot skips any order under $${botMinUsd}, so it can't trade with less.`}
+            </Text>
+          </View>
+        )}
 
         <Switcher
           items={[
