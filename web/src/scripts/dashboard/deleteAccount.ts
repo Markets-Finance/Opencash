@@ -94,6 +94,7 @@ export function openDeleteAccount() {
       await clearImport();
       for (const key of Object.keys(localStorage)) if (key.startsWith("opencash.")) localStorage.removeItem(key);
       sessionStorage.clear();
+      sessionStorage.setItem("opencash.signedout", "1");
       statusEl.textContent = "Done. Everything is deleted. Signing you out…";
       setTimeout(() => location.reload(), 1800);
     } catch (error) {

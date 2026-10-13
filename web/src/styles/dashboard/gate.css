@@ -94,3 +94,6 @@
 [data-gate-import-block]:not([hidden]) { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 14px; }
 [data-gate-import-fields]:not([hidden]) { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 24px; }
 [data-gate-import-fields] .gate__hint { grid-column: 1 / -1; margin: 0; }
+
+.gate__link { background: none; border: 0; padding: 12px 0; font: inherit; font-size: 13px; color: rgba(255, 255, 255, 0.7); cursor: pointer; text-align: center; }
+.gate__link:hover { color: #fff; }
