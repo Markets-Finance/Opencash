@@ -28,10 +28,21 @@ export function createLoaderEngine(width: number, height: number, start: number)
   }
 
   function loginDots(): Dot[] {
-    const size = Math.min(pitch, (width - margin * 2) / textWidth(5, 1));
-    const left = (word: string) => (width - textWidth(word.length, size)) / 2;
-    const top = height / 2 - size * 8;
-    return [...textDots("MERA", size, left("MERA"), top), ...textDots("LOGIN", size, left("LOGIN"), top + size * 9)];
+    const available = width - margin * 2;
+    const fit = Math.min(1, (height * 0.7) / (21.5 * pitch));
+    const big = Math.min(pitch * fit, available / textWidth(4, 1));
+    const small = Math.min(pitch * fit, available / textWidth(8, 1));
+    const gap = big * 2.5;
+    const total = 6 * big + gap + 6 * small + gap + 6 * small;
+    const centered = (word: string, size: number) => (width - textWidth(word.length, size)) / 2;
+    const top = height / 2 - total / 2;
+    const middle = top + 6 * big + gap;
+    const bottom = middle + 6 * small + gap;
+    return [
+      ...textDots("MERA", big, centered("MERA", big), top),
+      ...textDots("X", small, centered("X", small), middle),
+      ...textDots("OPENCASH", small, centered("OPENCASH", small), bottom),
+    ];
   }
 
   function counter(percent: number): Dot[] {
