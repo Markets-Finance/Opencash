@@ -7,6 +7,7 @@ import { toolbox } from "./agent/session";
 import { binPulse, flowText, loadPulses, stanceText } from "./nansen";
 import { setCard } from "./agent/card";
 import { errorText, legStackHtml, query, usd } from "./dom";
+import { protectPosition } from "./bots";
 import { initHome } from "./home";
 import { getMarketData, getPositions } from "./market";
 import { closeModal, openModal } from "./modal";
@@ -141,6 +142,10 @@ function openBinModal(bin: Bin, custom = false) {
         <button type="button" class="btn btn--primary" data-bin-more>Add to this bin</button>
         <button type="button" class="btn" data-bin-close-all>Close all legs</button>
       </div>
+      <div class="field-row" style="margin-top:12px">
+        <label class="field"><span>Stop loss % of margin</span><input type="number" min="1" step="any" value="10" data-bin-stop /></label>
+        <button type="button" class="btn" data-bin-protect>Protect all legs</button>
+      </div>
       <p class="status-line" data-bin-position-status></p>`;
 
     const chart = query("[data-bin-chart]", positionEl);
@@ -176,6 +181,31 @@ function openBinModal(bin: Bin, custom = false) {
     query("[data-bin-more]", positionEl).addEventListener("click", () => {
       positionEl.hidden = true;
       formEl.hidden = false;
+    });
+    const protect = query<HTMLButtonElement>("[data-bin-protect]", positionEl);
+    protect.addEventListener("click", async () => {
+      const stop = Number(query<HTMLInputElement>("[data-bin-stop]", positionEl).value);
+      if (!(stop > 0)) return;
+      protect.disabled = true;
+      try {
+        positionStatus.dataset.tone = "";
+        positionStatus.textContent = await protectPosition(
+          `${bin.name} guard`,
+          (() => {
+            const legs = view.legs.map((leg) => ({ symbol: leg.symbol, direction: leg.direction, leverage: Math.max(1, Math.round((leg.units * leg.mark) / (leg.margin || 1))), weightBps: Math.round(leg.allocationPct * 100) }));
+            legs[legs.length - 1]!.weightBps += 10000 - legs.reduce((sum, leg) => sum + leg.weightBps, 0);
+            return legs;
+          })(),
+          view.margin,
+          stop,
+          undefined,
+          (text) => (positionStatus.textContent = text),
+        );
+      } catch (error) {
+        positionStatus.dataset.tone = "error";
+        positionStatus.textContent = errorText(error);
+        protect.disabled = false;
+      }
     });
     const closeAll = query<HTMLButtonElement>("[data-bin-close-all]", positionEl);
     closeAll.addEventListener("click", async () => {

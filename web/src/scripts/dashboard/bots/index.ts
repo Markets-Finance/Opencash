@@ -137,6 +137,28 @@ export function exitsFor(symbol: string) {
     .map((bot) => ({ stopLossPct: bot.card.stopLossPct, takeProfitPct: bot.card.takeProfitPct }));
 }
 
+export type ProtectLeg = { symbol: string; direction: "long" | "short"; leverage: number; weightBps: number };
+
+export async function protectPosition(name: string, legs: ProtectLeg[], marginUsd: number, stopLossPct: number, takeProfitPct: number | undefined, onStep: (text: string) => void): Promise<string> {
+  const trader = requireTrader();
+  const status = await call<{ hasKey: boolean }>(`/bots?owner=${trader.address}&network=${network}`);
+  if (!status.hasKey) await turnOnServerRunning(onStep);
+  onStep("Approve the protection with your passkey…");
+  const card: Bot["card"] = {
+    name,
+    thesis: "Stop and target on a position you already hold",
+    kind: legs.length === 1 ? "directional" : "basket",
+    marginUsd,
+    legs,
+    stopLossPct,
+    ...(takeProfitPct !== undefined && legs.length === 1 ? { takeProfitPct } : {}),
+  };
+  const id = await addBotFromCard(card, "guard");
+  onStep("Placing the stop on Perpl…");
+  await actServerBot(id, "enable");
+  return legs.length > 1 && takeProfitPct !== undefined ? "Stop is on Perpl. A target needs a single-market position, so it was skipped." : "Protection is on. The stop and target now rest on Perpl.";
+}
+
 const botMinUsd = 10;
 
 async function paintFundingNote() {

@@ -3,6 +3,7 @@ import type { Address } from "viem";
 import { contextFor, type Net } from "../analytics/context.js";
 import { heldPositions, marketBook, type HeldPosition } from "../analytics/positions.js";
 import type { ServerBot } from "./store.js";
+import { latestPositionTx } from "./txlookup.js";
 
 export const execWindowBlocks = 10;
 const settleMs = 4000;
@@ -11,6 +12,7 @@ export type Reads = {
   account(): Promise<{ accountId: bigint; balance: number } | null>;
   held(accountId: bigint): Promise<HeldPosition[]>;
   markets(): Promise<perpl.PerpMarket[]>;
+  txSince?(accountId: bigint, fromBlock: number): Promise<string | undefined>;
 };
 
 export function chainReads(net: Net, owner: Address): Reads {
@@ -22,6 +24,7 @@ export function chainReads(net: Net, owner: Address): Reads {
     },
     held: (accountId) => heldPositions(net, accountId),
     markets: async () => (await marketBook(net)).markets,
+    txSince: (accountId, fromBlock) => latestPositionTx(net, accountId, BigInt(fromBlock)).catch(() => undefined),
   };
 }
 
@@ -135,7 +138,7 @@ export function createApiDeps(ctx: AdapterContext): BotDeps {
 
       const held = await ctx.reads.held(mine.accountId);
       const opened = held.filter((position) => sized.legs.some((leg) => leg.leg.symbol === position.symbol && leg.leg.direction === position.side));
-      if (opened.length === sized.legs.length) return {};
+      if (opened.length === sized.legs.length) return { txHash: await ctx.reads.txSince?.(mine.accountId, snap.headBlock) };
       if (opened.length === 0) throw new Error(`Perpl did not fill the order${result.ok ? "" : `: ${failures(result)}`}`);
       await closeAll(opened, mine.accountId, bySymbol);
       await wait(settleMs);
@@ -197,11 +200,12 @@ export function createApiDeps(ctx: AdapterContext): BotDeps {
           stale.map((order) => perpl.cancelSpec({ marketId: order.marketId, accountId: snap.id, orderId: order.id, requestId: ctx.trade.nextRequestId(snap.lastRequestId) })),
         );
       }
+      const fromBlock = (await snapshot(mine.accountId)).headBlock;
       const result = await closeAll(positions, mine.accountId, bySymbol);
       await wait(settleMs);
       const left = matching(card, await ctx.reads.held(mine.accountId));
       if (left.length > 0) throw new Error(`Close did not complete for ${left.map((position) => position.symbol).join(", ")}${result.ok ? "" : `: ${failures(result)}`}`);
-      return {};
+      return { txHash: await ctx.reads.txSince?.(mine.accountId, fromBlock) };
     },
   };
 }

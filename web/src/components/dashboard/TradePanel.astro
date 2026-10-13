@@ -98,6 +98,11 @@ import { label } from "../../data/network";
             <div class="lev__ticks" data-ticket-ticks></div>
             <small class="lev__risk" data-ticket-risk></small>
           </div>
+          <div class="field-row">
+            <label class="field"><span>Stop loss % (optional)</span><input type="number" min="0" step="any" placeholder="e.g. 10" data-ticket-stop /></label>
+            <label class="field"><span>Target % (optional)</span><input type="number" min="0" step="any" placeholder="e.g. 20" data-ticket-target /></label>
+          </div>
+          <p class="quote-line">Stop and target are percent of margin and rest on Perpl once you approve once.</p>
           <p class="quote-line" data-ticket-size></p>
           <div class="cost" data-ticket-cost hidden></div>
           <button type="button" class="btn btn--primary" data-ticket-submit>Place order</button>

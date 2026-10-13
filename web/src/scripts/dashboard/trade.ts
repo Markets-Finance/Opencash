@@ -1,7 +1,8 @@
 import { label as networkName } from "../../data/network";
 import { estimateExecution, liquidationDistancePct, summarizeDepth, perpl, slippageWarnBps, type ExecutionEstimate } from "shared";
 import { singleLegBin, sizeBinFor, terminal, type CandleRangeKey, type OpenPosition } from "../perpl";
-import { exitsFor } from "./bots";
+import { exitsFor, protectPosition } from "./bots";
+import { openModal } from "./modal";
 import { drawCandles } from "./charts";
 import { loadCandles } from "../perplApi";
 import { changeClass, errorText, markForSymbol, px, query, say, usd } from "./dom";
@@ -230,11 +231,21 @@ export async function initTrade() {
                 <td class="cell-muted">${px(entry.position.entryPrice)}</td>
                 <td class="cell-muted">${usd(entry.position.deposit)}</td>
                 <td class="cell-value ${changeClass(entry.position.pnl)}">${usd(entry.position.pnl)}</td>
-                <td><button type="button" class="link-btn" data-close-index="${index}">Close</button></td>
+                <td class="cell-actions"><button type="button" class="link-btn" data-add-index="${index}">Add</button> <button type="button" class="link-btn" data-protect-index="${index}">Stop / target</button> <button type="button" class="link-btn" data-close-index="${index}">Close</button></td>
               </tr>`,
           )
           .join("")}</tbody>
       </table>`;
+    ui.desk.querySelectorAll<HTMLButtonElement>("[data-add-index]").forEach((button) =>
+      button.addEventListener("click", () => {
+        const entry = positions[Number(button.dataset.addIndex)];
+        showAsset(entry.market.symbol);
+        setSide(entry.position.positionType === perpl.OrderType.OpenLong ? "long" : "short");
+      }),
+    );
+    ui.desk.querySelectorAll<HTMLButtonElement>("[data-protect-index]").forEach((button) =>
+      button.addEventListener("click", () => openProtect(positions[Number(button.dataset.protectIndex)])),
+    );
     ui.desk.querySelectorAll<HTMLButtonElement>("[data-close-index]").forEach((button) =>
       button.addEventListener("click", async () => {
         const entry = positions[Number(button.dataset.closeIndex)];
@@ -250,6 +261,32 @@ export async function initTrade() {
         }
       }),
     );
+  }
+
+  function openProtect(entry: OpenPosition) {
+    const long = entry.position.positionType === perpl.OrderType.OpenLong;
+    const leverage = Math.max(1, Math.round(entry.position.deposit > 0 ? (entry.position.lots * entry.position.entryPrice) / entry.position.deposit / 10 ** entry.market.lotDecimals : 1) || 1);
+    const panel = openModal(`
+      <div class="modal__head"><span class="modal__title">${long ? "Long" : "Short"} ${entry.market.symbol}: stop and target</span><button type="button" class="modal__close" data-close>×</button></div>
+      <p class="quote-line">They rest on Perpl, so they work even when this page is closed. Percentages are of your margin (${usd(entry.position.deposit)}). A 10% stop on 2x closes after a 5% price move.</p>
+      <label class="field"><span>Stop loss %</span><input type="number" min="1" step="any" value="10" data-pr-stop /></label>
+      <label class="field"><span>Target % (optional)</span><input type="number" min="0" step="any" placeholder="e.g. 20" data-pr-target /></label>
+      <button type="button" class="btn btn--primary" data-pr-go>Set stop and target</button>
+      <p class="status-line" data-pr-status></p>`);
+    const go = query<HTMLButtonElement>("[data-pr-go]", panel);
+    const status = query("[data-pr-status]", panel);
+    go.addEventListener("click", async () => {
+      const stop = Number(query<HTMLInputElement>("[data-pr-stop]", panel).value);
+      const target = Number(query<HTMLInputElement>("[data-pr-target]", panel).value);
+      if (!(stop > 0)) return say(status, "Enter a stop loss above 0.", "error");
+      go.disabled = true;
+      try {
+        say(status, await protectPosition(`${long ? "Long" : "Short"} ${entry.market.symbol} guard`, [{ symbol: entry.market.symbol, direction: long ? "long" : "short", leverage, weightBps: 10000 }], entry.position.deposit, stop, target > 0 ? target : undefined, (text) => say(status, text)));
+      } catch (error) {
+        say(status, errorText(error), "error");
+        go.disabled = false;
+      }
+    });
   }
 
   async function refresh() {
@@ -396,6 +433,16 @@ export async function initTrade() {
         say(ui.status, step === "orders" ? "Opening position…" : step === "fund" ? "Funding account…" : "Approving AUSD…"),
       );
       say(ui.status, `${side === "long" ? "Long" : "Short"} ${symbol} is open.`);
+      const stop = Number(query<HTMLInputElement>("[data-ticket-stop]").value);
+      const target = Number(query<HTMLInputElement>("[data-ticket-target]").value);
+      if (stop > 0 || target > 0) {
+        try {
+          const leverage = Number(query<HTMLInputElement>("[data-ticket-leverage]").value) || 1;
+          say(ui.status, await protectPosition(`${side === "long" ? "Long" : "Short"} ${symbol} guard`, [{ symbol, direction: side, leverage, weightBps: 10000 }], sizing.sized.margin, stop > 0 ? stop : 10, target > 0 ? target : undefined, (text) => say(ui.status, text)));
+        } catch (error) {
+          say(ui.status, `Position is open, but the stop and target could not be set: ${errorText(error)}`, "error");
+        }
+      }
       ui.margin.value = "";
       renderTicketSize();
       await refresh();
