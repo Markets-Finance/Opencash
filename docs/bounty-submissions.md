@@ -200,33 +200,19 @@ git push legacy monad:monad
 
 Then on GitHub, open Opencash > Settings > Branches and set the default branch to `monad`, so judges land on the right code. Do not force-push over `main`.
 
-**Or in batches by subject.** A push of one commit sends all its ancestors, so run these in order. Each finds the newest commit with that subject and pushes up to it:
+**Or in batches by subject.** A push of one commit sends all its ancestors, so run these in order. Each finds the newest commit with that subject and pushes up to it. The last command pushes everything that is left:
 
 ```bash
 push_to() { git push legacy "$(git log --fixed-strings --grep="$1" -1 --format=%H):refs/heads/monad"; }
 
-push_to "Port web bin fixes"                    # ports from hood: sign-in, import, bins
-push_to "Perpl exchange stops"                  # trigger orders for stops and targets
-push_to "Chart trade overlay"                   # entry, liquidation, stop, target lines
-push_to "Server bots default"                   # bots on the server
-push_to "Dot matrix sign-in loader"             # MERA loader
-push_to "One-tap server running"                # trade-key enrollment
-push_to "Release 1.0.5"                         # passkey fixes
-push_to "Passkey-sealed private notes"          # Mera notes, Neon vault
-push_to "Referral code unlocks bot limits"      # referral codes
-push_to "Privacy policy and terms pages"        # legal pages
-push_to "Gas grant for referral accounts"       # relayer gas grant
-push_to "Fix Perpl key enrollment signing"      # enrollment fix, agent route
-push_to "Agent chat UI"                         # agent UI and boundaries
-push_to "Bots tab overhaul"                     # Bots layout, paper and live
-push_to "Bin position view"                     # bin position on web
-push_to "Release 1.0.8"                         # app Bots, loader, cache
-push_to "Release 1.0.9"                         # app bin position, sealed memory
-push_to "Entry content"                         # docs for the form
-push_to "Bounty deep dive"                      # final docs commit
+push_to "Release 1.0.5"                         # ports, stops, overlay, bots, MERA loader
+push_to "Gas grant for referral accounts"       # notes, referral codes, legal pages, gas grant
+push_to "Bots tab overhaul"                     # enrollment fix, agent, Bots and layout work
+push_to "Release 1.0.9"                         # bin position, sealed memory, both apps
+git push legacy monad:monad                     # the rest: docs and bounty links
 ```
 
-The last line pushes everything up to the newest commit, so after it the branch matches your local `monad`.
+After the last command the branch matches your local `monad`.
 
 To commit a new change by subject from here, stage only that subject's files, for example:
 
