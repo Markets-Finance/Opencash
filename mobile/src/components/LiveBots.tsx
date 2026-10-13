@@ -3,9 +3,10 @@ import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-nativ
 import type { templates } from "shared";
 
 type LiveAction = templates.LiveAction;
-import { liveAct, liveNetwork, loadLive, preflightLive, saveTradeKey, stopAllBots, type Preflight, type PublicLive } from "../lib/live";
+import { liveAct, loadLive, preflightLive, stopAllBots, type Preflight, type PublicLive } from "../lib/live";
 import { dark, family, space, touch } from "../theme";
 import { AssetMark } from "./AssetMark";
+import { ServerRunning } from "./ServerRunning";
 import { meta, money, price, tints } from "./labShared";
 import { tone } from "./ui";
 
@@ -54,8 +55,6 @@ export function LiveBots({ refreshKey = 0, onOpenAsset }: { refreshKey?: number;
   const [busy, setBusy] = useState<string | null>(null);
   const [dry, setDry] = useState<Record<string, Preflight>>({});
   const [hasKey, setHasKey] = useState(false);
-  const [apiKey, setApiKey] = useState("");
-  const [secret, setSecret] = useState("");
 
   const refresh = useCallback(async () => {
     try {
@@ -101,20 +100,6 @@ export function LiveBots({ refreshKey = 0, onOpenAsset }: { refreshKey?: number;
     }
   }
 
-  async function saveKey() {
-    setNote(null);
-    try {
-      await saveTradeKey(apiKey.trim(), secret.trim());
-      setApiKey("");
-      setNote("Trade key saved. Perpl confirmed it and One-Click Trading is on.");
-    } catch (error) {
-      setNote(error instanceof Error ? error.message : String(error));
-    } finally {
-      setSecret("");
-      await refresh();
-    }
-  }
-
   async function stopAll(close: boolean) {
     const ok = await confirm(close ? "Stop all and close" : "Pause all bots", close ? "Stop every bot and close all bot positions at market?" : "Pause every bot? Positions stay open, and nothing watches their stops while paused.");
     if (!ok) return;
@@ -130,12 +115,7 @@ export function LiveBots({ refreshKey = 0, onOpenAsset }: { refreshKey?: number;
     <View style={styles.wrap}>
       <Text style={styles.label}>LIVE STRATEGIES</Text>
       {!runner && <Text style={styles.small}>The server runner is off, so live bots will not act.</Text>}
-      <Text style={styles.small}>Perpl's API takes no stop orders, so the server watches each stop every 30 seconds. {hasKey ? `A trade key is saved for ${liveNetwork}.` : `Save a Perpl trade key for ${liveNetwork} to start one.`}</Text>
-      <TextInput value={apiKey} onChangeText={setApiKey} placeholder="Perpl API key" placeholderTextColor={dark.muted} autoCapitalize="none" autoCorrect={false} style={styles.input} />
-      <TextInput value={secret} onChangeText={setSecret} placeholder="Key secret (64 hex characters)" placeholderTextColor={dark.muted} secureTextEntry autoCapitalize="none" autoCorrect={false} style={styles.input} />
-      <Pressable onPress={() => void saveKey()} style={styles.btn}>
-        <Text style={styles.btnLabel}>{hasKey ? "Replace trade key" : "Save trade key"}</Text>
-      </Pressable>
+      <ServerRunning hasKey={hasKey} onChanged={() => void refresh()} />
       <View style={styles.row}>
         <Pressable onPress={() => void stopAll(false)} style={styles.btn}>
           <Text style={styles.btnLabel}>Pause all</Text>

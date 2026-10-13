@@ -10,6 +10,7 @@ import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { CardTitle, RoundButton, ScreenTitle, SelectPill, Switcher, Tag, ToneCard, tone } from "../components/ui";
 import { draftBot, draftCard, removeBot, setBotEnabled, subscribeBots, updateBotRules } from "../lib/bots";
 import { actServerBot, createServerBot, loadServerBots } from "../lib/serverBots";
+import { ServerRunning } from "../components/ServerRunning";
 import { dark, family, space, touch } from "../theme";
 import { explorer as networkExplorer } from "../lib/network";
 
@@ -101,7 +102,7 @@ export function Bots({ name, labSymbol, onSelectTab, onOpenAsset }: BotsProps) {
         await createServerBot(card, mode);
         await refreshServer();
         setPrompt("");
-        setHint(hasKey ? "Bot saved on the server. Press Start to run it." : "Bot saved. Save a Perpl trade key under Strategies, then press Start.");
+        setHint(hasKey ? "Bot saved on the server. Press Start to run it." : "Bot saved. Turn on server running below, then press Start.");
         return;
       }
       const problem = await draftBot(prompt, mode, signal);
@@ -214,6 +215,12 @@ export function Bots({ name, labSymbol, onSelectTab, onOpenAsset }: BotsProps) {
           </View>
           {hint !== null && <Text style={styles.hint}>{hint}</Text>}
         </ToneCard>
+
+        {runOn === "server" && !hasKey && (
+          <ToneCard>
+            <ServerRunning hasKey={hasKey} onChanged={() => void refreshServer()} />
+          </ToneCard>
+        )}
 
         <Text style={styles.section}>YOUR BOTS</Text>
         {items.length === 0 ? (

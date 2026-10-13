@@ -6,6 +6,7 @@ import { fetchBinPosition } from "../bins/position.js";
 import { sizeBin } from "../bins/sizing.js";
 import type { Bin, BinSizingIssue, SizedBin } from "../bins/types.js";
 import type { TradingAccount } from "../mera/index.js";
+import { exchangeAbi } from "../perpl/abi.js";
 import { fetchAccount, fetchPosition } from "../perpl/account.js";
 import type { PerplAccount, PerpPosition } from "../perpl/account.js";
 import { fetchMarginTerms, fetchMarkets, marketsBySymbol } from "../perpl/markets.js";
@@ -345,6 +346,20 @@ export function createTerminal(config: TerminalConfig) {
     return hash;
   }
 
+  async function enableOrderForwarding(account: TradingAccount): Promise<Hash> {
+    const wallet = walletFor(account);
+    const hash = await wallet.writeContract({
+      address: deployment.exchange,
+      abi: exchangeAbi,
+      functionName: "allowOrderForwarding",
+      args: [true],
+      chain: wallet.chain,
+      account: account.account,
+    });
+    await client.waitForTransactionReceipt({ hash });
+    return hash;
+  }
+
   async function withdrawToWallet(account: TradingAccount, amount: number): Promise<Hash> {
     const owner = account.address as Address;
     if (!(amount > 0)) throw new Error("Enter an amount.");
@@ -372,6 +387,7 @@ export function createTerminal(config: TerminalConfig) {
     withdrawFromPerpl,
     depositToPerpl,
     withdrawToWallet,
+    enableOrderForwarding,
     loadUsdcBalance,
     quoteConvert,
     convertUsdcToCollateral,

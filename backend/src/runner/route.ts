@@ -147,7 +147,7 @@ export function registerBotRoute(app: FastifyInstance): void {
       await deleteBot(id);
       return { ok: true };
     }
-    if (action === "enable" && !(await hasKey(bot.owner, bot.net))) return reply.status(400).send({ error: "Save a trade key for this wallet first" });
+    if (action === "enable" && !(await hasKey(bot.owner, bot.net))) return reply.status(400).send({ error: "Turn on server running first" });
     const next: ServerBot = { ...bot, enabled: action === "enable", status: action === "enable" ? "watching" : "idle", errorStreak: 0 };
     await saveBot(next);
     return publicBot(next);

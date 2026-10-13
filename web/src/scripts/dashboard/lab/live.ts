@@ -2,6 +2,7 @@ import { botMandateMessage, templates, tradeKeyMessage } from "shared";
 import { network } from "../../../data/network";
 import { changeClass, esc, query, usd } from "../dom";
 import { requireTrader } from "../state";
+import { terminal } from "../../perpl";
 
 const backend = import.meta.env.PUBLIC_BACKEND_URL ?? "http://localhost:8787";
 export const liveNetwork = network;
@@ -33,6 +34,23 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 const post = <T>(path: string, body: unknown) => call<T>(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+export async function turnOnServerRunning(onStep: (text: string) => void): Promise<void> {
+  const trader = requireTrader();
+  onStep("Asking Perpl for a trading key…");
+  const start = await post<{ id: string; signing: Record<string, unknown> }>("/bots/enroll/start", { owner: trader.address, network: liveNetwork });
+  onStep("Approve once with your passkey…");
+  const signature = await trader.account.signTypedData(start.signing as never);
+  onStep("Saving…");
+  const done = await post<{ ok: true; forwarding: boolean | null }>("/bots/enroll/finish", { id: start.id, signature });
+  if (done.forwarding === true) return;
+  onStep("Allowing server orders (one small network fee)…");
+  try {
+    await terminal.enableOrderForwarding(trader);
+  } catch (error) {
+    throw new Error(`Open a position first so you have a Perpl account, then try again. (${error instanceof Error ? error.message.slice(0, 120) : String(error)})`);
+  }
+}
 
 export async function saveTradeKey(apiKey: string, secret: string): Promise<void> {
   const trader = requireTrader();
@@ -128,7 +146,8 @@ export async function paintLiveBots(): Promise<void> {
   const host = query("[data-live-bot-list]");
   try {
     const { bots, runner, hasKey } = await call<{ bots: PublicLive[]; runner: boolean; hasKey: boolean }>(`/live?owner=${requireTrader().address}&network=${liveNetwork}`);
-    query("[data-trade-key-state]").textContent = hasKey ? `A Perpl trade key is saved for ${liveNetwork}. Saving a new one replaces it.` : `No Perpl trade key saved for ${liveNetwork} yet.`;
+    query("[data-trade-key-state]").textContent = hasKey ? "Server running is on. Your bots keep working when this page is closed." : "Turn on server running so your bots keep working when this page is closed. It takes one passkey approval.";
+    query<HTMLButtonElement>("[data-server-run]").hidden = hasKey;
     const off = runner ? "" : `<p class="empty">The server runner is off, so live bots will not act.</p>`;
     host.innerHTML = off + (bots.length === 0 ? `<p class="empty">No live strategies yet. Start one from the Strategy Lab, Live stage.</p>` : bots.map(renderLive).join(""));
   } catch (error) {
@@ -185,19 +204,20 @@ export function initLiveBots(onError: (error: unknown) => void, onNote: (text: s
       onError(error);
     }
   });
-  query<HTMLFormElement>("[data-trade-key-form]").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const form = event.currentTarget as HTMLFormElement;
-    const keyInput = form.querySelector<HTMLInputElement>('[name="apiKey"]')!;
-    const secretInput = form.querySelector<HTMLInputElement>('[name="secret"]')!;
+  const runButton = query<HTMLButtonElement>("[data-server-run]");
+  const runStatus = query("[data-server-run-status]");
+  runButton.addEventListener("click", async () => {
+    runButton.disabled = true;
+    runStatus.dataset.tone = "";
     try {
-      await saveTradeKey(keyInput.value.trim(), secretInput.value.trim());
-      onNote("Trade key saved. Perpl confirmed it and One-Click Trading is on.");
+      await turnOnServerRunning((text) => (runStatus.textContent = text));
+      runStatus.textContent = "Server running is on.";
       await paintLiveBots();
     } catch (error) {
-      onError(error);
+      runStatus.dataset.tone = "error";
+      runStatus.textContent = error instanceof Error ? error.message : String(error);
     } finally {
-      secretInput.value = "";
+      runButton.disabled = false;
     }
   });
 }
