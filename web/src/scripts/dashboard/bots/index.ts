@@ -6,9 +6,10 @@ import { terminal } from "../../perpl";
 import { query } from "../dom";
 import { toolbox } from "../agent/session";
 import { requireTrader, session } from "../state";
-import { publishStrategy } from "../strategies";
-import { initLiveBots, paintLiveBots, startLiveBots } from "../lab/live";
+import { initLiveBots, paintLiveBots, startLiveBots, turnOnServerRunning } from "../lab/live";
+import { addPaper, listPaper, removePaper, startPaper, togglePaper } from "./paperCard";
 import { localBotStorage } from "./storage";
+import { initTradeStrip } from "./tradeStrip";
 import { renderBot } from "./view";
 
 let runtime: BotRuntime | null = null;
@@ -29,8 +30,10 @@ const post = <T>(path: string, body: unknown) => call<T>(path, { method: "POST",
 
 function paintAll() {
   const list = query("[data-bot-list]");
-  const html = [...serverBots.map((bot) => renderBot(bot, true)), ...localBots.map((bot) => renderBot(bot))];
-  list.innerHTML = html.length === 0 ? `<p class="empty">No bots yet.</p>` : html.join("");
+  const paper = listPaper();
+  const html = [...serverBots.map((bot) => renderBot(bot, "live")), ...paper.map((bot) => renderBot(bot, "paper")), ...localBots.map((bot) => renderBot(bot, "browser"))];
+  list.innerHTML = html.length === 0 ? `<p class="empty">No bots yet. Ask the agent for a trade, then start it in Paper or Live.</p>` : html.join("");
+  document.dispatchEvent(new CustomEvent("bots:changed", { detail: [...serverBots.map((bot) => ({ bot, kind: "live" })), ...paper.map((bot) => ({ bot, kind: "paper" }))] }));
 }
 
 function paint(bots: Bot[]) {
@@ -59,6 +62,7 @@ async function actServerBot(id: string, action: BotAction) {
 export async function startBots() {
   if (runtime) return;
   startLiveBots();
+  startPaper();
   const trader = requireTrader();
   runtime = createBotRuntime({
     terminal,
@@ -74,12 +78,32 @@ export async function startBots() {
   serverTimer ??= setInterval(() => void refreshServerBots(), 15_000);
 }
 
-export async function addBotFromCard(card: Bot["card"], mode: BotMode) {
+export async function addBotFromCard(card: Bot["card"], mode: BotMode): Promise<string> {
   const trader = requireTrader();
   const issuedAt = Date.now();
   const signature = await trader.account.signMessage({ message: botMandateMessage(trader.address, network, botDigest(card, mode), issuedAt) });
-  await post("/bots", { owner: trader.address, network, mode, card, issuedAt, signature });
+  const created = await post<{ id: string }>("/bots", { owner: trader.address, network, mode, card, issuedAt, signature });
   await refreshServerBots();
+  return created.id;
+}
+
+export async function startFromCard(card: Bot["card"], mode: BotMode, kind: "paper" | "live", onStep: (text: string) => void): Promise<string> {
+  if (kind === "paper") {
+    await addPaper(card, mode);
+    return "Paper bot is running with fake money. Watch it under Your bots.";
+  }
+  const trader = requireTrader();
+  const account = await terminal.loadAccount(trader.address).catch(() => null);
+  const free = account === null ? 0 : account.balance - account.lockedBalance;
+  if (free < botMinUsd) throw new Error(`A live bot trades from your Perpl account and needs at least $${botMinUsd} there. You have $${free.toFixed(2)}. Move AUSD in from Account, Move between accounts, or test it in Paper first.`);
+  if (card.marginUsd > free) throw new Error(`This bot wants $${card.marginUsd} margin but Perpl has $${free.toFixed(2)} free. Lower the margin.`);
+  const status = await call<{ hasKey: boolean }>(`/bots?owner=${trader.address}&network=${network}`);
+  if (!status.hasKey) await turnOnServerRunning(onStep);
+  onStep("Approve the bot with your passkey…");
+  const id = await addBotFromCard(card, mode);
+  onStep("Starting it…");
+  await actServerBot(id, "enable");
+  return "Live bot started. It trades from the server, even when this page is closed.";
 }
 
 export function exitsFor(symbol: string) {
@@ -105,6 +129,8 @@ async function paintFundingNote() {
 }
 
 export function initBots() {
+  initTradeStrip();
+  document.addEventListener("paperbots:changed", paintAll);
   document.addEventListener("balance:changed", () => void paintFundingNote());
   setTimeout(() => void paintFundingNote(), 1500);
   const list = query("[data-bot-list]");
@@ -125,7 +151,8 @@ export function initBots() {
     const root = (event.target as HTMLElement).closest<HTMLElement>("[data-bot]");
     if (!root) return;
     const remote = serverBots.find((b) => b.id === root.dataset.bot);
-    const bot = remote ?? runtime?.list().find((b) => b.id === root.dataset.bot);
+    const paperBot = listPaper().find((b) => b.id === root.dataset.bot);
+    const bot = remote ?? paperBot ?? runtime?.list().find((b) => b.id === root.dataset.bot);
     if (!bot) return;
     const failed = (error: unknown) => {
       const note = query("[data-bot-hint]");
@@ -133,23 +160,14 @@ export function initBots() {
       note.textContent = error instanceof Error ? error.message : String(error);
     };
     if ((event.target as HTMLElement).closest("[data-bot-toggle]")) {
-      if (remote) await actServerBot(bot.id, bot.enabled ? "disable" : "enable").catch(failed);
+      if (paperBot) await togglePaper(bot.id).catch(failed);
+      else if (remote) await actServerBot(bot.id, bot.enabled ? "disable" : "enable").catch(failed);
       else await runtime?.setEnabled(bot.id, !bot.enabled);
     }
     if ((event.target as HTMLElement).closest("[data-bot-delete]")) {
-      if (remote) await actServerBot(bot.id, "remove").catch(failed);
+      if (paperBot) removePaper(bot.id);
+      else if (remote) await actServerBot(bot.id, "remove").catch(failed);
       else await runtime?.remove(bot.id);
-    }
-    if ((event.target as HTMLElement).closest("[data-bot-share]")) {
-      const hint = query("[data-bot-hint]");
-      try {
-        const shared = await publishStrategy(bot.card);
-        hint.dataset.tone = "";
-        hint.textContent = `Shared as strategy ${shared.id}. It appears on Ranks and ranks once two followers have closed trades.`;
-      } catch (error) {
-        hint.dataset.tone = "error";
-        hint.textContent = error instanceof Error ? error.message : String(error);
-      }
     }
   });
 

@@ -1,6 +1,6 @@
 import { askAgent } from "shared";
 import { network } from "../../../data/network";
-import { bins, cardFromBin, ruleDrafter } from "../../perpl";
+import { ruleDrafter } from "../../perpl";
 import { terminal } from "../../perpl";
 import { session } from "../state";
 import { esc, query } from "../dom";
@@ -48,14 +48,6 @@ export function initAgent() {
       button.disabled = false;
     }),
   );
-
-  query("[data-agent-ideas]").innerHTML = bins
-    .map((bin, index) => `<button type="button" class="chip" data-idea="${index}">${esc(bin.name)}</button>`)
-    .join("");
-  query("[data-agent-ideas]").addEventListener("click", (event) => {
-    const chip = (event.target as HTMLElement).closest<HTMLElement>("[data-idea]");
-    if (chip) setCard(cardFromBin(bins[Number(chip.dataset.idea)], 100, 10));
-  });
 
   const chat = query("[data-agent-chat]");
   const send = query<HTMLButtonElement>("[data-agent-send]");

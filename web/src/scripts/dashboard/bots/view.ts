@@ -33,17 +33,20 @@ function rulesRow(bot: Bot): string {
   </div>`;
 }
 
-export function renderBot(bot: Bot, server = false): string {
+export type BotKind = "live" | "paper" | "browser";
+
+export function renderBot(bot: Bot, kind: BotKind = "browser"): string {
+  const server = kind === "live";
+  const unrealised = kind === "paper" ? (bot as unknown as { unrealisedUsd?: number }).unrealisedUsd ?? 0 : null;
   const target = bot.card.takeProfitPct === undefined ? "none" : `${bot.card.takeProfitPct}%`;
   return `<div class="bot card" data-bot="${esc(bot.id)}">
     <div class="bot__head">
       <span class="bot__name">${esc(bot.name)}</span>
-      <span class="pill">${server ? "Server" : "In browser"}</span>
-      <span class="pill">${bot.mode === "auto" ? "Auto" : "Guard"}</span>
+      <span class="pill pill--${kind}">${kind === "live" ? "Live" : kind === "paper" ? "Paper" : "In browser"}</span>
+      <span class="pill">${bot.mode === "auto" ? "Opens for you" : "Guards a position"}</span>
       <span class="pill pill--${bot.status}">${bot.status}</span>
       <span class="bot__spacer"></span>
       <button type="button" class="btn ${bot.enabled ? "" : "btn--primary"}" data-bot-toggle>${bot.enabled ? "Stop" : "Start"}</button>
-      <button type="button" class="link-btn" data-bot-share>Share</button>
       <button type="button" class="link-btn" data-bot-delete>Delete</button>
     </div>
     <div class="bot__meta">
@@ -52,6 +55,7 @@ export function renderBot(bot: Bot, server = false): string {
       <span>Stop ${bot.card.stopLossPct}%</span>
       <span>Target ${target}</span>
       <span class="${changeClass(bot.realizedPnlUsd)}">Realised ${usd(bot.realizedPnlUsd)}</span>
+      ${unrealised === null ? "" : `<span class="${changeClass(unrealised)}">Open ${usd(unrealised)}</span>`}
     </div>
     ${server ? "" : rulesRow(bot)}
     ${bot.lastCheck ? `<div class="bot__meta"><span>Checked ${new Date(bot.lastCheck.at).toLocaleTimeString()}: ${esc(bot.lastCheck.message)}</span></div>` : ""}

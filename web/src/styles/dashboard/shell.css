@@ -202,7 +202,7 @@
 .dash__content {
   max-width: var(--content-max);
   margin: 0 auto;
-  padding: var(--sp-2xl) var(--gutter) 120px;
+  padding: var(--sp-md) var(--gutter) 120px;
 }
 .panel__subtitle {
   font-size: 11px;

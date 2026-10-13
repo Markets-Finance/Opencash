@@ -1,7 +1,7 @@
-import { binFromCard, sizeBinFor, type BotMode, type StrategyCard, type StrategyLeg } from "../../perpl";
+import type { BotMode, StrategyCard, StrategyLeg } from "../../perpl";
 import type { StrategyPreview } from "shared";
 import { errorText, esc, markForSymbol, px, query, say, usd } from "../dom";
-import { addBotFromCard } from "../bots";
+import { startFromCard } from "../bots";
 import { initHome } from "../home";
 import { getMarketData, getPositions } from "../market";
 import { requireTrader } from "../state";
@@ -26,7 +26,7 @@ function elements() {
     tp: query<HTMLInputElement>("[data-card-tp]"),
     legs: query("[data-card-legs]"),
     preview: query("[data-card-preview]"),
-    approve: query<HTMLButtonElement>("[data-card-approve]"),
+    approve: query<HTMLButtonElement>("[data-card-start]"),
     status: query("[data-card-status]"),
     signal: query<HTMLSelectElement>("[data-card-signal]"),
     signalNote: query("[data-card-signal-note]"),
@@ -156,7 +156,14 @@ async function paintSignal() {
   ui.signalNote.textContent = `${gate.ok ? "Signal agrees" : "Signal blocks this trade"}: ${gate.reason}.`;
 }
 
-async function approve() {
+let kind: "paper" | "live" = "paper";
+
+function paintKind() {
+  document.querySelectorAll<HTMLElement>("[data-card-kind]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.cardKind === kind)));
+  query("[data-card-start]").textContent = kind === "paper" ? "Start paper bot" : "Start live bot";
+}
+
+async function start() {
   if (!card) return;
   readFields();
   const ui = elements();
@@ -166,24 +173,13 @@ async function approve() {
       say(ui.status, "Checking Nansen smart money…");
       const gate = nansen.signalGate(card.legs, await pulseList(card.legs.map((leg) => leg.symbol)));
       if (!gate.ok) {
-        say(ui.status, `Not opened. ${gate.reason}. Set the signal to None to trade anyway.`, "error");
+        say(ui.status, `Not started. ${gate.reason}. Set the signal to None to run it anyway.`, "error");
         return;
       }
-      say(ui.status, `Nansen agrees: ${gate.reason}.`);
     }
-    const data = await getMarketData();
-    const { sized, issues } = sizeBinFor(binFromCard(card), card.marginUsd, data);
-    if (sized.legs.length === 0) {
-      say(ui.status, issues.map((i) => i.detail).join(" · ") || "No leg could be sized.", "error");
-      return;
-    }
-    say(ui.status, "Waiting for your passkey…");
-    await terminal.openBin(requireTrader(), sized, data, (step) =>
-      say(ui.status, step === "orders" ? "Opening every leg…" : step === "fund" ? "Funding the account…" : "Approving AUSD…"),
-    );
-    say(ui.status, `${card.name} is open.`);
-    await getPositions(true);
-    void initHome();
+    const mode = query<HTMLSelectElement>("[data-card-mode]").value as BotMode;
+    say(ui.status, kind === "paper" ? "Starting…" : "Checking your Perpl balance…");
+    say(ui.status, await startFromCard(structuredClone(card), mode, kind, (text) => say(ui.status, text)));
   } catch (error) {
     say(ui.status, errorText(error), "error");
   } finally {
@@ -216,16 +212,12 @@ export function initCard() {
     card.legs.push({ symbol: "BTC", direction: "long", weightBps: 0, leverage: card.legs[0]?.leverage ?? 2 });
     setCard(card);
   });
-  ui.approve.addEventListener("click", () => void approve());
-  query<HTMLButtonElement>("[data-card-bot]").addEventListener("click", async () => {
-    if (!card) return;
-    readFields();
-    const mode = query<HTMLSelectElement>("[data-card-mode]").value as BotMode;
-    try {
-      await addBotFromCard(structuredClone(card), mode);
-      say(ui.status, "Bot added under Your bots. Press Start there to run it.");
-    } catch (error) {
-      say(ui.status, errorText(error), "error");
-    }
-  });
+  ui.approve.addEventListener("click", () => void start());
+  document.querySelectorAll<HTMLElement>("[data-card-kind]").forEach((button) =>
+    button.addEventListener("click", () => {
+      kind = button.dataset.cardKind as "paper" | "live";
+      paintKind();
+    }),
+  );
+  paintKind();
 }
