@@ -33,6 +33,11 @@ const importStore: CredentialStore = {
   },
 };
 
+export async function hasStoredAccount(): Promise<boolean> {
+  const [passkey, imported] = await Promise.all([AsyncStorage.getItem(storageKey), AsyncStorage.getItem(importStorageKey)]);
+  return passkey !== null || imported !== null;
+}
+
 function passkeyContext() {
   return {
     rpId,

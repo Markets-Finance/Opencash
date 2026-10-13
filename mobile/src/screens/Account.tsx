@@ -17,7 +17,7 @@ import { AuthShell, type AuthMode } from "../components/AuthShell";
 import { ImportPanel } from "../components/ImportPanel";
 import { SettingIcon, type SettingIconKind } from "../components/SettingIcon";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
-import { createAccount, revealPhrase, signIn } from "../lib/mera";
+import { createAccount, hasStoredAccount, revealPhrase, signIn } from "../lib/mera";
 import { startDotLoader } from "../lib/dotLoader";
 import { setBackOverride } from "../lib/nav";
 import { dark, family, space, track } from "../theme";
@@ -129,6 +129,11 @@ export function Account({
   const [importKey, setImportKey] = useState("");
   const [missing, setMissing] = useState(false);
   const working = useRef(false);
+  const [returning, setReturning] = useState(false);
+
+  useEffect(() => {
+    void hasStoredAccount().then(setReturning);
+  }, []);
 
   function explain(error: unknown) {
     setFailed(true);
@@ -373,6 +378,8 @@ export function Account({
         onSwitch={account === null ? () => { setMissing(false); setFailed(false); setStatus(""); setFormMode(formMode === "create" ? null : "create"); } : undefined}
         onSubmit={() => { setMissing(false); if (authMode === "signin") void run(signIn, "Waiting for your passkey…"); else submit(); }}
         missing={missing}
+        returning={returning && !missing && account === null && formMode === null}
+        onUseOther={() => setReturning(false)}
       />
     );
   }

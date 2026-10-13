@@ -24,6 +24,8 @@ type AuthShellProps = {
   onImportOpen?: (open: boolean) => void;
   onImportKey?: (value: string) => void;
   missing?: boolean;
+  returning?: boolean;
+  onUseOther?: () => void;
 };
 
 const copy: Record<AuthMode, { title: string; hint: string; go: string }> = {
@@ -35,7 +37,7 @@ const copy: Record<AuthMode, { title: string; hint: string; go: string }> = {
 const white = "#ffffff";
 const line = "rgba(255, 255, 255, 0.14)";
 
-export function AuthShell({ mode, dev, name, email, status, failed, onName, onEmail, onSwitch, onSubmit, importOpen = false, importAddress = null, importKey = "", onImportOpen, onImportKey, missing = false }: AuthShellProps) {
+export function AuthShell({ mode, dev, name, email, status, failed, onName, onEmail, onSwitch, onSubmit, importOpen = false, importAddress = null, importKey = "", onImportOpen, onImportKey, missing = false, returning = false, onUseOther }: AuthShellProps) {
   const insets = useSafeAreaInsets();
   const draw = useRef(new Animated.Value(0)).current;
   const fields = mode !== "signin";
@@ -134,14 +136,19 @@ export function AuthShell({ mode, dev, name, email, status, failed, onName, onEm
               <Text style={styles.primaryLabel}>{copy[mode].go}</Text>
             </Pressable>
           )}
-          {mode === "signin" && onImportOpen && (
+          {mode === "signin" && onImportOpen && !returning && (
             <Pressable onPress={() => onImportOpen(true)} accessibilityRole="button" style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
               <Text style={styles.secondaryLabel}>Import a wallet</Text>
             </Pressable>
           )}
-          {onSwitch && !(missing && mode === "signin") && (
+          {onSwitch && !(missing && mode === "signin") && !(returning && mode === "signin") && (
             <Pressable onPress={onSwitch} accessibilityRole="button" style={({ pressed }) => [styles.secondary, pressed && styles.pressed]}>
               <Text style={styles.secondaryLabel}>{mode === "create" ? "I already have an account" : "Create an account"}</Text>
+            </Pressable>
+          )}
+          {returning && mode === "signin" && !missing && onUseOther && (
+            <Pressable onPress={onUseOther} hitSlop={8} style={styles.retry}>
+              <Text style={styles.switch}>Use a different account</Text>
             </Pressable>
           )}
           {missing && mode === "signin" && (

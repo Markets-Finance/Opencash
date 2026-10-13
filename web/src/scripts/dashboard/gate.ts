@@ -19,6 +19,15 @@ const importToggle = query<HTMLInputElement>("[data-gate-import-toggle]");
 const importFields = query("[data-gate-import-fields]");
 const importLink = query<HTMLButtonElement>("[data-gate-import]");
 const missingEl = query("[data-gate-missing]");
+const otherLink = query<HTMLButtonElement>("[data-gate-other]");
+
+function hasStoredAccount(): boolean {
+  try {
+    return localStorage.getItem("monad.passkey.credential") !== null || localStorage.getItem("monad.import.v1") !== null;
+  } catch {
+    return false;
+  }
+}
 const importPreview = query("[data-gate-import-preview]");
 
 type Mode = "signin" | "create";
@@ -63,6 +72,7 @@ async function paintIdentity(account: TradingAccount) {
 
 export function initGate(onEnter: () => void) {
   let mode: Mode = "signin";
+  let returning = hasStoredAccount();
 
   function syncRequired() {
     const creating = mode === "create";
@@ -79,7 +89,10 @@ export function initGate(onEnter: () => void) {
     hintEl.hidden = false;
     fieldsEl.hidden = !creating;
     importBlock.hidden = !creating;
-    importLink.hidden = creating;
+    const quiet = !creating && returning;
+    importLink.hidden = creating || quiet;
+    switchButton.hidden = quiet;
+    otherLink.hidden = !quiet;
     if (!creating) {
       importToggle.checked = false;
       importFields.hidden = true;
@@ -112,6 +125,10 @@ export function initGate(onEnter: () => void) {
       if (mode === "signin" && isMeraError(error) && error.code === "PASSKEY_OPERATION_FAILED") {
         say("");
         missingEl.hidden = false;
+        returning = false;
+        importLink.hidden = false;
+        switchButton.hidden = false;
+        otherLink.hidden = true;
         goButton.textContent = "Try signing in again";
         return;
       }
@@ -121,6 +138,10 @@ export function initGate(onEnter: () => void) {
     }
   }
 
+  otherLink.addEventListener("click", () => {
+    returning = false;
+    setMode("signin");
+  });
   switchButton.addEventListener("click", () => setMode(mode === "signin" ? "create" : "signin"));
   form.querySelector<HTMLInputElement>('[name="importKey"]')!.addEventListener("input", (event) => {
     const value = (event.target as HTMLInputElement).value;
@@ -162,4 +183,5 @@ export function initGate(onEnter: () => void) {
       }
     }, bringing ? "Creating your passkey and importing your wallet…" : "Creating your passkey…", { name, email });
   });
+  setMode("signin");
 }
