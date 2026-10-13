@@ -4,6 +4,12 @@ import { label } from "../../data/network";
 <section class="panel" data-panel="trade" hidden>
 
   <div data-trade-list>
+    <div class="card">
+      <span class="panel__label">Open positions</span>
+      <div data-trade-desk class="table-wrap table-wrap--loading">Loading…</div>
+      <p class="status-line" data-trade-desk-status></p>
+    </div>
+
     <div class="board-widgets">
       <div class="card card--balance widget widget--account">
         <div class="balance-head">
@@ -29,12 +35,6 @@ import { label } from "../../data/network";
         <input type="search" class="search-field board-search" data-trade-search placeholder="Search assets" autocomplete="off" />
       </div>
       <div class="table-wrap board-wrap" data-board-table><p class="empty">Loading markets…</p></div>
-    </div>
-
-    <div class="card">
-      <span class="panel__label">Open positions</span>
-      <div data-trade-desk class="table-wrap table-wrap--loading">Loading…</div>
-      <p class="status-line" data-trade-desk-status></p>
     </div>
   </div>
 

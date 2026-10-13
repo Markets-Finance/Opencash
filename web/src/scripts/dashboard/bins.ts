@@ -10,6 +10,7 @@ import { getMarketData, getPositions } from "./market";
 import { closeModal, openModal } from "./modal";
 import { requireTrader } from "./state";
 import { activateTab } from "./tabs";
+import { openAsset } from "./trade";
 
 const stepLabels: Record<EntryStep, string> = {
   approve: "Approving AUSD…",
@@ -194,7 +195,16 @@ function openBinModal(bin: Bin, custom = false) {
       const { sized, issues, usedMode } = await planBin(toolbox, chosen, amount, data, mode);
       status.textContent = "";
       const warnings = issues.map((i) => i.detail).join(" · ");
-      const skipped = issues.filter((i) => i.reason === "below-minimum" || i.reason === "no-liquidity" || i.reason === "unknown-market").map((i) => i.symbol);
+      const incomplete = sized.legs.length < chosen.legs.length;
+      const minimums = chosen.legs.map((leg) => {
+        const market = data.markets.get(leg.symbol);
+        if (!market) return null;
+        const leverage = Math.min(leg.leverage, data.maxLeverage.get(leg.symbol) ?? leg.leverage);
+        return (market.mark / 10 ** market.lotDecimals / leverage / (leg.weightBps / 10000)) * 1.15;
+      });
+      const needs = minimums.some((value) => value === null)
+        ? "A leg is not available right now."
+        : `Needs at least ${usd(Math.ceil(Math.max(...(minimums as number[]))))} for every leg.`;
       const fellBack = usedMode !== mode ? `<p class="warn-line">Not enough data for ${mode} weights, using fixed.</p>` : "";
       if (sized.legs.length === 0) {
         sizingEl.innerHTML = `<p class="warn-line">${warnings || "No legs could be sized."}</p>`;
@@ -209,7 +219,10 @@ function openBinModal(bin: Bin, custom = false) {
           .join("") +
         fellBack +
         (warnings ? `<p class="warn-line">${warnings}</p>` : "") +
-        `<button type="button" class="btn btn--primary" data-bin-confirm style="margin-top:12px">${skipped.length > 0 ? `Open without ${skipped.join(", ")}` : "Open bin with my passkey"}</button>`;
+        (incomplete
+          ? `<p class="warn-line">${needs}</p>`
+          : `<button type="button" class="btn btn--primary" data-bin-confirm style="margin-top:12px">Open bin with my passkey</button>`);
+      if (incomplete) return;
       const confirm = query<HTMLButtonElement>("[data-bin-confirm]", sizingEl);
       confirm.addEventListener("click", async () => {
         confirm.disabled = true;
@@ -217,7 +230,16 @@ function openBinModal(bin: Bin, custom = false) {
         try {
           status.textContent = "Waiting for your passkey…";
           await terminal.openBin(requireTrader(), sized, data, (step) => (status.textContent = stepLabels[step]));
-          status.textContent = `Opened ${bin.name}.`;
+          status.textContent = `Opened ${bin.name}. Manage each leg below, or from Trade.`;
+          sizingEl.innerHTML = sized.legs
+            .map((leg) => `<button type="button" class="btn" data-manage="${leg.leg.symbol}" style="margin-top:8px">${leg.leg.symbol} · Manage ↗</button>`)
+            .join("");
+          sizingEl.querySelectorAll<HTMLButtonElement>("[data-manage]").forEach((button) =>
+            button.addEventListener("click", () => {
+              closeModal();
+              openAsset(button.dataset.manage!);
+            }),
+          );
           await getPositions(true);
           void initHome();
         } catch (error) {
