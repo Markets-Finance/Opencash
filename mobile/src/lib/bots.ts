@@ -10,10 +10,12 @@ import {
   type BotMode,
   type BotRuntime,
   type TradingAccount,
+  askAgent,
 } from "shared";
+import { backendUrl } from "./config";
 import { pulseList } from "./nansen";
 import { terminal } from "./perpl";
-import { deployment } from "./network";
+import { deployment, network } from "./network";
 
 export const toolbox = createToolbox(perpl.createPerplApi(deployment.apiUrl), defaultLimits);
 toolbox.setSmartMoney(pulseList);
@@ -85,6 +87,14 @@ export async function draftBot(prompt: string, mode: BotMode, signal: "nansen" |
 }
 
 export async function draftCard(prompt: string, signal: "nansen" | null = null): Promise<{ card: Bot["card"] | null; problem: string | null }> {
+  if (signer !== null) {
+    const answer = await askAgent(backendUrl, signer.address, network, prompt);
+    if (answer !== null) {
+      const checked = answer.checked.length ? ` Checked: ${[...new Set(answer.checked)].join(", ")}.` : "";
+      if (answer.card === null) return { card: null, problem: `${answer.reply}${checked}` };
+      return { card: signal ? { ...answer.card, signal } : answer.card, problem: null };
+    }
+  }
   const symbols = (await toolbox.getMarkets()).map((m) => m.symbol);
   const card = await ruleDrafter(prompt, symbols);
   if (card === null) return { card: null, problem: `Name a market and a side, like "long MON short BTC 2x $100 stop 8%". Markets: ${symbols.join(", ")}.` };

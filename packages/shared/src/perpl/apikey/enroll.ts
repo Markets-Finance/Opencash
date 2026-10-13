@@ -34,7 +34,9 @@ export type PendingEnrollment = {
 
 export function enrollmentSigning(typedData: TypedData) {
   const { EIP712Domain: _domain, ...types } = typedData.types;
-  return { domain: typedData.domain, types, primaryType: typedData.primaryType, message: typedData.message };
+  const domain = { ...typedData.domain };
+  if (typeof domain.chainId === "string") domain.chainId = Number(domain.chainId);
+  return { domain, types, primaryType: typedData.primaryType, message: typedData.message };
 }
 
 type RequestInput = {

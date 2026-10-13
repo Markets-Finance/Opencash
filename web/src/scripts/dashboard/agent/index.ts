@@ -1,4 +1,7 @@
+import { askAgent } from "shared";
+import { network } from "../../../data/network";
 import { bins, cardFromBin, ruleDrafter } from "../../perpl";
+import { session } from "../state";
 import { esc, query } from "../dom";
 import { addLeg, initCard, setCard } from "./card";
 import { initLab } from "../lab";
@@ -58,6 +61,17 @@ export function initAgent() {
     hint.textContent = "";
     hint.dataset.tone = "";
     try {
+      if (session.trader) {
+        hint.textContent = "The agent is checking your balances and the markets…";
+        const answer = await askAgent(import.meta.env.PUBLIC_BACKEND_URL ?? "http://localhost:8787", session.trader.address, network, input.value);
+        if (answer !== null) {
+          hint.dataset.tone = answer.card === null ? "error" : "";
+          hint.textContent = `${answer.reply}${answer.checked.length ? ` Checked: ${[...new Set(answer.checked)].join(", ")}.` : ""}`;
+          if (answer.card !== null) setCard(answer.card);
+          return;
+        }
+        hint.textContent = "";
+      }
       const symbols = (await toolbox.getMarkets()).map((m) => m.symbol);
       const drafted = await ruleDrafter(input.value, symbols);
       if (drafted === null) {

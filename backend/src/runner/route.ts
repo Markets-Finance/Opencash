@@ -115,7 +115,8 @@ export function registerBotRoute(app: FastifyInstance): void {
     try {
       return await finishEnrollment(id, signature);
     } catch (error) {
-      return reply.status(400).send({ error: error instanceof Error ? error.message : String(error) });
+      const message = error instanceof Error ? error.message : String(error);
+      return reply.status(400).send({ error: message.startsWith("Perpl 404") ? "Perpl has no account for this wallet yet. Move at least $10 of AUSD into Perpl first, then try again." : message });
     }
   });
 
