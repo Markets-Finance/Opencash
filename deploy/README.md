@@ -35,7 +35,7 @@ A first-time referral redemption sends the new wallet a small MON grant so its f
 
 - `RELAYER_PRIVATE_KEY` funds the grants. Keep only a small MON balance on it.
 - `RELAYER_ALLOW_MAINNET=1` is required on mainnet.
-- `GAS_GRANT_MON` is the grant size, default `0.1`.
+- `GAS_GRANT_MON` is the grant size, default `0.5`, enough for about four trades with their closes.
 - `GAS_GRANT_DAILY_CAP` is the most grants per day, default `30`.
 
 Each wallet is granted once, and only when its MON balance is below the grant. With no key set, redemption still works and no gas is sent.

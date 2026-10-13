@@ -13,7 +13,7 @@ const dayMs = 86_400_000;
 const grantsToday: number[] = [];
 
 export function grantAmount(): bigint {
-  return parseEther(process.env.GAS_GRANT_MON ?? "0.1");
+  return parseEther(process.env.GAS_GRANT_MON ?? "0.5");
 }
 
 function dailyCap(): number {
