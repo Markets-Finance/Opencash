@@ -137,7 +137,13 @@ export function Account({
       );
       return;
     }
-    setStatus(failures[error.code] ?? `${error.code}: ${error.message}`);
+    const detail = error.cause instanceof Error && error.cause.message ? ` (${error.cause.message})` : "";
+    const creating = formMode === "create" || account !== null;
+    setStatus(
+      error.code === "PASSKEY_OPERATION_FAILED" && creating
+        ? `We couldn't create your passkey${detail}. Either the prompt was closed or this phone has no passkey provider. Turn on a screen lock and Google Password Manager, then tap Create again.`
+        : (failures[error.code] ?? `${error.code}: ${error.message}`),
+    );
     if (error.code === "PASSKEY_OPERATION_FAILED" && account === null && formMode === null) setMissing(true);
   }
 

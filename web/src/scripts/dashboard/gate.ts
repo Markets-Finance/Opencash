@@ -41,7 +41,8 @@ function explain(error: unknown, mode: Mode): string {
         : "The passkey prompt was closed before it finished. Tap Create to try again.",
     CRYPTO_UNAVAILABLE: "This browser is missing a required crypto primitive.",
   };
-  return messages[error.code] ?? `${error.code}: ${error.message}`;
+  const detail = error.cause instanceof Error && error.cause.message ? ` (${error.cause.message})` : "";
+  return `${messages[error.code] ?? `${error.code}: ${error.message}`}${error.code === "PASSKEY_OPERATION_FAILED" && mode === "create" ? detail : ""}`;
 }
 
 async function paintIdentity(account: TradingAccount) {
