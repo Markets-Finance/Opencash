@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { bins, type BinPosition, type TradingAccount } from "shared";
 import { AddressMark } from "../components/AddressMark";
 import { AssetMark, LegStack } from "../components/AssetMark";
+import { isFresh, peek, remember } from "../lib/memo";
 import { VolumeBars } from "../components/VolumeBars";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { ArrowBadge, CardTitle, RoundButton, Tag, ToneCard, tone } from "../components/ui";
@@ -12,6 +13,7 @@ import { loadMarkets, loadPositions, loadSummary, type MarketData, type Portfoli
 import { dark, family, space, touch, track } from "../theme";
 
 const lowGasMon = 0.08;
+const freshMs = 8_000;
 
 const featuredSymbols = [...new Set(bins.flatMap((bin) => bin.legs.map((leg) => leg.symbol)))];
 
@@ -42,22 +44,24 @@ function money(value: number): { whole: string; cents: string } {
 
 export function Home({ trader, name, onSelectTab, onOpenAsset, onDeposit, onSend }: HomeProps) {
   const insets = useSafeAreaInsets();
-  const [summary, setSummary] = useState<PortfolioSummary | null>(null);
-  const [positions, setPositions] = useState<BinPosition[] | null>(null);
-  const [data, setData] = useState<MarketData | null>(null);
+  const keys = { summary: `${trader.address}:summary`, positions: `${trader.address}:bins`, markets: "markets", mon: `${trader.address}:mon` };
+  const [summary, setSummary] = useState<PortfolioSummary | null>(() => peek(keys.summary));
+  const [positions, setPositions] = useState<BinPosition[] | null>(() => peek(keys.positions));
+  const [data, setData] = useState<MarketData | null>(() => peek(keys.markets));
   const [error, setError] = useState<string | null>(null);
-  const [mon, setMon] = useState<number | null>(null);
+  const [mon, setMon] = useState<number | null>(() => peek(keys.mon));
 
   useEffect(() => {
     let live = true;
-    terminal.loadNativeBalance(trader.address).then((next) => live && setMon(next)).catch(() => {});
+    if (isFresh(keys.summary, freshMs) && isFresh(keys.positions, freshMs)) return;
+    terminal.loadNativeBalance(trader.address).then((next) => live && setMon(remember(keys.mon, next))).catch(() => {});
     loadMarkets()
       .then((markets) => {
-        if (live) setData(markets);
-        loadSummary(trader.address, markets).then((next) => live && setSummary(next)).catch(() => live && setSummary(null));
+        if (live) setData(remember(keys.markets, markets));
+        loadSummary(trader.address, markets).then((next) => live && setSummary(remember(keys.summary, next))).catch(() => live && setSummary(null));
         return loadPositions(trader.address, markets);
       })
-      .then((held) => live && setPositions(held))
+      .then((held) => live && setPositions(remember(keys.positions, held)))
       .catch((cause) => live && setError(String(cause)));
     return () => {
       live = false;

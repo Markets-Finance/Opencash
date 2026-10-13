@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { liquidityGrade, perpl, slippageBps, type LiquidityGrade, type TradingAccount } from "shared";
+import { peek, remember } from "../lib/memo";
 import { toolbox } from "../lib/bots";
 import { AssetMark } from "../components/AssetMark";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
@@ -30,9 +31,10 @@ type TradeProps = {
 
 export function Trade({ trader, onOpenAsset, onSelectTab }: TradeProps) {
   const insets = useSafeAreaInsets();
-  const [data, setData] = useState<MarketData | null>(null);
+  const [data, setData] = useState<MarketData | null>(() => peek("markets"));
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [positions, setPositions] = useState<OpenPosition[] | null>(null);
+  const positionsKey = `${trader.address}:open`;
+  const [positions, setPositions] = useState<OpenPosition[] | null>(() => peek(positionsKey));
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -42,8 +44,8 @@ export function Trade({ trader, onOpenAsset, onSelectTab }: TradeProps) {
   const refreshPositions = useCallback(
     (markets: MarketData) => {
       loadOpenPositions(trader.address, markets)
-        .then(setPositions)
-        .catch(() => setPositions([]));
+        .then((next) => setPositions(remember(positionsKey, next)))
+        .catch(() => setPositions((current) => current ?? []));
     },
     [trader.address],
   );
@@ -53,7 +55,7 @@ export function Trade({ trader, onOpenAsset, onSelectTab }: TradeProps) {
     loadMarkets()
       .then((next) => {
         if (!live) return;
-        setData(next);
+        setData(remember("markets", next));
         refreshPositions(next);
       })
       .catch((error) => live && setLoadError(error instanceof Error ? error.message : String(error)));

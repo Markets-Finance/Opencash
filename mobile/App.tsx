@@ -16,6 +16,7 @@ import { BinDetail } from "./src/screens/BinDetail";
 import { Bins } from "./src/screens/Bins";
 import { Bots } from "./src/screens/Bots";
 import { startBots, stopBots } from "./src/lib/bots";
+import { forgetAll } from "./src/lib/memo";
 import { startSweep, stopSweep } from "./src/lib/sweep";
 import { Asset } from "./src/screens/Asset";
 import { Deposit } from "./src/screens/Deposit";
@@ -104,6 +105,7 @@ export default function App() {
     if (account === null) {
       stopBots();
       stopSweep();
+      forgetAll();
     } else {
       void startBots(account);
       startSweep(account, () => {

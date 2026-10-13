@@ -1,4 +1,5 @@
 import { createTerminal, perpl } from "shared";
+import { invalidate } from "./memo";
 import { publicClient, walletClientFor } from "./mera";
 import { deployment as networkDeployment } from "./network";
 
@@ -27,12 +28,23 @@ export const {
   loadPositions,
   loadOpenPositions,
   loadSummary,
-  openBin,
-  closePosition,
   loadNativeBalance,
-  sendAsset,
-  withdrawFromPerpl,
 } = terminal;
+
+function settled<Args extends unknown[], Result>(action: (...args: Args) => Promise<Result>) {
+  return async (...args: Args): Promise<Result> => {
+    try {
+      return await action(...args);
+    } finally {
+      invalidate();
+    }
+  };
+}
+
+export const openBin = settled(terminal.openBin);
+export const closePosition = settled(terminal.closePosition);
+export const sendAsset = settled(terminal.sendAsset);
+export const withdrawFromPerpl = settled(terminal.withdrawFromPerpl);
 
 export const loadCandles = (market: perpl.PerpMarket, range: CandleRangeKey) =>
   perpl.fetchCandles(networkDeployment.apiUrl, market, range);
