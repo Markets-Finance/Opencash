@@ -1,6 +1,7 @@
 import { initAnalysisTools } from "../agent";
 import { errorText, query } from "../dom";
 import { ago } from "./format";
+import { initBoard } from "./board";
 import { initProtocolControls, paintProtocol, type Protocol } from "./protocol";
 import { initRiskControls, loadRisk } from "./risk";
 import { initWallet, lookup, setNetwork } from "./wallet";
@@ -41,6 +42,7 @@ export function initAnalytics() {
   initProtocolControls();
   initRiskControls();
   initWallet(backend, () => network);
+  initBoard(backend, () => network);
   void load();
   timer = setInterval(() => {
     tick();

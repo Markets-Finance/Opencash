@@ -13,6 +13,7 @@ import "./modal";
 import { initFunds } from "./funds";
 import { initChartSize } from "./chartSize";
 import { initSwitchers } from "./switcher";
+import { applyHost, hostKind } from "./host";
 import { activateTab, initAccountMenu, initTabs } from "./tabs";
 import { startSweep } from "./sweep";
 import { initTrade, openAsset, setTradeQuery } from "./trade";
@@ -35,7 +36,8 @@ document.addEventListener("click", (event) => {
 });
 initBots();
 initChartSize();
-const hostTab = location.hostname.startsWith("bot.") ? "agent" : location.hostname.startsWith("analytics.") ? "analytics" : null;
+applyHost();
+const hostTab = hostKind() === "bot" ? "agent" : hostKind() === "analytics" ? "analytics" : null;
 
 initGate(() => {
   if (hostTab) activateTab(hostTab);

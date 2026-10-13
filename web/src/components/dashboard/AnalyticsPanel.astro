@@ -3,6 +3,7 @@
     <div class="switcher" data-switcher="an" role="tablist">
       <button type="button" data-switch="protocol" aria-pressed="true"><i class="switcher__dot switcher__dot--butter"></i>Protocol</button>
       <button type="button" data-switch="wallet" aria-pressed="false"><i class="switcher__dot switcher__dot--violet"></i>Wallets</button>
+      <button type="button" class="only-analytics" data-switch="board" aria-pressed="false"><i class="switcher__dot switcher__dot--peach"></i>Leaderboard</button>
       <button type="button" data-switch="tools" aria-pressed="false"><i class="switcher__dot switcher__dot--lime"></i>Agent tools</button>
     </div>
     <div class="an-bar__right">
@@ -101,6 +102,20 @@
     </div>
     <div class="agent__feed" data-agent-feed>
       <p class="empty">Run a tool. Everything the agent looks at appears here.</p>
+    </div>
+  </div>
+
+  <div data-pane="an:board" hidden>
+    <div class="card">
+      <div class="an-chart__head">
+        <div><span class="panel__label">Top Perpl traders</span><p class="panel__lede" data-board-note>Ranked from indexed on-chain events. Tap a row to open that wallet.</p></div>
+        <div class="chip-row" data-board-sort>
+          <button type="button" class="chip chip--active" data-sort="pnl">Net P&amp;L</button>
+          <button type="button" class="chip" data-sort="volume">Volume</button>
+          <button type="button" class="chip" data-sort="winRate">Win rate</button>
+        </div>
+      </div>
+      <div class="table-wrap" data-board-rows><p class="empty">Loading…</p></div>
     </div>
   </div>
 </section>

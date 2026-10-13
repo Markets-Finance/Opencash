@@ -3,7 +3,8 @@ import { botActionMessage, botDigest, botMandateMessage, type BotAction } from "
 import { network } from "../../../data/network";
 import { createBot, createBotRuntime, type Bot, type BotMode, type BotRuntime } from "../../perpl";
 import { terminal } from "../../perpl";
-import { query } from "../dom";
+import { esc, query, usd } from "../dom";
+import { explorer as networkExplorer } from "../../../data/network";
 import { toolbox } from "../agent/session";
 import { requireTrader, session } from "../state";
 import { initLiveBots, paintLiveBots, startLiveBots, turnOnServerRunning } from "../lab/live";
@@ -17,6 +18,7 @@ let localBots: Bot[] = [];
 let serverBots: Bot[] = [];
 let serverTimer: ReturnType<typeof setInterval> | null = null;
 
+const explorerTx = `${networkExplorer}/tx/`;
 const backend = import.meta.env.PUBLIC_BACKEND_URL ?? "http://localhost:8787";
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
@@ -28,11 +30,34 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
 
 const post = <T>(path: string, body: unknown) => call<T>(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
+function paintActivity(entries: { bot: Bot; kind: string }[]) {
+  const summary = document.querySelector<HTMLElement>("[data-bot-summary]");
+  const feed = document.querySelector<HTMLElement>("[data-bot-activity]");
+  if (!summary || !feed) return;
+  const running = entries.filter((entry) => entry.bot.enabled).length;
+  const realised = entries.reduce((sum, entry) => sum + entry.bot.realizedPnlUsd, 0);
+  summary.innerHTML = `<div class="stat"><small>Bots</small><b>${entries.length}</b></div><div class="stat"><small>Running</small><b>${running}</b></div><div class="stat"><small>Realised</small><b>${usd(realised)}</b></div>`;
+  const rows = entries
+    .flatMap(({ bot, kind }) => bot.log.map((entry) => ({ entry, name: bot.name, kind })))
+    .sort((a, b) => b.entry.at - a.entry.at)
+    .slice(0, 30);
+  feed.innerHTML =
+    rows.length === 0
+      ? `<div class="bot__log-row">Nothing yet. Every bot action appears here with its transaction.</div>`
+      : rows
+          .map(({ entry, name, kind }) => {
+            const tx = entry.txHash ? ` <a href="${explorerTx}${esc(entry.txHash)}" target="_blank" rel="noreferrer">tx</a>` : "";
+            return `<div class="bot__log-row bot__log-row--${entry.level}"><span>${new Date(entry.at).toLocaleTimeString()}</span><span><b>${esc(name)}</b> · ${kind} · ${esc(entry.message)}${tx}</span></div>`;
+          })
+          .join("");
+}
+
 function paintAll() {
   const list = query("[data-bot-list]");
   const paper = listPaper();
   const html = [...serverBots.map((bot) => renderBot(bot, "live")), ...paper.map((bot) => renderBot(bot, "paper")), ...localBots.map((bot) => renderBot(bot, "browser"))];
   list.innerHTML = html.length === 0 ? `<p class="empty">No bots yet. Ask the agent for a trade, then start it in Paper or Live.</p>` : html.join("");
+  paintActivity([...serverBots.map((bot) => ({ bot, kind: "Live" })), ...paper.map((bot) => ({ bot, kind: "Paper" }))]);
   document.dispatchEvent(new CustomEvent("bots:changed", { detail: [...serverBots.map((bot) => ({ bot, kind: "live" })), ...paper.map((bot) => ({ bot, kind: "paper" }))] }));
 }
 

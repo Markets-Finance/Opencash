@@ -355,3 +355,12 @@
 [data-panel="agent"] > .switcher { margin-bottom: 14px; }
 
 .agent-memory { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; opacity: 0.85; }
+
+[data-host="bot"] [data-tabs] [data-tab]:not([data-tab="agent"]):not([data-tab="account"]),
+[data-host="analytics"] [data-tabs] [data-tab]:not([data-tab="analytics"]):not([data-tab="account"]) { display: none; }
+[data-host="bot"] .dash__search, [data-host="analytics"] .dash__search { display: none; }
+[data-host="bot"] .dash__brand::after { content: "Bots"; margin-left: 8px; padding: 2px 10px; border-radius: 999px; background: rgba(123, 115, 240, 0.25); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+[data-host="analytics"] .dash__brand::after { content: "Analytics"; margin-left: 8px; padding: 2px 10px; border-radius: 999px; background: rgba(62, 207, 142, 0.25); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+.only-analytics, .only-bot { display: none; }
+[data-host="analytics"] .only-analytics { display: revert; }
+[data-host="bot"] .only-bot { display: revert; }
