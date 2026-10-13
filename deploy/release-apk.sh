@@ -23,6 +23,10 @@ EXPO_PUBLIC_BACKEND_URL=https://monad-api.opencash.in EXPO_PUBLIC_NETWORK=mainne
   ./gradlew :app:createBundleReleaseJsAndAssets --rerun assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a -q
 apk="$root/mobile/android/app/build/outputs/apk/release/OpenCash.apk"
 cp "$root/mobile/android/app/build/outputs/apk/release/app-release.apk" "$apk"
+expected="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).expo.android.package)' "$root/mobile/app.json")"
+aapt="$(ls -d "$HOME"/Library/Android/sdk/build-tools/*/ | tail -1)aapt2"
+built="$("$aapt" dump badging "$apk" | sed -n "s/^package: name='\([^']*\)'.*/\1/p")"
+[[ "$built" == "$expected" ]] || { echo "APK package $built does not match app.json $expected"; exit 1; }
 
 gh release create "v$version" "$apk" --repo "$repo" --title "OpenCash $version" --notes "$notes"
 echo "released v$version (versionCode $code)"
