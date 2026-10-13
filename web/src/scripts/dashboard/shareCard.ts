@@ -1,7 +1,7 @@
 import { requireTrader } from "./state";
 
 const siteUrl = "https://monad.opencash.in";
-const postText = "I'm trading on OpenCash. Join me:";
+const postText = "I'm trading on OpenCash with @opencashhq. Join me:";
 
 function roundedRect(context: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
   context.beginPath();

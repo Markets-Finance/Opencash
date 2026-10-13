@@ -524,7 +524,7 @@ export function Account({
           />
         )}
         {account !== null && (
-          <Action label="Share on X" emphasis="primary" onPress={() => void Share.share({ message: "I'm trading on OpenCash. Join me: https://monad.opencash.in" })} />
+          <Action label="Share on X" emphasis="primary" onPress={() => void Share.share({ message: "I'm trading on OpenCash with @opencashhq. Join me: https://monad.opencash.in" })} />
         )}
 
         <View style={styles.actions}>
