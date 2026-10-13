@@ -16,6 +16,7 @@ import { BinDetail } from "./src/screens/BinDetail";
 import { Bins } from "./src/screens/Bins";
 import { Bots } from "./src/screens/Bots";
 import { startBots, stopBots } from "./src/lib/bots";
+import { startSweep, stopSweep } from "./src/lib/sweep";
 import { Asset } from "./src/screens/Asset";
 import { Deposit } from "./src/screens/Deposit";
 import { runBackOverride } from "./src/lib/nav";
@@ -99,8 +100,17 @@ export default function App() {
 
   function onAuthenticated(account: TradingAccount | null) {
     setTrader(account);
-    if (account === null) stopBots();
-    else void startBots(account);
+    if (account === null) {
+      stopBots();
+      stopSweep();
+    } else {
+      void startBots(account);
+      startSweep(account, () => {
+        loadCollateralBalance(account.address)
+          .then((ausd) => setBalance(ausd))
+          .catch(() => {});
+      });
+    }
     setBalance(null);
     setPortfolio(null);
     if (account === null) return;
