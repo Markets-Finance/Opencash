@@ -161,26 +161,37 @@ export function createTerminal(config: TerminalConfig) {
     const total = descs.reduce((sum, desc) => sum + desc.amountCNS, 0n);
     const signer = { chain: wallet.chain, account: tradingAccount.account };
 
-    const allowance = await client.readContract(
-      allowanceRequest(deployment.collateral, owner, deployment.exchange),
-    );
-
-    if (allowance < total) {
-      const hash = await wallet.writeContract({
-        ...approveCollateralRequest(deployment.collateral, deployment.exchange, total),
-        ...signer,
-      });
-      onStep("approve", hash);
-      await client.waitForTransactionReceipt({ hash });
-    }
-
     const existing = await fetchAccount(client, deployment.exchange, owner);
-    const fund = existing
-      ? depositCollateralRequest(deployment.exchange, total)
-      : createAccountRequest(deployment.exchange, total);
-    const fundHash = await wallet.writeContract({ ...fund, ...signer });
-    onStep("fund", fundHash);
-    await client.waitForTransactionReceipt({ hash: fundHash });
+    const freeCNS = existing ? toCNS(Math.max(0, existing.balance - existing.lockedBalance)) : 0n;
+    const shortfall = total > freeCNS ? total - freeCNS : 0n;
+
+    if (shortfall > 0n) {
+      const walletAusd = await loadCollateralBalance(owner);
+      const needed = fromScaled(shortfall, deployment.collateralDecimals);
+      if (walletAusd + 1e-9 < needed) {
+        const perplFree = existing ? Math.max(0, existing.balance - existing.lockedBalance) : 0;
+        throw new Error(`This trade needs ${fromScaled(total, deployment.collateralDecimals).toFixed(2)} AUSD of margin. Perpl has ${perplFree.toFixed(2)} free and your wallet has ${walletAusd.toFixed(2)}. Lower the amount or deposit ${(needed - walletAusd).toFixed(2)} more AUSD.`);
+      }
+
+      const allowance = await client.readContract(
+        allowanceRequest(deployment.collateral, owner, deployment.exchange),
+      );
+      if (allowance < shortfall) {
+        const hash = await wallet.writeContract({
+          ...approveCollateralRequest(deployment.collateral, deployment.exchange, shortfall),
+          ...signer,
+        });
+        onStep("approve", hash);
+        await client.waitForTransactionReceipt({ hash });
+      }
+
+      const fund = existing
+        ? depositCollateralRequest(deployment.exchange, shortfall)
+        : createAccountRequest(deployment.exchange, shortfall);
+      const fundHash = await wallet.writeContract({ ...fund, ...signer });
+      onStep("fund", fundHash);
+      await client.waitForTransactionReceipt({ hash: fundHash });
+    }
 
     const ordersHash = await wallet.writeContract({
       ...execOrdersRequest(deployment.exchange, descs, true),
