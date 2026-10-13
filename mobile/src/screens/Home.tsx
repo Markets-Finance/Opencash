@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { bins, type BinPosition, type TradingAccount } from "shared";
 import { AddressMark } from "../components/AddressMark";
 import { AssetMark, LegStack } from "../components/AssetMark";
+import { VolumeBars } from "../components/VolumeBars";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { ArrowBadge, CardTitle, RoundButton, Tag, ToneCard, tone } from "../components/ui";
 import { loadMarkets, loadPositions, loadSummary, type MarketData, type PortfolioSummary } from "../lib/perpl";
@@ -97,9 +98,10 @@ export function Home({ trader, name, onSelectTab, onOpenAsset, onDeposit, onSend
               {total.whole}
               <Text style={styles.walletCents}>{total.cents}</Text>
             </Text>
+            <Text style={styles.walletChange}>AUSD</Text>
             <Text style={styles.walletChange}>
               {pnl >= 0 ? "+" : "−"} {change.whole}
-              {change.cents}
+              {change.cents} AUSD
             </Text>
           </View>
           <View style={styles.walletActions}>
@@ -117,6 +119,8 @@ export function Home({ trader, name, onSelectTab, onOpenAsset, onDeposit, onSend
             </Pressable>
           </View>
         </View>
+
+        {summary !== null && summary.symbols.length === 0 && <VolumeBars />}
 
         <Text style={styles.section}>POSITIONS</Text>
         {error !== null ? (

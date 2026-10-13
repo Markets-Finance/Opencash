@@ -1,6 +1,8 @@
 import type { BinPosition } from "shared";
+import { perpl } from "shared";
 import { bins, terminal, type MarketData } from "../perpl";
-import { drawLine } from "./charts";
+import { drawBars, drawLine } from "./charts";
+import { toolbox } from "./agent/session";
 import { filterHistory, loadHistory, recordSnapshot, type HistoryRange } from "./history";
 import { changeClass, legStackHtml, markForSymbol, px, query, usd } from "./dom";
 import { getMarketData, getPositions } from "./market";
@@ -97,13 +99,22 @@ export async function initHome() {
   );
   paintHistory();
 
+  async function showVolume() {
+    const label = document.querySelector<HTMLElement>("[data-portfolio-label]");
+    if (label) label.textContent = "Perpl volume · last 7 days";
+    query("[data-portfolio-range]").hidden = true;
+    chartEl.innerHTML = '<div class="chart-empty">Loading Perpl volume…</div>';
+    const series = await perpl.exchangeVolumeSeries(toolbox, 7).catch(() => []);
+    drawBars(chartEl, series, "Perpl volume is unavailable right now.");
+  }
+
   const changeEl = query("[data-wallet-change]");
   const coinsEl = query("[data-wallet-coins]");
 
   function paintTotal(total: number, pnl: number, symbols: string[]) {
     const [whole, cents] = Math.abs(total).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).split(".");
-    balanceEl.innerHTML = `${total < 0 ? "−" : ""}$${whole}<small>.${cents}</small>`;
-    changeEl.textContent = `${pnl >= 0 ? "+" : "−"} ${usd(Math.abs(pnl))}`;
+    balanceEl.innerHTML = `${total < 0 ? "−" : ""}$${whole}<small>.${cents}</small><small class="wallet__unit"> AUSD</small>`;
+    changeEl.textContent = `${pnl >= 0 ? "+" : "−"} ${usd(Math.abs(pnl))} AUSD`;
     coinsEl.innerHTML = symbols.slice(0, 4).map(markForSymbol).join("");
     updatedEl.textContent = new Date().toLocaleTimeString();
   }
@@ -121,11 +132,12 @@ export async function initHome() {
     renderMarkets(query("[data-top-assets]"), data);
     renderTicker(query("[data-ticker-row]"), data);
     const summary = await terminal.loadSummary(trader.address, data);
-    portfolioValueEl.textContent = usd(summary.total);
-    portfolioChangeEl.textContent = `${usd(summary.unrealizedPnl)} unrealised`;
+    portfolioValueEl.textContent = `${usd(summary.total)} AUSD`;
+    portfolioChangeEl.textContent = `${usd(summary.unrealizedPnl)} AUSD unrealised`;
     portfolioChangeEl.className = `chart-change ${changeClass(summary.unrealizedPnl)}`;
     history = recordSnapshot(trader.address, summary.total);
-    paintHistory();
+    if (summary.symbols.length === 0) await showVolume();
+    else paintHistory();
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     for (const selector of ["[data-top-assets]", "[data-ticker-row]"]) {

@@ -130,12 +130,12 @@ export function Trade({ trader, onOpenAsset, onSelectTab }: TradeProps) {
                   <Text style={styles.positionTitle}>
                     {long ? "LONG" : "SHORT"} {entry.market.symbol} ↗
                   </Text>
-                  <Text style={[styles.pnl, { color: entry.position.pnl >= 0 ? dark.green : dark.red }]}>{usd(entry.position.pnl)}</Text>
+                  <Text style={[styles.pnl, { color: entry.position.pnl >= 0 ? dark.green : dark.red }]}>{usd(entry.position.pnl)} AUSD</Text>
                 </Pressable>
                 <View style={styles.tags}>
                   <Tag label={`${entry.position.lots} lots`} dot={long ? dark.green : dark.red} />
                   <Tag label={`Entry ${px(entry.position.entryPrice)}`} />
-                  <Tag label={`Margin ${usd(entry.position.deposit)}`} />
+                  <Tag label={`Margin ${usd(entry.position.deposit)} AUSD`} />
                 </View>
                 <Pressable disabled={busy} onPress={() => void close(entry)} style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}>
                   <Text style={styles.closeLabel}>Close position</Text>

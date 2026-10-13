@@ -68,3 +68,5 @@ export { perplEventsAbi } from "./events.js";
 export * from "./apikey/index.js";
 export { curveAbi, defaultConvertSlippageBps, mainnetConvert, minimumOut, quoteConvertRequest, quoteUsdcToCollateral, swapRequest } from "./convert.js";
 export type { ConvertVenue } from "./convert.js";
+export { exchangeVolumeSeries } from "./volume.js";
+export type { VolumePoint } from "./volume.js";

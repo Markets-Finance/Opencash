@@ -266,7 +266,7 @@ export function Deposit({ trader, onBack, onSelectTab }: DepositProps) {
                 {quote !== null && (
                   <View style={styles.end}>
                     <Text style={styles.endLabel}>YOU END WITH ABOUT</Text>
-                    <Text style={styles.endValue}>${Number(quote.amountOutUsd).toFixed(2)} of Perpl margin</Text>
+                    <Text style={styles.endValue}>{Number(quote.amountOutUsd).toFixed(2)} AUSD of Perpl margin</Text>
                     <Text style={styles.muted}>Before the small USDC to AUSD conversion cost, which is not quoted yet.</Text>
                   </View>
                 )}

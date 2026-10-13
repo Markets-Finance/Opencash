@@ -1,6 +1,7 @@
 import {
   CandlestickSeries,
   ColorType,
+  HistogramSeries,
   LineSeries,
   LineStyle,
   createChart,
@@ -75,6 +76,18 @@ export function drawLine(container: HTMLElement, points: { time: number; value: 
   }
   const chart = baseChart(container);
   const series = chart.addSeries(LineSeries, { color: palette.line, lineWidth: 2 });
+  series.setData(points.map((p) => ({ time: Math.floor(p.time / 1000) as UTCTimestamp, value: p.value })));
+  chart.timeScale().fitContent();
+}
+
+export function drawBars(container: HTMLElement, points: { time: number; value: number }[], emptyMessage: string) {
+  container.innerHTML = "";
+  if (points.length < 2) {
+    container.innerHTML = `<div class="chart-empty">${emptyMessage}</div>`;
+    return;
+  }
+  const chart = baseChart(container);
+  const series = chart.addSeries(HistogramSeries, { color: palette.line, priceFormat: { type: "volume" } });
   series.setData(points.map((p) => ({ time: Math.floor(p.time / 1000) as UTCTimestamp, value: p.value })));
   chart.timeScale().fitContent();
 }

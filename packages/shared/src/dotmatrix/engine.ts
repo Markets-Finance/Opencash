@@ -1,4 +1,4 @@
-import { cardDots, ease, loaderTiming, pairDots, pendingPercent, percentLabel, scatterDots, textDots, textWidth, type Dot } from "./index.js";
+import { ease, loaderTiming, pairDots, pendingPercent, percentLabel, scatterDots, textDots, textWidth, type Dot } from "./index.js";
 
 export type LoaderEngine = {
   pitch: number;
@@ -27,6 +27,13 @@ export function createLoaderEngine(width: number, height: number, start: number)
     ];
   }
 
+  function loginDots(): Dot[] {
+    const size = Math.min(pitch, (width - margin * 2) / textWidth(5, 1));
+    const left = (word: string) => (width - textWidth(word.length, size)) / 2;
+    const top = height / 2 - size * 8;
+    return [...textDots("MERA", size, left("MERA"), top), ...textDots("LOGIN", size, left("LOGIN"), top + size * 9)];
+  }
+
   function counter(percent: number): Dot[] {
     const text = percentLabel(percent);
     const originX = width - margin - textWidth(text.length, pitch);
@@ -53,7 +60,7 @@ export function createLoaderEngine(width: number, height: number, start: number)
     }
     const since = now - resolveAt;
     if (since < loaderTiming.rushMs) return counter(rushFrom + (100 - rushFrom) * ease(since / loaderTiming.rushMs));
-    if (pairs.length === 0) pairs = pairDots(counter(100), cardDots(width / 2, height / 2, Math.min(width * 0.8, 360), pitch));
+    if (pairs.length === 0) pairs = pairDots(counter(100), loginDots());
     const t = (since - loaderTiming.rushMs) / loaderTiming.resolveMs;
     if (!finished && since >= loaderTiming.rushMs + loaderTiming.resolveMs + loaderTiming.holdMs) {
       finished = true;
