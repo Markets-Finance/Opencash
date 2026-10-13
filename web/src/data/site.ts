@@ -23,6 +23,7 @@ export const footerLinks = [
   { href: "#assets", label: "Bins" },
   { href: "#platform", label: "Platform" },
   { href: "#network", label: "Developers" },
+  { href: "#bounties", label: "Bounties" },
   { href: "#about", label: "About OpenCash" },
   { href: "/privacy", label: "Privacy Policy" },
   { href: "/terms", label: "Terms & Conditions" },

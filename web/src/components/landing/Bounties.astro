@@ -1,0 +1,36 @@
+---
+const bounties = [
+  { sponsor: "Aurora Intents", title: "Bring Any-Chain Liquidity to Monad", line: "Pay with USDC, ETH, SOL or BTC from another chain. A one-time Aurora deposit address brings it to your Monad address, and the app turns it into AUSD." },
+  { sponsor: "Agora", title: "Best Mobile Trading App on Monad", line: "A native Android app for bins, bots and direct trades, with a passkey sign-in, live chart overlays and in-app updates." },
+  { sponsor: "Perpl", title: "Best Use of Perpl's API", line: "Server bots place orders and exchange-side stop and target triggers through Perpl's trade API, read candles, books and funding, and never hold withdraw rights." },
+  { sponsor: "Perpl", title: "Best Analytics / Risk Tool", line: "Entry, liquidation, stop and target lines on every chart, exchange volume and wallet analytics, and hard caps on every bot." },
+  { sponsor: "Monad Foundation", title: "Best Mera-Powered UX on Monad", line: "No seed phrase and no extension. One passkey creates the account, signs every order and signs you back in." },
+  { sponsor: "Monad Foundation", title: "Mera: One Passkey, Many Keys", line: "The same passkey also seals your profile, an imported wallet and private notes in separate namespaces. Notes sync as ciphertext, so any device with your passkey can open them." },
+] as const;
+---
+
+<section class="bounties section-frame" id="bounties" aria-labelledby="bounties-title">
+  <div class="section-heading">
+    <h2 id="bounties-title">Built for the<br />Monad Metropolis bounties.</h2>
+    <p>OpenCash is our entry across six tracks, from any-chain deposits to passkey-sealed notes. Each card is something you can try in the app today.</p>
+  </div>
+  <div class="bounty-grid">
+    {bounties.map((bounty) => (
+      <article class="bounty-card">
+        <span>{bounty.sponsor}</span>
+        <h3>{bounty.title}</h3>
+        <p>{bounty.line}</p>
+      </article>
+    ))}
+  </div>
+</section>
+
+<style>
+  .bounty-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 40px; }
+  .bounty-card { padding: 24px; border-radius: 24px; background: #c4f299; color: #10210a; display: flex; flex-direction: column; gap: 8px; }
+  .bounty-card:nth-child(3n + 2) { background: #f2d16b; }
+  .bounty-card:nth-child(3n) { background: #f2b98b; }
+  .bounty-card span { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.65; }
+  .bounty-card h3 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; }
+  .bounty-card p { margin: 0; font-size: 15px; line-height: 1.5; }
+</style>
