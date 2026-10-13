@@ -35,11 +35,12 @@ export function DotLoader() {
 
   return (
     <Animated.View pointerEvents="auto" style={[styles.overlay, { opacity: fade }]}>
-      <Text style={styles.label}>SIGNING…</Text>
+      <Text style={styles.label}>MERA PASSKEY</Text>
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        {dots.map((dot, index) => (
-          <View key={index} style={[styles.dot, { left: dot.x - radius, top: dot.y - radius, width: radius * 2, height: radius * 2, borderRadius: radius }]} />
-        ))}
+        {dots.map((dot, index) => {
+          const r = dot.r ?? radius;
+          return <View key={index} style={[styles.dot, { left: dot.x - r, top: dot.y - r, width: r * 2, height: r * 2, borderRadius: r }]} />;
+        })}
       </View>
     </Animated.View>
   );

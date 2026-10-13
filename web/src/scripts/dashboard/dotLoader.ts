@@ -4,7 +4,7 @@ export type DotLoader = { resolve: () => Promise<void>; dismiss: () => Promise<v
 
 const idle: DotLoader = { resolve: async () => {}, dismiss: async () => {} };
 
-export function startDotLoader(label = "SIGNING…"): DotLoader {
+export function startDotLoader(label = "MERA PASSKEY"): DotLoader {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return idle;
 
   const style = getComputedStyle(document.body);
@@ -37,8 +37,9 @@ export function startDotLoader(label = "SIGNING…"): DotLoader {
     context.fillStyle = ink;
     context.beginPath();
     for (const dot of engine.frame(Date.now())) {
-      context.moveTo(dot.x + radius, dot.y);
-      context.arc(dot.x, dot.y, radius, 0, Math.PI * 2);
+      const r = dot.r ?? radius;
+      context.moveTo(dot.x + r, dot.y);
+      context.arc(dot.x, dot.y, r, 0, Math.PI * 2);
     }
     context.fill();
     frame = requestAnimationFrame(tick);

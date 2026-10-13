@@ -2,13 +2,13 @@ import { glyphCells, glyphCols, glyphRows, scrambleChars } from "./font.js";
 
 export { glyphCells, glyphCols, glyphRows, scrambleChars };
 
-export type Dot = { x: number; y: number };
+export type Dot = { x: number; y: number; r?: number };
 
-export function textDots(text: string, pitch: number, originX: number, originY: number): Dot[] {
+export function textDots(text: string, pitch: number, originX: number, originY: number, r?: number): Dot[] {
   const dots: Dot[] = [];
   [...text].forEach((char, index) => {
     const left = originX + index * (glyphCols + 1) * pitch;
-    for (const [col, row] of glyphCells(char)) dots.push({ x: left + col * pitch, y: originY + row * pitch });
+    for (const [col, row] of glyphCells(char)) dots.push({ x: left + col * pitch, y: originY + row * pitch, ...(r === undefined ? {} : { r }) });
   });
   return dots;
 }

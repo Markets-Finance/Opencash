@@ -20,7 +20,14 @@ export function createLoaderEngine(width: number, height: number, start: number)
   function counter(percent: number): Dot[] {
     const text = percentLabel(percent);
     const originX = width - margin - textWidth(text.length, pitch);
-    return [...textDots(text, pitch, originX, height * 0.42), ...textDots(">", pitch, margin, height * 0.62)];
+    const small = pitch * 0.55;
+    const wordTop = height * 0.14;
+    return [
+      ...textDots("MERA", small, margin, wordTop, small * 0.38),
+      ...textDots("PASSKEY", small, margin, wordTop + small * 9, small * 0.38),
+      ...textDots(text, pitch, originX, height * 0.42),
+      ...textDots(">", pitch, margin, height * 0.62),
+    ];
   }
 
   function frame(now: number): Dot[] {
@@ -47,7 +54,10 @@ export function createLoaderEngine(width: number, height: number, start: number)
     }
     return pairs.map((pair, index) => {
       const local = ease(t * 1.4 - (index / pairs.length) * 0.4);
-      return { x: pair.from.x + (pair.to.x - pair.from.x) * local, y: pair.from.y + (pair.to.y - pair.from.y) * local };
+      const base = pitch * 0.38;
+      const from = pair.from.r ?? base;
+      const to = pair.to.r ?? base;
+      return { x: pair.from.x + (pair.to.x - pair.from.x) * local, y: pair.from.y + (pair.to.y - pair.from.y) * local, r: from + (to - from) * local };
     });
   }
 
