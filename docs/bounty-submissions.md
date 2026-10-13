@@ -4,7 +4,8 @@ Links to use everywhere a link is asked:
 
 - App (web, works on phones too): https://monad.opencash.in
 - Android APK (latest): https://github.com/Markets-Finance/Opencash/releases/latest
-- Source: https://github.com/Markets-Finance/Opencash
+- Source: https://github.com/Markets-Finance/Opencash (branch `monad`: https://github.com/Markets-Finance/Opencash/tree/monad)
+- Code links below use the `monad` branch. Push it first (see the end of this file) or the links will 404.
 
 Each section below is written to paste into the "describe" box (all are under 8,000 characters). Items marked CHECK are things to confirm on a real device or account before you submit.
 
@@ -26,6 +27,15 @@ Proof of real use: a four-leg bin position (MON, ETH, SOL, HYPE) was opened from
 
 CHECK: record the demo on a real phone: create account, deposit, open a bin, show the position view, close it.
 
+**Code on GitHub:**
+- https://github.com/Markets-Finance/Opencash/tree/monad/mobile
+- https://github.com/Markets-Finance/Opencash/tree/monad/mobile/src/screens/Account.tsx
+- https://github.com/Markets-Finance/Opencash/tree/monad/mobile/src/components/BinPosition.tsx
+- https://github.com/Markets-Finance/Opencash/tree/monad/mobile/src/screens/Bots.tsx
+- https://github.com/Markets-Finance/Opencash/tree/monad/mobile/src/lib/updates.ts
+- https://github.com/Markets-Finance/Opencash/tree/monad/packages/shared/src/mera
+- https://github.com/Markets-Finance/Opencash/tree/monad/packages/shared/src/dotmatrix
+
 ---
 
 ## 2. Aurora Intents: Bring Any-Chain Liquidity to Monad
@@ -39,6 +49,13 @@ OpenCash then finishes the job. A background check swaps any USDC in the wallet 
 The quote and address calls go through our backend, which keeps the Aurora key off the device and limits request rates. Referral accounts also get a small amount of MON for gas so the first swap does not need a second deposit.
 
 CHECK: run one real small cross-chain deposit end to end and record it for the demo.
+
+**Code on GitHub:**
+- https://github.com/Markets-Finance/Opencash/tree/monad/backend/src/intents
+- https://github.com/Markets-Finance/Opencash/tree/monad/packages/shared/src/intents
+- https://github.com/Markets-Finance/Opencash/tree/monad/web/src/scripts/dashboard/funds.ts
+- https://github.com/Markets-Finance/Opencash/tree/monad/mobile/src/screens/Deposit.tsx
+- https://github.com/Markets-Finance/Opencash/tree/monad/backend/src/relayer
 
 ---
 
@@ -60,6 +77,13 @@ Safety rails: signed mandates per bot, per-wallet bot and leverage caps, a serve
 
 CHECK: confirm a live guard bot places and cancels real trigger orders on a small position, and note the order IDs for the demo.
 
+**Code on GitHub:**
+- https://github.com/Markets-Finance/Opencash/tree/monad/packages/shared/src/perpl/apikey
+- https://github.com/Markets-Finance/Opencash/tree/monad/backend/src/runner
+- https://github.com/Markets-Finance/Opencash/tree/monad/backend/src/agent
+- https://github.com/Markets-Finance/Opencash/tree/monad/packages/shared/src/agent
+- https://github.com/Markets-Finance/Opencash/tree/monad/docs/first-real-orders.md
+
 ---
 
 ## 4. Perpl: Best Analytics / Risk Tool
@@ -73,6 +97,13 @@ CHECK: confirm a live guard bot places and cancels real trigger orders on a smal
 **Hard limits.** Per-wallet bot and leverage caps, a $10 minimum order, a low-gas warning, and a server kill switch.
 
 Smart-money flow from Nansen is shown beside every bin and can gate a bot's entry.
+
+**Code on GitHub:**
+- https://github.com/Markets-Finance/Opencash/tree/monad/backend/src/analytics
+- https://github.com/Markets-Finance/Opencash/tree/monad/web/src/scripts/dashboard/analytics
+- https://github.com/Markets-Finance/Opencash/tree/monad/packages/shared/src/analysis
+- https://github.com/Markets-Finance/Opencash/tree/monad/packages/shared/src/bins
+- https://github.com/Markets-Finance/Opencash/tree/monad/web/src/scripts/dashboard/bins.ts
 
 ---
 
@@ -88,6 +119,12 @@ Nansen smart-money data is used as a signal, not decoration.
 
 The backend caches reads and enforces a credit cap, so a busy day cannot run the key dry. Flow data covers an asset across chains, which we state in the UI.
 
+**Code on GitHub:**
+- https://github.com/Markets-Finance/Opencash/tree/monad/backend/src/nansen
+- https://github.com/Markets-Finance/Opencash/tree/monad/packages/shared/src/nansen
+- https://github.com/Markets-Finance/Opencash/tree/monad/web/src/scripts/dashboard/nansen.ts
+- https://github.com/Markets-Finance/Opencash/tree/monad/mobile/src/lib/nansen.ts
+
 ---
 
 ## 6. Monad Foundation: Best Mera-Powered UX on Monad
@@ -102,6 +139,13 @@ The whole product is a passkey experience.
 - **Recovery phrase** can be revealed from the passkey when the user wants it.
 - **Onboarding.** A referral code can unlock higher limits and send a small gas grant, so a first trade works right after sign-up.
 - **One approval turns on autonomous trading** (a trade-only key for bots). A second device with the same passkey opens the same account and the same notes.
+
+**Code on GitHub:**
+- https://github.com/Markets-Finance/Opencash/tree/monad/packages/shared/src/mera
+- https://github.com/Markets-Finance/Opencash/tree/monad/web/src/scripts/dashboard/gate.ts
+- https://github.com/Markets-Finance/Opencash/tree/monad/mobile/src/screens/Account.tsx
+- https://github.com/Markets-Finance/Opencash/tree/monad/mobile/src/components/AuthShell.tsx
+- https://github.com/Markets-Finance/Opencash/tree/monad/packages/shared/src/dotmatrix
 
 ---
 
@@ -123,3 +167,67 @@ The notes and agent-memory namespaces each use their own PRF salt, so each needs
 Honest boundary: the agent memory is sealed at rest, but a question you ask is sent to the language-model provider to be answered. Profile and imported-key keys come from the sign-in PRF result, while notes and agent memory have their own salts.
 
 CHECK: run the two-device demo live before the deadline and record it.
+
+**Code on GitHub:**
+- https://github.com/Markets-Finance/Opencash/tree/monad/packages/shared/src/mera
+- https://github.com/Markets-Finance/Opencash/tree/monad/backend/src/vault
+- https://github.com/Markets-Finance/Opencash/tree/monad/mobile/src/components/NotesPanel.tsx
+- https://github.com/Markets-Finance/Opencash/tree/monad/web/src/scripts/dashboard/agent/memory.ts
+
+---
+
+## Pushing the code (commands to run yourself)
+
+Your local remotes:
+
+- `legacy` = https://github.com/Markets-Finance/Opencash.git (this is the repo you named)
+- `origin` = git@github.com:Markets-Finance/open-cash.git (a different repo, the one currently in the form)
+
+Make the form link and the remote you push to the same repo. Everything below pushes to `legacy` (Opencash). To check:
+
+```bash
+cd /Users/daiwi/project/monad
+git status                      # should be clean
+git log --oneline legacy/monad..monad | wc -l   # commits not on Opencash yet (run `git fetch legacy` first)
+```
+
+**All at once (simplest)**
+
+```bash
+git fetch legacy
+git push legacy monad:monad
+```
+
+Then on GitHub, open Opencash > Settings > Branches and set the default branch to `monad`, so judges land on the right code. Do not force-push over `main`.
+
+**Or in batches by subject.** A push of one commit sends all its ancestors, so run these in order. Each finds the newest commit with that subject and pushes up to it:
+
+```bash
+push_to() { git push legacy "$(git log --grep="$1" -1 --format=%H):refs/heads/monad"; }
+
+push_to "Port"                                  # ports from hood: sign-in, import, icons
+push_to "Exchange stops"                        # Perpl trigger orders for stops and targets
+push_to "One-tap server running"                # trade-key enrollment
+push_to "Release 1.0.5"                         # passkey fixes and the MERA loader
+push_to "Passkey-sealed private notes"          # Mera notes, Neon vault
+push_to "Referral code unlocks bot limits"      # referral codes
+push_to "Gas grant"                             # relayer gas grant
+push_to "Fix Perpl key enrollment signing"      # enrollment fix, agent route
+push_to "Agent chat UI"                         # agent UI and boundaries
+push_to "Bots tab overhaul"                     # Bots layout, paper and live
+push_to "Bin position view"                     # bin position on web
+push_to "Release 1.0.8"                         # app Bots, loader, cache
+push_to "Release 1.0.9"                         # app bin position, sealed memory
+push_to "Entry content"                         # docs for the form
+push_to "Bounty deep dive"                      # final docs commit
+```
+
+The last line pushes everything up to the newest commit, so after it the branch matches your local `monad`.
+
+To commit a new change by subject from here, stage only that subject's files, for example:
+
+```bash
+git add docs/bounty-submissions.md
+git commit -m "Docs: bounty links"
+git push legacy monad:monad
+```
