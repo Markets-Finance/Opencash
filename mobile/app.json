@@ -2,7 +2,7 @@
   "expo": {
     "name": "OpenCash",
     "slug": "opencash",
-    "version": "1.0.9",
+    "version": "1.0.10",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -22,7 +22,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "xyz.opencash.monad",
-      "versionCode": 10009
+      "versionCode": 10010
     },
     "web": {
       "favicon": "./assets/favicon.png"
