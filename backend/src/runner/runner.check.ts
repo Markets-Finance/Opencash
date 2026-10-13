@@ -51,6 +51,7 @@ const symbolOf = new Map(markets.map((item) => [item.perpId, item.symbol]));
 function world(options: { forwarding?: boolean; balance?: number; fillOnly?: string[] } = {}) {
   const held: { symbol: string; side: "long" | "short"; lots: number }[] = [];
   const batches: perpl.OrderSpec[][] = [];
+  const resting: { oid: number; mkt: number; t: number; tp: number }[] = [];
   let counter = 0;
   const trade = {
     account: async () => ({ id: 7, forwarding: options.forwarding ?? true, frozen: false, lastRequestId: 20, balanceRaw: 0, lockedRaw: 0, headBlock: 1000 }),
@@ -58,6 +59,14 @@ function world(options: { forwarding?: boolean; balance?: number; fillOnly?: str
     submit: async (specs: perpl.OrderSpec[]) => {
       batches.push(specs);
       for (const spec of specs) {
+        if (spec.t === 5) {
+          resting.splice(resting.findIndex((order) => order.oid === spec.oid), 1);
+          continue;
+        }
+        if (spec.tp) {
+          resting.push({ oid: 900 + resting.length, mkt: spec.mkt, t: spec.t, tp: spec.tp });
+          continue;
+        }
         const symbol = symbolOf.get(spec.mkt)!;
         if (spec.t === 1 || spec.t === 2) {
           if (!options.fillOnly || options.fillOnly.includes(symbol)) held.push({ symbol, side: spec.t === 1 ? "long" : "short", lots: spec.s! / 1e5 });
@@ -68,14 +77,15 @@ function world(options: { forwarding?: boolean; balance?: number; fillOnly?: str
       }
       return { ok: true, status: { code: 0 }, statuses: specs.map(() => ({ code: 0 })) };
     },
+    openOrders: async () => ({ d: resting }),
   } as unknown as perpl.TradeClient;
   const reads = {
     account: async () => ({ accountId: 7n, balance: options.balance ?? 1000 }),
     held: async () =>
-      held.map((item) => ({ symbol: item.symbol, side: item.side, lots: item.lots, notionalUsd: 0, entryPrice: 0, markPrice: 0, marginUsd: 50, leverage: 3, unrealizedPnlUsd: 1, liquidationPrice: null, liquidationDistancePct: null })),
+      held.map((item) => ({ symbol: item.symbol, side: item.side, lots: item.lots, notionalUsd: 0, entryPrice: 1000, markPrice: 1000, marginUsd: 50, leverage: 3, unrealizedPnlUsd: 1, liquidationPrice: null, liquidationDistancePct: null })),
     markets: async () => markets,
   };
-  return { held, batches, trade, reads };
+  return { held, batches, resting, trade, reads };
 }
 
 const toolbox = { getMarkets: async () => [{ symbol: "BTC", maxLeverage: 15 }, { symbol: "ETH", maxLeverage: 12 }] } as never;
@@ -104,6 +114,17 @@ const other = { ...createBot("Other", "auto", { ...card, legs: [{ symbol: "BTC",
 const conflict = world();
 console.assert((await make(conflict, [other]).open(card).then(() => "", (error: Error) => error.message)).includes("already used by"), "one owner per market");
 console.assert(conflict.batches.length === 0, "nothing was sent on a conflict");
+
+const guarded = world();
+const stopCard = { ...card, stopLossPct: 10, takeProfitPct: 20, legs: [{ ...card.legs[0], weightBps: 10000 }] } as typeof card;
+await make(guarded, [], undefined, stopCard).open(stopCard);
+guarded.reads.held = async () => (guarded.held.length === 0 ? [] : [{ symbol: "BTC", side: "long", lots: 1, notionalUsd: 0, entryPrice: 80_000, markPrice: 80_000, marginUsd: 50, leverage: 2, unrealizedPnlUsd: 0, liquidationPrice: null, liquidationDistancePct: null }]);
+const placed = await make(guarded, [], undefined, stopCard).protect!(stopCard);
+const [stop, target] = guarded.batches[guarded.batches.length - 1];
+console.assert(placed.length === 2 && stop.tp === 760_000 && stop.tpc === 4 && stop.t === 3 && target.tp === 880_000 && target.tpc === 3, "stop and target trigger specs", [placed, stop, target]);
+console.assert((await make(guarded, [], undefined, stopCard).protect!(stopCard)).length === 0 && guarded.resting.length === 2, "stops are not placed twice");
+await make(guarded, [], undefined, stopCard).close(stopCard);
+console.assert(guarded.resting.length === 0, "resting stops cancelled on close", guarded.resting);
 
 const closing = world();
 await make(closing).open(card);

@@ -18,7 +18,14 @@ export type OrderSpec = {
   fl: number;
   lv: number;
   lb: number;
+  tp?: number;
+  tpc?: number;
+  ms?: number;
 };
+
+export const TriggerCondition = { GTELast: 1, LTELast: 2, GTEMark: 3, LTEMark: 4 } as const;
+
+export type TriggerKind = "stop" | "target";
 
 type Side = "long" | "short";
 
@@ -75,4 +82,34 @@ export function closeSpec(input: CloseSpecInput): OrderSpec {
 
 export function cancelSpec(input: { marketId: number; accountId: number; orderId: number; requestId: number }): OrderSpec {
   return { rq: input.requestId, mkt: input.marketId, acc: input.accountId, oid: input.orderId, t: ApiOrderType.Cancel, fl: 0, lv: 0, lb: 0 };
+}
+
+export type TriggerSpecInput = Omit<CloseSpecInput, "price" | "slippageBps" | "flag"> & {
+  kind: TriggerKind;
+  triggerPrice: number;
+  maxSlippageBps?: number;
+};
+
+export const defaultTriggerSlippageBps = 300;
+
+export function triggerPriceFor(entry: number, side: Side, kind: TriggerKind, movePct: number): number {
+  const down = (side === "long") === (kind === "stop");
+  return entry * (down ? 1 - movePct / 100 : 1 + movePct / 100);
+}
+
+export function triggerCondition(side: Side, kind: TriggerKind): number {
+  const down = (side === "long") === (kind === "stop");
+  return down ? TriggerCondition.LTEMark : TriggerCondition.GTEMark;
+}
+
+export function triggerSpec(input: TriggerSpecInput): OrderSpec {
+  const base = closeSpec(input);
+  return {
+    ...base,
+    p: 0,
+    ms: input.maxSlippageBps ?? defaultTriggerSlippageBps,
+    fl: ApiOrderFlag.GoodTillCancel,
+    tp: Number(toPNS(input.triggerPrice, input.market.priceDecimals)),
+    tpc: triggerCondition(input.side, input.kind),
+  };
 }

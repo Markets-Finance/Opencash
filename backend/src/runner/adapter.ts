@@ -43,6 +43,15 @@ function failures(result: perpl.SubmitResult): string {
   return parts.filter((part) => part.trim() !== "").join("; ");
 }
 
+type RestingTrigger = { id: number; marketId: number; closeType: number };
+
+async function restingTriggers(trade: perpl.TradeClient): Promise<RestingTrigger[]> {
+  const rows = (await trade.openOrders()).d as { oid?: number; id?: number; mkt?: number; t?: number; tp?: number }[];
+  return rows
+    .filter((row) => (row.tp ?? 0) > 0 && (row.t === perpl.ApiOrderType.CloseLong || row.t === perpl.ApiOrderType.CloseShort))
+    .map((row) => ({ id: row.oid ?? row.id ?? 0, marketId: row.mkt ?? 0, closeType: row.t! }));
+}
+
 export function createApiDeps(ctx: AdapterContext): BotDeps {
   const wait = ctx.wait ?? sleep;
 
@@ -133,12 +142,61 @@ export function createApiDeps(ctx: AdapterContext): BotDeps {
       throw new Error(`Only ${opened.length} of ${sized.legs.length} legs filled${result.ok ? "" : ` (${failures(result)})`}. The filled legs were closed again.`);
     },
 
+    protect: async (card) => {
+      const mine = await account();
+      const positions = matching(card, await ctx.reads.held(mine.accountId));
+      if (positions.length === 0) return [];
+      const markets = await ctx.reads.markets();
+      const bySymbol = new Map(markets.map((market) => [market.symbol, market]));
+      const resting = await restingTriggers(ctx.trade);
+      const snap = await snapshot(mine.accountId);
+      const specs: perpl.OrderSpec[] = [];
+      const placed: string[] = [];
+      for (const position of positions) {
+        const market = bySymbol.get(position.symbol);
+        if (!market) throw new Error(`${position.symbol} is not listed`);
+        const closeType = position.side === "long" ? perpl.ApiOrderType.CloseLong : perpl.ApiOrderType.CloseShort;
+        const covered = resting.filter((order) => order.marketId === market.perpId && order.closeType === closeType).length;
+        const leverage = position.leverage ?? card.legs.find((leg) => leg.symbol === position.symbol)?.leverage ?? 1;
+        const wanted: [perpl.TriggerKind, number][] = [["stop", card.stopLossPct]];
+        if (card.legs.length === 1 && card.takeProfitPct !== undefined) wanted.push(["target", card.takeProfitPct]);
+        if (covered >= wanted.length) continue;
+        for (const [kind, pct] of wanted.slice(covered)) {
+          const triggerPrice = perpl.triggerPriceFor(position.entryPrice, position.side, kind, pct / leverage);
+          specs.push(
+            perpl.triggerSpec({
+              market,
+              accountId: snap.id,
+              side: position.side,
+              lots: position.lots,
+              kind,
+              triggerPrice,
+              requestId: ctx.trade.nextRequestId(snap.lastRequestId),
+              lastExecBlock: snap.headBlock + execWindowBlocks,
+            }),
+          );
+          placed.push(`${kind} ${position.symbol} at ${Number(triggerPrice.toPrecision(5))}`);
+        }
+      }
+      if (specs.length === 0) return [];
+      const result = await ctx.trade.submit(specs);
+      if (!result.ok) throw new Error(failures(result));
+      return placed;
+    },
+
     close: async (card) => {
       const mine = await account();
       const positions = matching(card, await ctx.reads.held(mine.accountId));
       if (positions.length === 0) return {};
       const markets = await ctx.reads.markets();
       const bySymbol = new Map(markets.map((market) => [market.symbol, market]));
+      const stale = (await restingTriggers(ctx.trade)).filter((order) => positions.some((position) => bySymbol.get(position.symbol)?.perpId === order.marketId));
+      if (stale.length > 0) {
+        const snap = await snapshot(mine.accountId);
+        await ctx.trade.submit(
+          stale.map((order) => perpl.cancelSpec({ marketId: order.marketId, accountId: snap.id, orderId: order.id, requestId: ctx.trade.nextRequestId(snap.lastRequestId) })),
+        );
+      }
       const result = await closeAll(positions, mine.accountId, bySymbol);
       await wait(settleMs);
       const left = matching(card, await ctx.reads.held(mine.accountId));
