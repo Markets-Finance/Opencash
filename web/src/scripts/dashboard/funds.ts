@@ -196,17 +196,17 @@ function openDeposit() {
   const panel = openModal(`
     <div class="modal__head"><span class="modal__title">Deposit</span><button type="button" class="modal__close" data-close>×</button></div>
     <div class="switcher switcher--tight" data-dep-tabs>
-      <button type="button" data-dep="chain" aria-pressed="true"><i class="switcher__dot switcher__dot--violet"></i>Another chain</button>
-      <button type="button" data-dep="monad" aria-pressed="false"><i class="switcher__dot switcher__dot--butter"></i>From Monad</button>
+      <button type="button" data-dep="monad" aria-pressed="true"><i class="switcher__dot switcher__dot--butter"></i>From Monad</button>
+      <button type="button" data-dep="chain" aria-pressed="false"><i class="switcher__dot switcher__dot--violet"></i>Another chain</button>
     </div>
-    <div data-dep-pane="monad" hidden>
+    <div data-dep-pane="monad">
       <div class="qr-wrap">${qrSvg(trader.address)}</div>
       <p class="account-address">${esc(trader.address)}</p>
       <button type="button" class="btn" data-dep-copy>Copy address</button>
       <p class="quote-line">Send only on the Monad network. USDC, USDT0, AUSD and MON are fine. Perpl trades in AUSD, so USDC and USDT0 are converted to AUSD in the app before they become margin.</p>
       <p class="quote-line" data-dep-gas>Keep about $0.50 of MON in this address to pay network fees.</p>
     </div>
-    <div data-dep-pane="chain">
+    <div data-dep-pane="chain" hidden>
       <p class="status-line" data-dep-provider></p>
       <div class="field-row">
         <label class="field"><span>You pay</span><select data-dep-token></select></label>

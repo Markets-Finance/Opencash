@@ -34,7 +34,7 @@ export function Deposit({ trader, onBack, onSelectTab }: DepositProps) {
   const [quoting, setQuoting] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [mode, setMode] = useState<"monad" | "chain">("chain");
+  const [mode, setMode] = useState<"monad" | "chain">("monad");
   const [copied, setCopied] = useState(false);
   const [info, setInfo] = useState<Info | null>(null);
   const [address, setAddress] = useState<DepositAddress | null>(null);
@@ -142,8 +142,8 @@ export function Deposit({ trader, onBack, onSelectTab }: DepositProps) {
         {!picking && (
           <Switcher
             items={[
-              { key: "chain", label: "Another chain", dot: tone.violet },
               { key: "monad", label: "From Monad", dot: tone.lime },
+              { key: "chain", label: "Another chain", dot: tone.violet },
             ]}
             value={mode}
             onChange={setMode}
