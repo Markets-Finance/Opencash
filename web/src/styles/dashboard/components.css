@@ -402,3 +402,16 @@
   font-size: 13px;
   line-height: 1.45;
 }
+
+.bots-note[hidden] { display: none; }
+
+.agent-chat { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+.agent-msg { display: flex; gap: 10px; align-items: flex-start; }
+.agent-msg--me { flex-direction: row-reverse; }
+.agent-avatar { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: #7b73f0; color: #fff; font-size: 15px; }
+.agent-bubble { max-width: 640px; padding: 12px 16px; border-radius: 18px; background: rgba(255, 255, 255, 0.07); font-size: 14px; line-height: 1.5; }
+.agent-msg--me .agent-bubble { background: #c4f299; color: #10210a; }
+.agent-checked { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.agent-checked span { padding: 3px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); font-size: 11px; opacity: 0.8; }
+.agent-prompts { margin-bottom: 12px; }
+.agent__boundary { margin: 8px 0 0; font-size: 12px; opacity: 0.55; }

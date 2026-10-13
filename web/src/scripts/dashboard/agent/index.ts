@@ -56,33 +56,90 @@ export function initAgent() {
     if (chip) setCard(cardFromBin(bins[Number(chip.dataset.idea)], 100, 10));
   });
 
-  query<HTMLFormElement>("[data-agent-form]").addEventListener("submit", async (event) => {
-    event.preventDefault();
+  const chat = query("[data-agent-chat]");
+  const send = query<HTMLButtonElement>("[data-agent-send]");
+
+  function say(role: "me" | "bot", text: string, checked: string[] = []) {
+    const row = document.createElement("div");
+    row.className = `agent-msg${role === "me" ? " agent-msg--me" : ""}`;
+    const bubble = document.createElement("div");
+    bubble.className = "agent-bubble";
+    bubble.textContent = text;
+    if (checked.length > 0) {
+      const pills = document.createElement("div");
+      pills.className = "agent-checked";
+      for (const item of new Set(checked)) {
+        const pill = document.createElement("span");
+        pill.textContent = item;
+        pills.append(pill);
+      }
+      bubble.append(pills);
+    }
+    if (role === "bot") {
+      const avatar = document.createElement("span");
+      avatar.className = "agent-avatar";
+      avatar.textContent = "✦";
+      row.append(avatar);
+    }
+    row.append(bubble);
+    chat.append(row);
+    row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    return bubble;
+  }
+
+  const profileRaw = localStorage.getItem("opencash.profile");
+  if (profileRaw && session.trader) {
+    try {
+      const name = (JSON.parse(session.trader.openProfile(JSON.parse(profileRaw))) as { name?: string }).name?.split(" ")[0];
+      if (name) query("[data-agent-greeting]").textContent = `Hi ${name}! I'm your trading agent. Tell me what you want in plain words. I check your balance and the markets myself, then draft a strategy card. I only draft. You approve every trade.`;
+    } catch {}
+  }
+
+  async function ask(text: string) {
     hint.textContent = "";
     hint.dataset.tone = "";
+    say("me", text);
+    input.value = "";
+    send.disabled = true;
+    const thinking = say("bot", "Checking your balances and the markets…");
     try {
       if (session.trader) {
-        hint.textContent = "The agent is checking your balances and the markets…";
-        const answer = await askAgent(import.meta.env.PUBLIC_BACKEND_URL ?? "http://localhost:8787", session.trader.address, network, input.value);
+        const answer = await askAgent(import.meta.env.PUBLIC_BACKEND_URL ?? "http://localhost:8787", session.trader.address, network, text);
         if (answer !== null) {
-          hint.dataset.tone = answer.card === null ? "error" : "";
-          hint.textContent = `${answer.reply}${answer.checked.length ? ` Checked: ${[...new Set(answer.checked)].join(", ")}.` : ""}`;
+          thinking.textContent = answer.reply || (answer.card ? "Here is a draft. Check it on the right." : "I could not draft that.");
+          if (answer.checked.length > 0) {
+            const pills = document.createElement("div");
+            pills.className = "agent-checked";
+            for (const item of new Set(answer.checked)) pills.insertAdjacentHTML("beforeend", `<span>${esc(item)}</span>`);
+            thinking.append(pills);
+          }
           if (answer.card !== null) setCard(answer.card);
           return;
         }
-        hint.textContent = "";
       }
       const symbols = (await toolbox.getMarkets()).map((m) => m.symbol);
-      const drafted = await ruleDrafter(input.value, symbols);
+      const drafted = await ruleDrafter(text, symbols);
       if (drafted === null) {
-        hint.dataset.tone = "error";
-        hint.textContent = `Name a market and a side, for example "long MON short BTC 2x $100 stop 8%". Markets: ${symbols.join(", ")}.`;
+        thinking.textContent = `I could not read that. Name a market and a side, for example "long MON short BTC 2x $100 stop 8%". Markets: ${symbols.join(", ")}.`;
         return;
       }
+      thinking.textContent = "Drafted from your words. Check the card on the right.";
       setCard(drafted);
     } catch (error) {
-      hint.dataset.tone = "error";
-      hint.textContent = error instanceof Error ? error.message : String(error);
+      thinking.textContent = error instanceof Error ? error.message : String(error);
+    } finally {
+      send.disabled = false;
     }
+  }
+
+  query<HTMLFormElement>("[data-agent-form]").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const text = input.value.trim();
+    if (text !== "") void ask(text);
+  });
+
+  query("[data-agent-prompts]").addEventListener("click", (event) => {
+    const chip = (event.target as HTMLElement).closest<HTMLElement>("[data-prompt]");
+    if (chip?.dataset.prompt) void ask(chip.dataset.prompt);
   });
 }

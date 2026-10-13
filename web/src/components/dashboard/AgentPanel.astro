@@ -11,15 +11,30 @@ import StrategyLab from "./StrategyLab.astro";
   <div data-pane="agent:agent" hidden>
   <div class="agent">
     <div class="agent__main">
+      <div class="agent-chat" data-agent-chat>
+        <div class="agent-msg">
+          <span class="agent-avatar" aria-hidden="true">✦</span>
+          <div class="agent-bubble" data-agent-greeting>Hi! I'm your trading agent. Tell me what you want in plain words. I check your balance and the markets myself, then draft a strategy card. I only draft. You approve every trade.</div>
+        </div>
+      </div>
+      <div class="chip-row agent-prompts" data-agent-prompts>
+        <button type="button" class="chip" data-prompt="Long BTC with the smallest safe size, 2x, stop 6%">Safe BTC long</button>
+        <button type="button" class="chip" data-prompt="Pair trade: long MON, short BTC, 2x, stop 8%">MON vs BTC pair</button>
+        <button type="button" class="chip" data-prompt="Short PUMP 2x with a tight stop and a 10% target">Short PUMP, tight stop</button>
+        <button type="button" class="chip" data-prompt="Use my whole free Perpl balance on the best funding carry right now">Best funding carry</button>
+        <button type="button" class="chip" data-prompt="Build a basket of ETH, SOL and HYPE longs at 2x with a 8% stop">ETH, SOL, HYPE basket</button>
+      </div>
       <form class="agent__composer" data-agent-form>
         <input
           type="text"
           data-agent-input
           autocomplete="off"
-          placeholder="Describe a trade: long MON short BTC 2x $100 stop 8%"
+          maxlength="600"
+          placeholder="Ask for a trade, e.g. long MON short BTC 2x $100 stop 8%"
         />
-        <button type="submit" class="btn btn--primary">Draft</button>
+        <button type="submit" class="btn btn--primary" data-agent-send>Send</button>
       </form>
+      <p class="agent__boundary">Drafts only. Perpl markets only. It never moves funds or opens a trade without your passkey.</p>
       <p class="agent__hint" data-agent-hint></p>
       <div class="chip-row" data-agent-ideas></div>
 
@@ -49,6 +64,31 @@ import StrategyLab from "./StrategyLab.astro";
     </div>
 
     <div class="agent__side">
+      <section class="card agent__bots">
+        <span class="card__label">Your bots</span>
+        <p class="bots__note">
+          Bots run in this tab while you are signed in. Close it and they stop. Every action is logged with its
+          transaction.
+        </p>
+        <p class="agent__hint" data-bot-hint></p>
+        <div class="bots__list" data-paper-list></div>
+        <div class="bots__list" data-bot-list>
+          <p class="empty">No bots yet.</p>
+        </div>
+        <span class="card__label">Live strategies</span>
+        <p class="agent__hint">Strategies and bots that keep running on our server when you close this page. One passkey approval turns it on, with a trade-only key that cannot withdraw. Pause stops new orders and leaves the position open. Stop and close closes at market.</p>
+        <div class="bots__form">
+          <p class="agent__hint" data-trade-key-state></p>
+          <button type="button" class="btn btn--primary" data-server-run>Turn on server running</button>
+          <p class="status-line" data-server-run-status></p>
+        </div>
+        <div class="live__switch">
+          <button type="button" class="btn" data-live-stop-all>Pause all bots</button>
+          <button type="button" class="btn" data-live-close-all>Stop all and close</button>
+        </div>
+        <div class="bots__list" data-live-bot-list></div>
+      </section>
+
       <aside class="agent__card card" data-agent-card>
         <span class="card__label">Strategy card</span>
         <p class="empty" data-card-empty>Draft a trade or pick an idea to build a card.</p>
@@ -82,30 +122,6 @@ import StrategyLab from "./StrategyLab.astro";
         </div>
       </aside>
 
-      <section class="card agent__bots">
-        <span class="card__label">Your bots</span>
-        <p class="bots__note">
-          Bots run in this tab while you are signed in. Close it and they stop. Every action is logged with its
-          transaction.
-        </p>
-        <p class="agent__hint" data-bot-hint></p>
-        <div class="bots__list" data-paper-list></div>
-        <div class="bots__list" data-bot-list>
-          <p class="empty">No bots yet.</p>
-        </div>
-        <span class="card__label">Live strategies</span>
-        <p class="agent__hint">Strategies and bots that keep running on our server when you close this page. One passkey approval turns it on, with a trade-only key that cannot withdraw. Pause stops new orders and leaves the position open. Stop and close closes at market.</p>
-        <div class="bots__form">
-          <p class="agent__hint" data-trade-key-state></p>
-          <button type="button" class="btn btn--primary" data-server-run>Turn on server running</button>
-          <p class="status-line" data-server-run-status></p>
-        </div>
-        <div class="live__switch">
-          <button type="button" class="btn" data-live-stop-all>Pause all bots</button>
-          <button type="button" class="btn" data-live-close-all>Stop all and close</button>
-        </div>
-        <div class="bots__list" data-live-bot-list></div>
-      </section>
     </div>
   </div>
   </div>
