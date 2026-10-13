@@ -5,6 +5,7 @@ import { openDeleteAccount } from "./deleteAccount";
 import { clearImport, importWallet, openNamespace } from "../mera";
 import { initIdentity } from "./identity";
 import { disconnect } from "./tabs";
+import { autoFundOn, setAutoFund } from "./autoFund";
 import { initShareCard } from "./shareCard";
 import { requireTrader } from "./state";
 
@@ -64,6 +65,7 @@ export function initAccount() {
   initImportPane();
   initKeyPane();
   initNotesPane();
+  initAutoFund();
   initShareCard();
   document.querySelector("[data-delete-account]")?.addEventListener("click", openDeleteAccount);
   document.addEventListener("keydown", (event) => {
@@ -262,4 +264,16 @@ function initNotesPane() {
   });
 
   document.querySelector('[data-acct-open="notes"]')?.addEventListener("click", () => void check());
+}
+
+function initAutoFund() {
+  const toggle = query<HTMLButtonElement>("[data-autofund-toggle]");
+  const state = query("[data-autofund-state]");
+  const paint = () => (state.textContent = autoFundOn() ? "On" : "Off");
+  paint();
+  document.addEventListener("autofund:changed", paint);
+  toggle.addEventListener("click", () => {
+    setAutoFund(!autoFundOn());
+    paint();
+  });
 }

@@ -17,6 +17,7 @@ import { PassCard } from "../components/PassCard";
 import { AuthShell, type AuthMode } from "../components/AuthShell";
 import { DeleteDataPanel } from "../components/DeleteDataPanel";
 import { MovePanel } from "../components/MovePanel";
+import { setAutoFund, subscribeAutoFund } from "../lib/autoFund";
 import { NotesPanel } from "../components/NotesPanel";
 import { ImportPanel } from "../components/ImportPanel";
 import { SettingIcon, type SettingIconKind } from "../components/SettingIcon";
@@ -138,6 +139,8 @@ export function Account({
   const [importOpen, setImportOpen] = useState(false);
   const [importKey, setImportKey] = useState("");
   const [referral, setReferral] = useState("");
+  const [autoFund, setAutoFundState] = useState(true);
+  useEffect(() => subscribeAutoFund(setAutoFundState), []);
   const gift = useRef<{ gasSent: boolean; gasOver: boolean } | null>(null);
   const [missing, setMissing] = useState(false);
   const working = useRef(false);
@@ -573,7 +576,8 @@ export function Account({
                   <View style={styles.group}>
                     <Row icon="wallet" tint="lime" label="Add funds" onPress={onDeposit} />
                     <Row icon="exit" tint="blue" label="Send" onPress={onSend} />
-                    <Row icon="wallet" tint="purple" label="Move between wallet and Perpl" onPress={() => openPanel("move")} last />
+                    <Row icon="wallet" tint="purple" label="Move between wallet and Perpl" onPress={() => openPanel("move")} />
+                    <Row icon="wallet" tint="lime" label="Auto-move AUSD to Perpl" value={autoFund ? "On" : "Off"} onPress={() => setAutoFund(!autoFund)} last />
                   </View>
 
                   <Text style={styles.sectionLabel}>Security</Text>

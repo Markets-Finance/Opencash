@@ -280,6 +280,20 @@ export function createTerminal(config: TerminalConfig) {
     return convertUsdcToCollateral(account, Math.floor(usdc * 1e6) / 1e6, onStep);
   }
 
+  async function sweepToPerpl(
+    account: TradingAccount,
+    onStep: (step: "approve" | "deposit", hash: Hash) => void,
+    options: { minNewAccount?: number; minTopUp?: number } = {},
+  ): Promise<{ hash: Hash; amount: number } | null> {
+    const owner = account.address as Address;
+    const [wallet, gas, existing] = await Promise.all([loadCollateralBalance(owner), loadNativeBalance(owner), fetchAccount(client, deployment.exchange, owner)]);
+    const minimum = existing ? (options.minTopUp ?? 1) : (options.minNewAccount ?? 10);
+    if (wallet < minimum || gas < minGasMon) return null;
+    const amount = Math.floor(wallet * 1e6) / 1e6;
+    const hash = await depositToPerpl(account, amount, onStep);
+    return { hash, amount };
+  }
+
   async function sendAsset(
     account: TradingAccount,
     input: { asset: "AUSD" | "MON"; to: string; amount: number },
@@ -404,5 +418,6 @@ export function createTerminal(config: TerminalConfig) {
     convertUsdcToCollateral,
     loadSpendableBalance,
     sweepUsdc,
+    sweepToPerpl,
   };
 }

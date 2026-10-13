@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import type { TradingAccount } from "shared";
+import { autoFundEnabled, setAutoFund } from "../lib/autoFund";
 import { depositToPerpl, loadAccount, loadCollateralBalance, withdrawToWallet } from "../lib/perpl";
 import { dark, family, space, touch } from "../theme";
 
@@ -44,7 +45,9 @@ export function MovePanel({ trader }: { trader: TradingAccount }) {
         setStatus({ text: `Moved ${amountText(value)} AUSD into Perpl.`, failed: false });
       } else {
         await withdrawToWallet(trader, value);
-        setStatus({ text: `Moved ${amountText(value)} AUSD to your wallet.`, failed: false });
+        const turnedOff = autoFundEnabled();
+        if (turnedOff) setAutoFund(false);
+        setStatus({ text: `Moved ${amountText(value)} AUSD to your wallet.${turnedOff ? " Auto-move to Perpl was turned off so it does not send it back." : ""}`, failed: false });
       }
       setAmount("");
       await refresh();

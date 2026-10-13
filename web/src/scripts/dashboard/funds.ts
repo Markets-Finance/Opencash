@@ -1,3 +1,4 @@
+import { autoFundOn, setAutoFund } from "./autoFund";
 import { explorer as networkExplorer, label as networkName } from "../../data/network";
 import { intents } from "shared";
 import { isAddress } from "viem";
@@ -172,7 +173,11 @@ function openMove() {
         way === "in"
           ? await terminal.depositToPerpl(trader, amount, (step) => (statusEl.textContent = step === "approve" ? "Approved. Depositing…" : "Deposited."))
           : await terminal.withdrawToWallet(trader, amount);
-      statusEl.innerHTML = `Moved ${amount} AUSD ${way === "in" ? "to Perpl" : "to your wallet"}. <a href="${explorer}${hash}" target="_blank" rel="noreferrer">View transaction ↗</a>`;
+      if (way === "out" && autoFundOn()) {
+        setAutoFund(false);
+        document.dispatchEvent(new CustomEvent("autofund:changed"));
+      }
+      statusEl.innerHTML = `Moved ${amount} AUSD ${way === "in" ? "to Perpl" : "to your wallet"}${way === "out" ? ". Auto-move to Perpl was turned off so it does not send it back" : ""}. <a href="${explorer}${hash}" target="_blank" rel="noreferrer">View transaction ↗</a>`;
       amountEl.value = "";
       void load();
     } catch (error) {

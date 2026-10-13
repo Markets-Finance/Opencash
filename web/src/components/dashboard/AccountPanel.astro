@@ -53,6 +53,10 @@ import AccountCard from "../AccountCard.astro";
           <span class="setting-row__icon setting-row__icon--lime"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h13m0 0l-3-3m3 3l-3 3M19 16H6m0 0l3-3m-3 3l3 3" stroke-width="2.4" fill="none"/></svg></span>
           <span class="setting-row__label">Move between wallet and Perpl</span><span class="setting-row__chev" aria-hidden="true">›</span>
         </button>
+        <button type="button" class="setting-row" data-autofund-toggle>
+          <span class="setting-row__icon setting-row__icon--lime"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5" stroke-width="2" fill="none"/></svg></span>
+          <span class="setting-row__label">Auto-move AUSD to Perpl</span><span class="setting-row__chev" data-autofund-state>On</span>
+        </button>
       </div>
 
       <p class="account-group__label">Settings</p>
