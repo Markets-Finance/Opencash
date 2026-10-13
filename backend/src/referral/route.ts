@@ -31,6 +31,6 @@ export function registerReferralRoute(app: FastifyInstance): void {
     const first = !(await isUnlockedOwner(owner));
     await redeem(owner, code);
     const gas = first ? await grantGas(owner) : { sent: false, reason: "already redeemed" };
-    return { unlocked: true, gas: { sent: gas.sent, hash: gas.hash } };
+    return { unlocked: true, gas: { sent: gas.sent, hash: gas.hash, reason: gas.reason } };
   });
 }

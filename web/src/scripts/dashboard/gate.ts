@@ -126,6 +126,7 @@ export function initGate(onEnter: () => void) {
       onEnter();
       await loader.dismiss();
       if (gift?.gasSent) showToast("Free gas from OpenCash. Enjoy trading.");
+      else if (gift?.gasOver) showToast("Free gas is over. Deposit a little MON to your address to start trading.", 5000);
     } catch (error) {
       await loader.dismiss();
       if (mode === "signin" && isMeraError(error) && error.code === "PASSKEY_OPERATION_FAILED") {

@@ -131,7 +131,7 @@ export function Account({
   const [importOpen, setImportOpen] = useState(false);
   const [importKey, setImportKey] = useState("");
   const [referral, setReferral] = useState("");
-  const gift = useRef<{ gasSent: boolean } | null>(null);
+  const gift = useRef<{ gasSent: boolean; gasOver: boolean } | null>(null);
   const [missing, setMissing] = useState(false);
   const working = useRef(false);
   const [returning, setReturning] = useState(false);
@@ -210,6 +210,7 @@ export function Account({
       if (resolved !== null) onInitialised();
       await loader.dismiss();
       if (gift.current?.gasSent) showToast("Free gas from OpenCash. Enjoy trading.");
+      else if (gift.current?.gasOver) showToast("Free gas is over. Deposit a little MON to your address to start trading.", 5000);
       gift.current = null;
     } catch (error) {
       await loader.dismiss();
