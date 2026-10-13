@@ -71,32 +71,51 @@ async function renderCard(): Promise<Blob> {
   return new Promise((resolve, reject) => canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Could not make the image"))), "image/png"));
 }
 
+const mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+function download(blob: Blob) {
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "opencash-card.png";
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 4000);
+}
+
 export function initShareCard() {
   const button = document.querySelector<HTMLButtonElement>("[data-share-card]");
   const status = document.querySelector<HTMLElement>("[data-share-status]");
   if (!button || !status) return;
 
   button.addEventListener("click", async () => {
-    button.disabled = true;
     status.textContent = "";
-    try {
-      const blob = await renderCard();
-      const file = new File([blob], "opencash-card.png", { type: "image/png" });
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], text: `${postText} ${siteUrl}` });
-        return;
+    const image = renderCard();
+
+    if (mobile) {
+      button.disabled = true;
+      try {
+        const file = new File([await image], "opencash-card.png", { type: "image/png" });
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ files: [file], text: `${postText} ${siteUrl}` });
+          return;
+        }
+      } catch (error) {
+        if ((error as Error).name === "AbortError") return;
+      } finally {
+        button.disabled = false;
       }
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "opencash-card.png";
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(link.href), 4000);
-      window.open(`https://x.com/intent/post?text=${encodeURIComponent(postText)}&url=${encodeURIComponent(siteUrl)}`, "_blank", "noopener");
-      status.textContent = "Your card image was saved. Attach it to the post that just opened.";
-    } catch (error) {
-      if ((error as Error).name !== "AbortError") status.textContent = error instanceof Error ? error.message : String(error);
-    } finally {
-      button.disabled = false;
+    }
+
+    window.open(`https://x.com/intent/post?text=${encodeURIComponent(postText)}&url=${encodeURIComponent(siteUrl)}`, "_blank", "noopener");
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": image })]);
+      status.textContent = "X opened with your post. Your card image is copied. Paste it into the post with Ctrl or Cmd + V.";
+    } catch {
+      try {
+        download(await image);
+        status.textContent = "X opened with your post. Your card image was saved. Attach it to the post.";
+      } catch (error) {
+        status.textContent = error instanceof Error ? error.message : String(error);
+      }
     }
   });
 }
