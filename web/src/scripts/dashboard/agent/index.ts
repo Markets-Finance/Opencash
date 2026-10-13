@@ -1,6 +1,7 @@
 import { askAgent } from "shared";
 import { network } from "../../../data/network";
 import { bins, cardFromBin, ruleDrafter } from "../../perpl";
+import { terminal } from "../../perpl";
 import { session } from "../state";
 import { esc, query } from "../dom";
 import { addLeg, initCard, setCard } from "./card";
@@ -123,8 +124,13 @@ export function initAgent() {
         thinking.textContent = `I could not read that. Name a market and a side, for example "long MON short BTC 2x $100 stop 8%". Markets: ${symbols.join(", ")}.`;
         return;
       }
-      thinking.textContent = "Drafted from your words. Check the card on the right.";
-      setCard(drafted);
+      const account = session.trader ? await terminal.loadAccount(session.trader.address).catch(() => null) : null;
+      const free = account === null ? 0 : Math.max(0, account.balance - account.lockedBalance);
+      const fitted = drafted.marginUsd > free && free >= 10;
+      thinking.textContent = fitted
+        ? `Drafted from your words. I sized the margin to your free Perpl balance, $${free.toFixed(2)}. Check the card on the right.`
+        : "Drafted from your words. Check the card on the right.";
+      setCard(fitted ? { ...drafted, marginUsd: Math.floor(free * 100) / 100 } : drafted);
     } catch (error) {
       thinking.textContent = error instanceof Error ? error.message : String(error);
     } finally {

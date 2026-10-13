@@ -75,11 +75,12 @@ import StrategyLab from "./StrategyLab.astro";
         <div class="bots__list" data-bot-list>
           <p class="empty">No bots yet.</p>
         </div>
-        <span class="card__label">Live strategies</span>
-        <p class="agent__hint">Strategies and bots that keep running on our server when you close this page. One passkey approval turns it on, with a trade-only key that cannot withdraw. Pause stops new orders and leaves the position open. Stop and close closes at market.</p>
+        <span class="card__label">Autonomous trading</span>
+        <p class="agent__hint">Your bots keep trading on our server when you close this page. One passkey approval starts it, with a trade-only key that cannot withdraw. Stop pauses every bot and removes that key. Pause leaves positions open. Stop and close closes them at market.</p>
         <div class="bots__form">
           <p class="agent__hint" data-trade-key-state></p>
-          <button type="button" class="btn btn--primary" data-server-run>Turn on server running</button>
+          <button type="button" class="btn btn--primary" data-server-run>Start autonomous trading</button>
+          <button type="button" class="btn" data-server-stop hidden>Stop autonomous trading</button>
           <p class="status-line" data-server-run-status></p>
         </div>
         <div class="live__switch">

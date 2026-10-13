@@ -23,7 +23,7 @@ Rules:
 - A bot order below $10 notional is skipped, so margin times leverage must be at least $10 per leg. Margin must not exceed the user's free Perpl balance. If they have less than $10, submit no card and say what they need to do.
 - Leverage at most 5. Always set a stop loss percent. Prefer a target (takeProfitPct) when the user implies one.
 - Before submit_card, call preview_strategy on your card and fix any blocking issue.
-- If the request is vague, choose sensible defaults and state them. Keep the reply under 60 words, plain language.
+- If the request names no market, use BTC. If it names no size, use the smaller of $10 and the free Perpl balance, at 2x with a stop. If it is vague, choose sensible defaults and state them. Keep the reply under 60 words, plain language.
 Call submit_card exactly once when done. Its card must follow the schema.`;
 
 const submitSpec = {

@@ -98,7 +98,10 @@ export async function draftCard(prompt: string, signal: "nansen" | null = null):
   const symbols = (await toolbox.getMarkets()).map((m) => m.symbol);
   const card = await ruleDrafter(prompt, symbols);
   if (card === null) return { card: null, problem: `Name a market and a side, like "long MON short BTC 2x $100 stop 8%". Markets: ${symbols.join(", ")}.` };
-  return { card: signal ? { ...card, signal } : card, problem: null };
+  const account = signer ? await terminal.loadAccount(signer.address).catch(() => null) : null;
+  const free = account === null ? 0 : Math.max(0, account.balance - account.lockedBalance);
+  const sized = card.marginUsd > free && free >= 10 ? { ...card, marginUsd: Math.floor(free * 100) / 100 } : card;
+  return { card: signal ? { ...sized, signal } : sized, problem: null };
 }
 
 export async function addBotFromCard(card: Bot["card"], mode: BotMode): Promise<void> {

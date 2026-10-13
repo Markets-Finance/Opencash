@@ -1,4 +1,4 @@
-import { botMandateMessage, templates, tradeKeyMessage } from "shared";
+import { botMandateMessage, templates, tradeKeyMessage, tradeKeyRemoveMessage } from "shared";
 import { network } from "../../../data/network";
 import { changeClass, esc, query, usd } from "../dom";
 import { requireTrader } from "../state";
@@ -150,8 +150,9 @@ export async function paintLiveBots(): Promise<void> {
   const host = query("[data-live-bot-list]");
   try {
     const { bots, runner, hasKey } = await call<{ bots: PublicLive[]; runner: boolean; hasKey: boolean }>(`/live?owner=${requireTrader().address}&network=${liveNetwork}`);
-    query("[data-trade-key-state]").textContent = hasKey ? "Server running is on. Your bots keep working when this page is closed." : "Turn on server running so your bots keep working when this page is closed. It takes one passkey approval.";
+    query("[data-trade-key-state]").textContent = hasKey ? "Autonomous trading is on. Your bots keep working when this page is closed." : "Start autonomous trading so your bots keep working when this page is closed. It takes one passkey approval.";
     query<HTMLButtonElement>("[data-server-run]").hidden = hasKey;
+    query<HTMLButtonElement>("[data-server-stop]").hidden = !hasKey;
     const off = runner ? "" : `<p class="empty">The server runner is off, so live bots will not act.</p>`;
     host.innerHTML = off + (bots.length === 0 ? `<p class="empty">No live strategies yet. Start one from the Strategy Lab, Live stage.</p>` : bots.map(renderLive).join(""));
   } catch (error) {
@@ -210,12 +211,28 @@ export function initLiveBots(onError: (error: unknown) => void, onNote: (text: s
   });
   const runButton = query<HTMLButtonElement>("[data-server-run]");
   const runStatus = query("[data-server-run-status]");
+  const stopButton = query<HTMLButtonElement>("[data-server-stop]");
+  stopButton.addEventListener("click", async () => {
+    stopButton.disabled = true;
+    runStatus.dataset.tone = "";
+    try {
+      runStatus.textContent = "Pausing every bot and removing the trade key…";
+      await turnOffServerRunning();
+      runStatus.textContent = "Autonomous trading is off. Open positions stay open.";
+      await paintLiveBots();
+    } catch (error) {
+      runStatus.dataset.tone = "error";
+      runStatus.textContent = error instanceof Error ? error.message : String(error);
+    } finally {
+      stopButton.disabled = false;
+    }
+  });
   runButton.addEventListener("click", async () => {
     runButton.disabled = true;
     runStatus.dataset.tone = "";
     try {
       await turnOnServerRunning((text) => (runStatus.textContent = text));
-      runStatus.textContent = "Server running is on.";
+      runStatus.textContent = "Autonomous trading is on.";
       await paintLiveBots();
     } catch (error) {
       runStatus.dataset.tone = "error";
@@ -224,6 +241,14 @@ export function initLiveBots(onError: (error: unknown) => void, onNote: (text: s
       runButton.disabled = false;
     }
   });
+}
+
+export async function turnOffServerRunning(): Promise<void> {
+  const trader = requireTrader();
+  await stopAllBots(false);
+  const issuedAt = Date.now();
+  const signature = await trader.account.signMessage({ message: tradeKeyRemoveMessage(trader.address, liveNetwork, issuedAt) });
+  await post("/bots/key/remove", { owner: trader.address, network: liveNetwork, issuedAt, signature });
 }
 
 export function startLiveBots() {

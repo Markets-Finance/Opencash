@@ -1,3 +1,5 @@
+import { tradeKeyRemoveMessage } from "shared";
+import { stopAllBots } from "./live";
 import { backendUrl } from "./config";
 import { currentTrader } from "./bots";
 import { network } from "./network";
@@ -30,4 +32,13 @@ export async function turnOnServerRunning(onStep: (text: string) => void): Promi
   } catch (error) {
     throw new Error(`Open a position first so you have a Perpl account, then try again. (${error instanceof Error ? error.message.slice(0, 120) : String(error)})`);
   }
+}
+
+export async function turnOffServerRunning(): Promise<void> {
+  const trader = currentTrader();
+  if (!trader) throw new Error("Not signed in.");
+  await stopAllBots(false);
+  const issuedAt = Date.now();
+  const signature = await trader.account.signMessage({ message: tradeKeyRemoveMessage(trader.address, network, issuedAt) });
+  await post("/bots/key/remove", { owner: trader.address, network, issuedAt, signature });
 }
