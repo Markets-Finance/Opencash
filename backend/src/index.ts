@@ -25,7 +25,7 @@ const app = Fastify({ logger: true });
 
 const ownOrigins = /^https:\/\/([a-z0-9-]+\.)?opencash\.in$/;
 const configured = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",") : null;
-await app.register(cors, { origin: configured === null ? true : (origin, done) => done(null, origin === undefined || configured.includes(origin) || ownOrigins.test(origin)) });
+await app.register(cors, { methods: ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"], origin: configured === null ? true : (origin, done) => done(null, origin === undefined || configured.includes(origin) || ownOrigins.test(origin)) });
 
 app.addHook("onRequest", async (request, reply) => {
   if (killed() && request.url.split("?")[0] !== "/health") return reply.status(404).send({ error: "Not found" });
