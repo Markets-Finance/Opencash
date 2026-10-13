@@ -265,6 +265,7 @@ function openBinModal(bin: Bin, custom = false) {
   query<HTMLButtonElement>("[data-bin-agent]", detail).addEventListener("click", () => {
     closeModal();
     activateTab("agent");
+    document.querySelector<HTMLElement>('[data-switcher="agent"] [data-switch="agent"]')?.click();
     setCard(binCard());
   });
 

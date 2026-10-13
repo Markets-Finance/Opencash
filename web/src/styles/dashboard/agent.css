@@ -350,3 +350,6 @@
 .agent__more[open] { padding-bottom: 4px; }
 .newbot__col .stat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .newbot__col .stat { padding: 10px 12px; }
+
+.bots-row > .agent:has([data-agent-card]:has([data-card-empty]:not([hidden]))) { display: none; }
+[data-panel="agent"] > .switcher { margin-bottom: 14px; }

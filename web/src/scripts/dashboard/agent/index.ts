@@ -1,3 +1,4 @@
+import { initLab } from "../lab";
 import { askAgent } from "shared";
 import { network } from "../../../data/network";
 import { ruleDrafter } from "../../perpl";
@@ -43,6 +44,7 @@ export function initAnalysisTools() {
 }
 
 export function initAgent() {
+  void initLab();
   initCard();
   onAddLeg(addLeg);
 
