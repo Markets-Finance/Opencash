@@ -84,6 +84,13 @@ export async function draftBot(prompt: string, mode: BotMode, signal: "nansen" |
   return null;
 }
 
+export async function draftCard(prompt: string, signal: "nansen" | null = null): Promise<{ card: Bot["card"] | null; problem: string | null }> {
+  const symbols = (await toolbox.getMarkets()).map((m) => m.symbol);
+  const card = await ruleDrafter(prompt, symbols);
+  if (card === null) return { card: null, problem: `Name a market and a side, like "long MON short BTC 2x $100 stop 8%". Markets: ${symbols.join(", ")}.` };
+  return { card: signal ? { ...card, signal } : card, problem: null };
+}
+
 export async function addBotFromCard(card: Bot["card"], mode: BotMode): Promise<void> {
   if (runtime === null) throw new Error("Bots are not running yet");
   await runtime.add(createBot(card.name, mode, card, Date.now()));

@@ -33,11 +33,12 @@ function rulesRow(bot: Bot): string {
   </div>`;
 }
 
-export function renderBot(bot: Bot): string {
+export function renderBot(bot: Bot, server = false): string {
   const target = bot.card.takeProfitPct === undefined ? "none" : `${bot.card.takeProfitPct}%`;
   return `<div class="bot card" data-bot="${esc(bot.id)}">
     <div class="bot__head">
       <span class="bot__name">${esc(bot.name)}</span>
+      <span class="pill">${server ? "Server" : "In browser"}</span>
       <span class="pill">${bot.mode === "auto" ? "Auto" : "Guard"}</span>
       <span class="pill pill--${bot.status}">${bot.status}</span>
       <span class="bot__spacer"></span>
@@ -52,7 +53,7 @@ export function renderBot(bot: Bot): string {
       <span>Target ${target}</span>
       <span class="${changeClass(bot.realizedPnlUsd)}">Realised ${usd(bot.realizedPnlUsd)}</span>
     </div>
-    ${rulesRow(bot)}
+    ${server ? "" : rulesRow(bot)}
     ${bot.lastCheck ? `<div class="bot__meta"><span>Checked ${new Date(bot.lastCheck.at).toLocaleTimeString()}: ${esc(bot.lastCheck.message)}</span></div>` : ""}
     <div class="bot__log">${logRows(bot)}</div>
   </div>`;

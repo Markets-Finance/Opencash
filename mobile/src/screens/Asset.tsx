@@ -8,6 +8,7 @@ import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { OrderTicket } from "../components/OrderTicket";
 import { RoundButton, Tag, ToneCard, tone } from "../components/ui";
 import { subscribeBots, toolbox } from "../lib/bots";
+import { loadServerBots } from "../lib/serverBots";
 import { flowText, loadPulses, stanceLabel } from "../lib/nansen";
 import {
   candleRanges,
@@ -67,7 +68,15 @@ export function Asset({ symbol, trader, onBack, onSelectTab, onStrategies }: Ass
   const [busy, setBusy] = useState(false);
   const [bots, setBots] = useState<Bot[]>([]);
 
+  const [serverBots, setServerBots] = useState<Bot[]>([]);
+
   useEffect(() => subscribeBots(setBots), []);
+
+  useEffect(() => {
+    loadServerBots()
+      .then((next) => setServerBots(next.bots as Bot[]))
+      .catch(() => setServerBots([]));
+  }, []);
 
   const [maintenance, setMaintenance] = useState<number | null>(null);
 
@@ -83,7 +92,7 @@ export function Asset({ symbol, trader, onBack, onSelectTab, onStrategies }: Ass
     ? perpl.tradeOverlay(
         held.position,
         maintenance,
-        bots
+        [...serverBots, ...bots]
           .filter((bot) => bot.status === "open" && bot.card.legs.some((leg) => leg.symbol === symbol))
           .map((bot) => ({ stopLossPct: bot.card.stopLossPct, takeProfitPct: bot.card.takeProfitPct })),
       )

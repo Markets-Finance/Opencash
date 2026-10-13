@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Bot, BotMode } from "shared";
@@ -8,7 +8,8 @@ import { PaperBots } from "../components/PaperBots";
 import { StrategyLab } from "../components/StrategyLab";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { CardTitle, RoundButton, ScreenTitle, SelectPill, Switcher, Tag, ToneCard, tone } from "../components/ui";
-import { draftBot, removeBot, setBotEnabled, subscribeBots, updateBotRules } from "../lib/bots";
+import { draftBot, draftCard, removeBot, setBotEnabled, subscribeBots, updateBotRules } from "../lib/bots";
+import { actServerBot, createServerBot, loadServerBots } from "../lib/serverBots";
 import { dark, family, space, touch } from "../theme";
 import { explorer as networkExplorer } from "../lib/network";
 
@@ -41,8 +42,48 @@ export function Bots({ name, labSymbol, onSelectTab, onOpenAsset }: BotsProps) {
   const [hint, setHint] = useState<string | null>(null);
   const [view, setView] = useState<"strategies" | "agent">("strategies");
   const [liveKey, setLiveKey] = useState(0);
+  const [runOn, setRunOn] = useState<"server" | "app">("server");
+  const [serverBots, setServerBots] = useState<Bot[]>([]);
+  const [hasKey, setHasKey] = useState(true);
 
   useEffect(() => subscribeBots(setBots), []);
+
+  const refreshServer = useCallback(async () => {
+    try {
+      const next = await loadServerBots();
+      setServerBots(next.bots as Bot[]);
+      setHasKey(next.hasKey);
+    } catch {
+      setServerBots([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshServer();
+    const timer = setInterval(() => void refreshServer(), 15_000);
+    return () => clearInterval(timer);
+  }, [refreshServer]);
+
+  async function toggle(bot: Bot, server: boolean) {
+    setHint(null);
+    try {
+      if (server) await actServerBot(bot.id, bot.enabled ? "disable" : "enable");
+      else await setBotEnabled(bot.id, !bot.enabled);
+    } catch (error) {
+      setHint(error instanceof Error ? error.message : String(error));
+    }
+    if (server) await refreshServer();
+  }
+
+  async function discard(bot: Bot, server: boolean) {
+    try {
+      if (server) await actServerBot(bot.id, "remove");
+      else await removeBot(bot.id);
+    } catch (error) {
+      setHint(error instanceof Error ? error.message : String(error));
+    }
+    if (server) await refreshServer();
+  }
 
   async function create() {
     setHint(null);
@@ -51,6 +92,18 @@ export function Bots({ name, labSymbol, onSelectTab, onOpenAsset }: BotsProps) {
       return;
     }
     try {
+      if (runOn === "server") {
+        const { card, problem: unclear } = await draftCard(prompt, signal);
+        if (card === null) {
+          setHint(unclear);
+          return;
+        }
+        await createServerBot(card, mode);
+        await refreshServer();
+        setPrompt("");
+        setHint(hasKey ? "Bot saved on the server. Press Start to run it." : "Bot saved. Save a Perpl trade key under Strategies, then press Start.");
+        return;
+      }
       const problem = await draftBot(prompt, mode, signal);
       if (problem) setHint(problem);
       else {
@@ -62,7 +115,8 @@ export function Bots({ name, labSymbol, onSelectTab, onOpenAsset }: BotsProps) {
     }
   }
 
-  const running = bots.filter((bot) => bot.enabled).length;
+  const items = [...serverBots.map((bot) => ({ bot, server: true })), ...bots.map((bot) => ({ bot, server: false }))];
+  const running = items.filter((item) => item.bot.enabled).length;
 
   return (
     <View style={styles.screen}>
@@ -79,7 +133,7 @@ export function Bots({ name, labSymbol, onSelectTab, onOpenAsset }: BotsProps) {
         <Switcher
           items={[
             { key: "strategies", label: "Strategies", dot: tone.butter, count: 4 },
-            { key: "agent", label: "Agent", dot: tone.violet, count: bots.length },
+            { key: "agent", label: "Agent", dot: tone.violet, count: items.length },
           ]}
           value={view}
           onChange={setView}
@@ -103,8 +157,8 @@ export function Bots({ name, labSymbol, onSelectTab, onOpenAsset }: BotsProps) {
             </View>
             <View style={styles.bubble}>
               <Text style={styles.bubbleText}>
-                Hi{name ? `, ${name}` : ""}. Tell me a trade in one line. I turn it into a card with a stop, and a bot guards it while the app is open.
-                {bots.length > 0 ? ` You have ${bots.length} bot${bots.length === 1 ? "" : "s"} set up.` : ""}
+                Hi{name ? `, ${name}` : ""}. Tell me a trade in one line. I turn it into a card with a stop, and a bot guards it. On the server it keeps running when the app is closed.
+                {items.length > 0 ? ` You have ${items.length} bot${items.length === 1 ? "" : "s"} set up.` : ""}
               </Text>
             </View>
           </View>
@@ -119,6 +173,14 @@ export function Bots({ name, labSymbol, onSelectTab, onOpenAsset }: BotsProps) {
                 <Text style={styles.ideaText}>{idea.text}</Text>
               </Pressable>
             ))}
+          </View>
+
+          <View style={styles.modes}>
+            <SelectPill label="On server" active={runOn === "server"} onPress={() => setRunOn("server")} />
+            <SelectPill label="In app" active={runOn === "app"} onPress={() => setRunOn("app")} />
+            <Text style={styles.modeNote} numberOfLines={2}>
+              {runOn === "server" ? "Keeps running when the app is closed." : "Runs only while the app is open."}
+            </Text>
           </View>
 
           <View style={styles.modes}>
@@ -154,15 +216,16 @@ export function Bots({ name, labSymbol, onSelectTab, onOpenAsset }: BotsProps) {
         </ToneCard>
 
         <Text style={styles.section}>YOUR BOTS</Text>
-        {bots.length === 0 ? (
+        {items.length === 0 ? (
           <Text style={styles.empty}>No bots yet. Describe a trade above or start a paper bot.</Text>
         ) : (
-          bots.map((bot) => (
+          items.map(({ bot, server }) => (
             <ToneCard key={bot.id}>
               <View style={styles.botHead}>
                 <Text style={styles.botName} numberOfLines={1}>
                   {bot.name.toUpperCase()}
                 </Text>
+                <Tag label={server ? "Server" : "In app"} />
                 <Tag label={bot.mode === "auto" ? "Auto" : "Guard"} />
                 <Tag label={bot.status} dot={statusDot(bot)} />
               </View>
@@ -188,7 +251,7 @@ export function Bots({ name, labSymbol, onSelectTab, onOpenAsset }: BotsProps) {
                 </View>
               </View>
 
-              {bot.mode === "auto" && (
+              {bot.mode === "auto" && !server && (
                 <View style={styles.rules}>
                   <View style={styles.rule}>
                     <Text style={styles.statLabel}>Min carry %</Text>
@@ -232,12 +295,12 @@ export function Bots({ name, labSymbol, onSelectTab, onOpenAsset }: BotsProps) {
 
               <View style={styles.actions}>
                 <Pressable
-                  onPress={() => void setBotEnabled(bot.id, !bot.enabled)}
+                  onPress={() => void toggle(bot, server)}
                   style={({ pressed }) => [styles.action, { backgroundColor: bot.enabled ? tone.paper : tone.coral }, pressed && styles.pressed]}
                 >
                   <Text style={styles.actionLabel}>{bot.enabled ? "Stop" : "Start"}</Text>
                 </Pressable>
-                <Pressable onPress={() => void removeBot(bot.id)} style={({ pressed }) => [styles.action, styles.actionQuiet, pressed && styles.pressed]}>
+                <Pressable onPress={() => void discard(bot, server)} style={({ pressed }) => [styles.action, styles.actionQuiet, pressed && styles.pressed]}>
                   <Text style={styles.actionQuietLabel}>Delete</Text>
                 </Pressable>
               </View>
