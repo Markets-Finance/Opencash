@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { referralMessage } from "shared";
 import { isAddress, type Address, type Hex } from "viem";
 import { verifySigned } from "../auth/signed.js";
+import { grantGas } from "../relayer/gas.js";
 import { limited } from "../runner/route.js";
 import { isUnlockedOwner, redeem, validCode } from "./store.js";
 
@@ -27,7 +28,9 @@ export function registerReferralRoute(app: FastifyInstance): void {
     const problem = await verifySigned(owner, referralMessage(owner, code, issuedAt), signature, Date.now());
     if (problem) return reply.status(401).send({ error: problem });
     if (!validCode(code)) return reply.status(403).send({ error: "That referral code is not valid" });
+    const first = !(await isUnlockedOwner(owner));
     await redeem(owner, code);
-    return { unlocked: true };
+    const gas = first ? await grantGas(owner) : { sent: false, reason: "already redeemed" };
+    return { unlocked: true, gas: { sent: gas.sent, hash: gas.hash } };
   });
 }

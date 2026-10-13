@@ -17,5 +17,6 @@ console.log("check right", (await post("/referral/check", { code })).status);
 console.log("before", await (await fetch(`${base}/referral/${account.address}`)).json());
 console.log("redeem wrong", (await redeem("nope")).status);
 console.log("redeem by stranger", (await redeem(code, privateKeyToAccount(generatePrivateKey()))).status);
-console.log("redeem right", (await redeem(code.toLowerCase())).status);
+const done = await redeem(code.toLowerCase());
+console.log("redeem right", done.status, await done.text());
 console.log("after", await (await fetch(`${base}/referral/${account.address}`)).json());

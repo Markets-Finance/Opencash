@@ -20,6 +20,7 @@ import { SettingIcon, type SettingIconKind } from "../components/SettingIcon";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { backendUrl } from "../lib/config";
 import { createAccount, hasStoredAccount, revealPhrase, signIn } from "../lib/mera";
+import { showToast } from "../lib/toast";
 import { startDotLoader } from "../lib/dotLoader";
 import { setBackOverride } from "../lib/nav";
 import { dark, family, space, track } from "../theme";
@@ -130,6 +131,7 @@ export function Account({
   const [importOpen, setImportOpen] = useState(false);
   const [importKey, setImportKey] = useState("");
   const [referral, setReferral] = useState("");
+  const gift = useRef<{ gasSent: boolean } | null>(null);
   const [missing, setMissing] = useState(false);
   const working = useRef(false);
   const [returning, setReturning] = useState(false);
@@ -207,6 +209,8 @@ export function Account({
       );
       if (resolved !== null) onInitialised();
       await loader.dismiss();
+      if (gift.current?.gasSent) showToast("Free gas from OpenCash. Enjoy trading.");
+      gift.current = null;
     } catch (error) {
       await loader.dismiss();
       explain(error);
@@ -293,7 +297,7 @@ export function Account({
       async () => {
         if (code !== "") await checkReferral(backendUrl, code);
         const made = await createAccount(entered.email, entered.name, key === "" ? undefined : { privateKey: key });
-        if (code !== "") await redeemReferral(backendUrl, made, code).catch(() => {});
+        if (code !== "") gift.current = await redeemReferral(backendUrl, made, code).catch(() => null);
         return made;
       },
       "Creating a passkey…",

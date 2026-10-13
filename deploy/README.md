@@ -28,3 +28,14 @@ AWS runs the backend; Cloudflare runs DNS, the tunnel and the web app. Nothing l
 ## Kill switch
 
 `SERVER=ubuntu@<ip> deploy/kill.sh on|off|status` toggles `backend/data/kill-switch`: every API route but `/health` answers 404 and the bot runner pauses. The website follows when Pages has `BACKEND_URL=https://monad-api.opencash.in`, or set Pages `KILL_SWITCH=on` directly.
+
+## Gas relayer
+
+A first-time referral redemption sends the new wallet a small MON grant so its first swap and orders have gas. Set in `/etc/opencash-monad.env`:
+
+- `RELAYER_PRIVATE_KEY` funds the grants. Keep only a small MON balance on it.
+- `RELAYER_ALLOW_MAINNET=1` is required on mainnet.
+- `GAS_GRANT_MON` is the grant size, default `0.1`.
+- `GAS_GRANT_DAILY_CAP` is the most grants per day, default `30`.
+
+Each wallet is granted once, and only when its MON balance is below the grant. With no key set, redemption still works and no gas is sent.

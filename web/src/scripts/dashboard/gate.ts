@@ -1,4 +1,5 @@
 import { isMeraError } from "@category-labs/mera";
+import { showToast } from "./toast";
 import { addressForKey, checkReferral, redeemReferral, type TradingAccount } from "shared";
 import { createAccount, signIn } from "../mera";
 import { avatars, query } from "./dom";
@@ -117,13 +118,14 @@ export function initGate(onEnter: () => void) {
       const account = await action();
       await loader.resolve();
       session.trader = account;
-      if (referral !== "") await redeemReferral(backend, account, referral).catch(() => {});
+      const gift = referral !== "" ? await redeemReferral(backend, account, referral).catch(() => null) : null;
       if (profile) localStorage.setItem("opencash.profile", JSON.stringify(account.sealProfile(JSON.stringify({ ...profile, variant: 0 }))));
       gate.hidden = true;
       dash.hidden = false;
       await paintIdentity(account);
       onEnter();
       await loader.dismiss();
+      if (gift?.gasSent) showToast("Free gas from OpenCash. Enjoy trading.");
     } catch (error) {
       await loader.dismiss();
       if (mode === "signin" && isMeraError(error) && error.code === "PASSKEY_OPERATION_FAILED") {
