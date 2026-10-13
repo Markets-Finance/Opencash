@@ -203,15 +203,19 @@ Then on GitHub, open Opencash > Settings > Branches and set the default branch t
 **Or in batches by subject.** A push of one commit sends all its ancestors, so run these in order. Each finds the newest commit with that subject and pushes up to it:
 
 ```bash
-push_to() { git push legacy "$(git log --grep="$1" -1 --format=%H):refs/heads/monad"; }
+push_to() { git push legacy "$(git log --fixed-strings --grep="$1" -1 --format=%H):refs/heads/monad"; }
 
-push_to "Port"                                  # ports from hood: sign-in, import, icons
-push_to "Exchange stops"                        # Perpl trigger orders for stops and targets
+push_to "Port web bin fixes"                    # ports from hood: sign-in, import, bins
+push_to "Perpl exchange stops"                  # trigger orders for stops and targets
+push_to "Chart trade overlay"                   # entry, liquidation, stop, target lines
+push_to "Server bots default"                   # bots on the server
+push_to "Dot matrix sign-in loader"             # MERA loader
 push_to "One-tap server running"                # trade-key enrollment
-push_to "Release 1.0.5"                         # passkey fixes and the MERA loader
+push_to "Release 1.0.5"                         # passkey fixes
 push_to "Passkey-sealed private notes"          # Mera notes, Neon vault
 push_to "Referral code unlocks bot limits"      # referral codes
-push_to "Gas grant"                             # relayer gas grant
+push_to "Privacy policy and terms pages"        # legal pages
+push_to "Gas grant for referral accounts"       # relayer gas grant
 push_to "Fix Perpl key enrollment signing"      # enrollment fix, agent route
 push_to "Agent chat UI"                         # agent UI and boundaries
 push_to "Bots tab overhaul"                     # Bots layout, paper and live
