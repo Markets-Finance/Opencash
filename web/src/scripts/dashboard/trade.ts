@@ -1,6 +1,7 @@
 import { label as networkName } from "../../data/network";
 import { estimateExecution, liquidationDistancePct, summarizeDepth, perpl, slippageWarnBps, type ExecutionEstimate } from "shared";
 import { singleLegBin, sizeBinFor, terminal, type CandleRangeKey, type OpenPosition } from "../perpl";
+import { exitsFor } from "./bots";
 import { drawCandles } from "./charts";
 import { loadCandles } from "../perplApi";
 import { changeClass, errorText, markForSymbol, px, query, say, usd } from "./dom";
@@ -134,7 +135,10 @@ export async function initTrade() {
     const shown = symbol;
     try {
       const candles = await loadCandles(market, range);
-      if (shown === symbol) drawCandles(ui.chart, candles, `No trades in this range on ${networkName}.`);
+      const held = positions.find((entry) => entry.market.symbol === symbol);
+      const maintenanceLeverage = held ? await toolbox.getMarket(symbol).then((m) => m.maintenanceLeverage).catch(() => null) : null;
+      const lines = held ? perpl.tradeOverlay(held.position, maintenanceLeverage, exitsFor(symbol)) : [];
+      if (shown === symbol) drawCandles(ui.chart, candles, `No trades in this range on ${networkName}.`, lines.length > 0 ? { lines } : undefined);
     } catch (error) {
       ui.chart.innerHTML = `<div class="chart-empty">${errorText(error)}</div>`;
     }
@@ -253,6 +257,7 @@ export async function initTrade() {
       terminal.loadOpenPositions(trader.address, data),
     ]);
     positions = open;
+    if (!ui.asset.hidden) void renderChart();
     ui.balance.textContent = usd(account?.balance ?? 0);
     availableUsd = collateral + (account?.balance ?? 0);
     ui.available.textContent = `Available ${usd(availableUsd)}`;

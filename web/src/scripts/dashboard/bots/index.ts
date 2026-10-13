@@ -37,6 +37,12 @@ export async function addBotFromCard(card: Bot["card"], mode: BotMode) {
   await runtime.add(createBot(card.name, mode, card, Date.now()));
 }
 
+export function exitsFor(symbol: string) {
+  return (runtime?.list() ?? [])
+    .filter((bot) => bot.status === "open" && bot.card.legs.some((leg) => leg.symbol === symbol))
+    .map((bot) => ({ stopLossPct: bot.card.stopLossPct, takeProfitPct: bot.card.takeProfitPct }));
+}
+
 export function initBots() {
   const list = query("[data-bot-list]");
   const hint = () => query("[data-bot-hint]");

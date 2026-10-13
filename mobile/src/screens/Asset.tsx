@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { perpl, summarizeDepth, type DepthSummary, type MarketSnapshot, type TradingAccount } from "shared";
+import { perpl, summarizeDepth, type Bot, type DepthSummary, type MarketSnapshot, type TradingAccount } from "shared";
 import { AssetMark } from "../components/AssetMark";
 import { LineChart } from "../components/LineChart";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { OrderTicket } from "../components/OrderTicket";
 import { RoundButton, Tag, ToneCard, tone } from "../components/ui";
-import { toolbox } from "../lib/bots";
+import { subscribeBots, toolbox } from "../lib/bots";
 import { flowText, loadPulses, stanceLabel } from "../lib/nansen";
 import {
   candleRanges,
@@ -65,6 +65,29 @@ export function Asset({ symbol, trader, onBack, onSelectTab, onStrategies }: Ass
   const [positions, setPositions] = useState<OpenPosition[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [bots, setBots] = useState<Bot[]>([]);
+
+  useEffect(() => subscribeBots(setBots), []);
+
+  const [maintenance, setMaintenance] = useState<number | null>(null);
+
+  useEffect(() => {
+    toolbox
+      .getMarket(symbol)
+      .then((market) => setMaintenance(market.maintenanceLeverage))
+      .catch(() => setMaintenance(null));
+  }, [symbol]);
+
+  const held = positions[0];
+  const overlay = held
+    ? perpl.tradeOverlay(
+        held.position,
+        maintenance,
+        bots
+          .filter((bot) => bot.status === "open" && bot.card.legs.some((leg) => leg.symbol === symbol))
+          .map((bot) => ({ stopLossPct: bot.card.stopLossPct, takeProfitPct: bot.card.takeProfitPct })),
+      )
+    : [];
 
   function refreshPositions(markets: MarketData) {
     loadOpenPositions(trader.address, markets)
@@ -205,7 +228,7 @@ export function Asset({ symbol, trader, onBack, onSelectTab, onStrategies }: Ass
               <Text style={styles.onColorMuted}>No trades in this range yet.</Text>
             </View>
           ) : (
-            <LineChart values={candles.map((c) => c.close)} height={200} color={candles[candles.length - 1].close >= candles[0].open ? dark.green : dark.red} label={(i) => `${stamp(candles[i].time, range)} · ${px(candles[i].close)}`} />
+            <LineChart lines={overlay} values={candles.map((c) => c.close)} height={200} color={candles[candles.length - 1].close >= candles[0].open ? dark.green : dark.red} label={(i) => `${stamp(candles[i].time, range)} · ${px(candles[i].close)}`} />
           )}
           <View style={styles.ranges}>
             {rangeKeys.map((key) => (

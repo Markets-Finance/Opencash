@@ -52,6 +52,8 @@ export type { PerpPosition, PerplAccount } from "./account.js";
 export { candleRanges, fetchCandles } from "./history.js";
 export type { Candle, CandleRangeKey } from "./history.js";
 export { marketLogoUrl, normalizeSymbol } from "./logos.js";
+export { liquidationPriceFor, tradeOverlay } from "./overlay.js";
+export type { ChartLine, ExitLevels } from "./overlay.js";
 export { createPerplApi } from "./api.js";
 export type {
   ApiCandle,
