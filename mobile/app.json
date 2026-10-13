@@ -2,7 +2,7 @@
   "expo": {
     "name": "OpenCash",
     "slug": "opencash",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -21,7 +21,8 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "xyz.opencash.monad"
+      "package": "xyz.opencash.monad",
+      "versionCode": 10001
     },
     "web": {
       "favicon": "./assets/favicon.png"
