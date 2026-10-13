@@ -114,6 +114,37 @@ export function Trade({ trader, onOpenAsset, onSelectTab }: TradeProps) {
       >
         <ScreenTitle title="Trade" right={<Tag label={networkName} dot={dark.green} />} />
 
+        <Text style={styles.section}>OPEN POSITIONS</Text>
+        {status !== null && <Text style={styles.muted}>{status}</Text>}
+        {positions === null ? (
+          <ActivityIndicator color={dark.ink} />
+        ) : positions.length === 0 ? (
+          <Text style={styles.muted}>No open positions on {networkName} for this address.</Text>
+        ) : (
+          positions.map((entry) => {
+            const long = entry.position.positionType === perpl.OrderType.OpenLong;
+            return (
+              <ToneCard key={entry.market.perpId}>
+                <Pressable onPress={() => onOpenAsset(entry.market.symbol)} style={styles.positionHead}>
+                  <AssetMark symbol={entry.market.symbol} size={36} />
+                  <Text style={styles.positionTitle}>
+                    {long ? "LONG" : "SHORT"} {entry.market.symbol} ↗
+                  </Text>
+                  <Text style={[styles.pnl, { color: entry.position.pnl >= 0 ? dark.green : dark.red }]}>{usd(entry.position.pnl)}</Text>
+                </Pressable>
+                <View style={styles.tags}>
+                  <Tag label={`${entry.position.lots} lots`} dot={long ? dark.green : dark.red} />
+                  <Tag label={`Entry ${px(entry.position.entryPrice)}`} />
+                  <Tag label={`Margin ${usd(entry.position.deposit)}`} />
+                </View>
+                <Pressable disabled={busy} onPress={() => void close(entry)} style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}>
+                  <Text style={styles.closeLabel}>Close position</Text>
+                </Pressable>
+              </ToneCard>
+            );
+          })
+        )}
+
         <Switcher
           items={[
             { key: "assets", label: "Assets", dot: tone.butter },
@@ -173,37 +204,6 @@ export function Trade({ trader, onOpenAsset, onSelectTab }: TradeProps) {
           ))}
           {data !== null && shown.length === 0 && <Text style={styles.muted}>No asset matches “{query}”.</Text>}
         </View>
-
-        <Text style={styles.section}>OPEN POSITIONS</Text>
-        {status !== null && <Text style={styles.muted}>{status}</Text>}
-        {positions === null ? (
-          <ActivityIndicator color={dark.ink} />
-        ) : positions.length === 0 ? (
-          <Text style={styles.muted}>No open positions on {networkName} for this address.</Text>
-        ) : (
-          positions.map((entry) => {
-            const long = entry.position.positionType === perpl.OrderType.OpenLong;
-            return (
-              <ToneCard key={entry.market.perpId}>
-                <Pressable onPress={() => onOpenAsset(entry.market.symbol)} style={styles.positionHead}>
-                  <AssetMark symbol={entry.market.symbol} size={36} />
-                  <Text style={styles.positionTitle}>
-                    {long ? "LONG" : "SHORT"} {entry.market.symbol} ↗
-                  </Text>
-                  <Text style={[styles.pnl, { color: entry.position.pnl >= 0 ? dark.green : dark.red }]}>{usd(entry.position.pnl)}</Text>
-                </Pressable>
-                <View style={styles.tags}>
-                  <Tag label={`${entry.position.lots} lots`} dot={long ? dark.green : dark.red} />
-                  <Tag label={`Entry ${px(entry.position.entryPrice)}`} />
-                  <Tag label={`Margin ${usd(entry.position.deposit)}`} />
-                </View>
-                <Pressable disabled={busy} onPress={() => void close(entry)} style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}>
-                  <Text style={styles.closeLabel}>Close position</Text>
-                </Pressable>
-              </ToneCard>
-            );
-          })
-        )}
           </>
         )}
       </ScrollView>

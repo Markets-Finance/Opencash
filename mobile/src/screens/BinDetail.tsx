@@ -14,7 +14,7 @@ import { toolbox } from "../lib/bots";
 import { agreementFor, flowText, loadPulses, stanceLabel } from "../lib/nansen";
 import { SelectPill } from "../components/ui";
 import { AssetMark, LegStack } from "../components/AssetMark";
-import { openBin, type EntryStep, type MarketData } from "../lib/perpl";
+import { loadCollateralBalance, openBin, type EntryStep, type MarketData } from "../lib/perpl";
 import { dark, family, space, track } from "../theme";
 import { label as networkName } from "../lib/network";
 
@@ -24,6 +24,7 @@ type BinDetailProps = {
   balance: number | null;
   trader: TradingAccount;
   onBack: () => void;
+  onOpenAsset: (symbol: string) => void;
 };
 
 const stepLabels: Record<EntryStep, string> = {
@@ -34,7 +35,17 @@ const stepLabels: Record<EntryStep, string> = {
 
 const presets = [10, 25, 50, 100];
 
-export function BinDetail({ bin, data, balance, trader, onBack }: BinDetailProps) {
+export function BinDetail({ bin, data, balance: initialBalance, trader, onBack, onOpenAsset }: BinDetailProps) {
+  const [balance, setBalance] = useState(initialBalance);
+  const [openedLegs, setOpenedLegs] = useState<string[]>([]);
+
+  function refreshBalance() {
+    loadCollateralBalance(trader.address)
+      .then(setBalance)
+      .catch(() => {});
+  }
+
+  useEffect(refreshBalance, [trader.address]);
   const insets = useSafeAreaInsets();
   const [amount, setAmount] = useState("");
   const [status, setStatus] = useState<string | null>(null);
@@ -77,14 +88,28 @@ export function BinDetail({ bin, data, balance, trader, onBack }: BinDetailProps
     setFailed(false);
     try {
       await openBin(trader, result.sized, data, (step) => setStatus(stepLabels[step]));
-      setStatus(`${bin.name} is open.`);
+      setOpenedLegs(result.sized.legs.map((leg) => leg.leg.symbol));
+      setAmount("");
+      setStatus(`${bin.name} is open: ${result.sized.legs.map((leg) => leg.leg.symbol).join(", ")}. Manage each leg below, or from Trade.`);
     } catch (error) {
       setFailed(true);
       setStatus(error instanceof Error ? error.message : String(error));
     } finally {
       setBusy(false);
+      refreshBalance();
     }
   }
+
+  const everyLegLabel = (() => {
+    const minimums = bin.legs.map((leg) => {
+      const market = data.markets.get(leg.symbol);
+      if (!market) return null;
+      const leverage = Math.min(leg.leverage, data.maxLeverage.get(leg.symbol) ?? leg.leverage);
+      return (market.mark / 10 ** market.lotDecimals / leverage / (leg.weightBps / 10000)) * 1.15;
+    });
+    if (minimums.some((value) => value === null)) return "A leg is not available right now";
+    return `Needs at least $${Math.ceil(Math.max(...(minimums as number[])))} for every leg`;
+  })();
 
   const blocked =
     busy
@@ -95,7 +120,9 @@ export function BinDetail({ bin, data, balance, trader, onBack }: BinDetailProps
         ? "Pricing…"
         : !result || result.sized.legs.length === 0
           ? "No leg can be filled at this size"
-          : balance !== null && marginAmount > balance
+          : result.sized.legs.length < bin.legs.length
+            ? everyLegLabel
+            : balance !== null && marginAmount > balance
             ? "Insufficient balance"
             : null;
 
@@ -209,6 +236,14 @@ export function BinDetail({ bin, data, balance, trader, onBack }: BinDetailProps
         {status !== null ? (
           <Text style={[styles.status, failed && styles.statusFailed]}>{status}</Text>
         ) : null}
+
+        {openedLegs.map((symbol) => (
+          <Pressable key={symbol} onPress={() => onOpenAsset(symbol)} style={({ pressed }) => [styles.manageRow, pressed && { opacity: 0.8 }]}>
+            <AssetMark symbol={symbol} size={28} />
+            <Text style={styles.manageText}>{symbol}</Text>
+            <Text style={styles.manageCta}>Manage ↗</Text>
+          </Pressable>
+        ))}
 
         <Text style={styles.footnote}>
           All legs open together or none do. Orders fill on the Perpl order book on {networkName}.
@@ -376,4 +411,7 @@ const styles = StyleSheet.create({
   primaryButtonPressed: { opacity: 0.85 },
   primaryLabel: { fontFamily: family.medium, fontSize: 16, color: dark.onAccent },
   primaryLabelDisabled: { color: dark.muted },
+  manageRow: { flexDirection: "row", alignItems: "center", gap: space.sm, padding: space.md, borderRadius: 16, backgroundColor: dark.surface, borderWidth: 1, borderColor: dark.surfaceLine },
+  manageText: { flex: 1, fontFamily: family.semibold, fontSize: 16, color: dark.ink },
+  manageCta: { fontFamily: family.semibold, fontSize: 14, color: dark.accent },
 });

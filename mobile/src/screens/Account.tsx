@@ -1,7 +1,7 @@
 import { isMeraError } from "@category-labs/mera";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Clipboard from "expo-clipboard";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -18,6 +18,7 @@ import { ImportPanel } from "../components/ImportPanel";
 import { SettingIcon, type SettingIconKind } from "../components/SettingIcon";
 import { TabBar, tabBarHeight, type TabKey } from "../components/TabBar";
 import { createAccount, revealPhrase, signIn } from "../lib/mera";
+import { setBackOverride } from "../lib/nav";
 import { dark, family, space, track } from "../theme";
 import { deployment, label as networkName } from "../lib/network";
 
@@ -306,6 +307,20 @@ export function Account({
     network: "Network",
     import: "Import a wallet",
   };
+
+  useEffect(() => {
+    const closable = panel !== null || (account === null && formMode === "create");
+    setBackOverride(
+      closable
+        ? () => {
+            if (panel !== null) closePage();
+            else setFormMode(null);
+            return true;
+          }
+        : null,
+    );
+    return () => setBackOverride(null);
+  }, [panel, formMode, account]);
 
   function closePage() {
     setPanel(null);

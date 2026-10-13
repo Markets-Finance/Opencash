@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { perpl } from "shared";
 import { dark, family } from "../theme";
@@ -10,28 +10,22 @@ type AssetMarkProps = {
 };
 
 export function AssetMark({ symbol, size = 32, uri }: AssetMarkProps) {
-  const [failed, setFailed] = useState(false);
+  const [state, setState] = useState<"loading" | "loaded" | "failed">("loading");
   const logoUrl = uri ?? perpl.marketLogoUrl(symbol);
-  const showLogo = !failed;
+  const loaded = state === "loaded";
+
+  useEffect(() => setState("loading"), [logoUrl]);
 
   return (
-    <View
-      style={[
-        styles.mark,
-        { width: size, height: size, borderRadius: size / 2 },
-        showLogo && styles.markLogo,
-      ]}
-    >
-      {showLogo ? (
+    <View style={[styles.mark, { width: size, height: size, borderRadius: size / 2 }, loaded && styles.markLogo]}>
+      {!loaded && <Text style={[styles.markText, { fontSize: size * 0.42 }]}>{symbol.slice(0, 1).toUpperCase()}</Text>}
+      {state !== "failed" && (
         <Image
           source={{ uri: logoUrl }}
-          style={{ width: size, height: size, borderRadius: size / 2 }}
-          onError={() => setFailed(true)}
+          style={[styles.logo, { width: size, height: size, borderRadius: size / 2, opacity: loaded ? 1 : 0 }]}
+          onLoad={() => setState("loaded")}
+          onError={() => setState("failed")}
         />
-      ) : (
-        <Text style={[styles.markText, { fontSize: size * 0.42 }]}>
-          {symbol.slice(0, 1).toUpperCase()}
-        </Text>
       )}
     </View>
   );
@@ -73,6 +67,7 @@ const styles = StyleSheet.create({
     borderColor: "#e2e0d9",
   },
   markText: { fontFamily: family.semibold, color: "#fff" },
+  logo: { position: "absolute", top: 0, left: 0 },
   stack: { flexDirection: "row" },
   stackItem: { borderWidth: 2, borderColor: dark.surface },
 });

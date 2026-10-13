@@ -118,6 +118,32 @@ export function Home({ trader, name, onSelectTab, onOpenAsset, onDeposit, onSend
           </View>
         </View>
 
+        <Text style={styles.section}>POSITIONS</Text>
+        {error !== null ? (
+          <Text style={styles.error}>{error}</Text>
+        ) : positions === null ? (
+          <ActivityIndicator color={dark.ink} />
+        ) : positions.length === 0 ? (
+          <Text style={styles.muted}>No open positions yet. Open a bin to take a view.</Text>
+        ) : (
+          positions.map((position) => (
+            <ToneCard key={position.bin.id}>
+              <View style={styles.cardHead}>
+                <LegStack symbols={position.legs.map((leg) => leg.symbol)} size={30} />
+                <View style={styles.headText}>
+                  <Text style={styles.positionName}>{position.bin.name.toUpperCase()}</Text>
+                  <Text style={styles.muted}>{position.legs.map((leg) => leg.symbol).join(", ")}</Text>
+                </View>
+                <ArrowBadge label="Open in Trade" onPress={() => onOpenAsset(position.legs[0]?.symbol ?? "BTC")} />
+              </View>
+              <View style={styles.tagRow}>
+                <Tag label={`Value ${usd(position.deposit + position.pnl)}`} />
+                <Tag label={`PnL ${position.pnl >= 0 ? "+" : "−"}${usd(Math.abs(position.pnl))}`} dot={position.pnl >= 0 ? dark.green : dark.red} />
+              </View>
+            </ToneCard>
+          ))
+        )}
+
         <ToneCard fill={tone.violet}>
           <View style={styles.cardHead}>
             <View style={styles.headText}>
@@ -160,32 +186,6 @@ export function Home({ trader, name, onSelectTab, onOpenAsset, onDeposit, onSend
             <Text style={styles.quickSub}>Test a strategy first</Text>
           </Pressable>
         </View>
-
-        <Text style={styles.section}>POSITIONS</Text>
-        {error !== null ? (
-          <Text style={styles.error}>{error}</Text>
-        ) : positions === null ? (
-          <ActivityIndicator color={dark.ink} />
-        ) : positions.length === 0 ? (
-          <Text style={styles.muted}>No open positions yet. Open a bin to take a view.</Text>
-        ) : (
-          positions.map((position) => (
-            <ToneCard key={position.bin.id}>
-              <View style={styles.cardHead}>
-                <LegStack symbols={position.legs.map((leg) => leg.symbol)} size={30} />
-                <View style={styles.headText}>
-                  <Text style={styles.positionName}>{position.bin.name.toUpperCase()}</Text>
-                  <Text style={styles.muted}>{position.legs.map((leg) => leg.symbol).join(", ")}</Text>
-                </View>
-                <ArrowBadge label="Open in Trade" onPress={() => onOpenAsset(position.legs[0]?.symbol ?? "BTC")} />
-              </View>
-              <View style={styles.tagRow}>
-                <Tag label={`Value ${usd(position.deposit + position.pnl)}`} />
-                <Tag label={`PnL ${position.pnl >= 0 ? "+" : "−"}${usd(Math.abs(position.pnl))}`} dot={position.pnl >= 0 ? dark.green : dark.red} />
-              </View>
-            </ToneCard>
-          ))
-        )}
       </ScrollView>
 
       <TabBar active="home" onSelect={onSelectTab} />
