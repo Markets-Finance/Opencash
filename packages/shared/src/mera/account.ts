@@ -195,10 +195,11 @@ async function readCredential(
 
 export async function signInTradingAccount(
   context: PasskeyContext,
+  options: { choose?: boolean } = {},
 ): Promise<TradingAccount> {
   if (isDevAuth) return devTradingAccount();
 
-  const known = await readCredential(context);
+  const known = options.choose ? undefined : await readCredential(context);
 
   const { prfOutput, credentialId } = await getPasskeyPrfOutput({
     rpId: context.rpId,
@@ -211,7 +212,13 @@ export async function signInTradingAccount(
   }
 
   const sealed = context.importStore ? await context.importStore.read() : null;
-  if (sealed) return deriveTradingAccount(prfOutput, openImportedKey(prfOutput, parseSealedRecord(sealed)));
+  if (sealed) {
+    try {
+      return deriveTradingAccount(prfOutput, openImportedKey(prfOutput, parseSealedRecord(sealed)));
+    } catch (error) {
+      if (!options.choose) throw error;
+    }
+  }
   return deriveTradingAccount(prfOutput);
 }
 

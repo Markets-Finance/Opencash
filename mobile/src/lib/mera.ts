@@ -58,8 +58,8 @@ export function createAccount(
   return createTradingAccount({ ...passkeyContext(), userName, displayName, importKey });
 }
 
-export function signIn(): Promise<TradingAccount> {
-  return signInTradingAccount(passkeyContext());
+export function signIn(choose = false): Promise<TradingAccount> {
+  return signInTradingAccount(passkeyContext(), { choose });
 }
 
 export function revealPhrase(): Promise<string> {

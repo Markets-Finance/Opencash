@@ -12,7 +12,7 @@
 ![Venue](https://img.shields.io/badge/venue-Perpl-111111)
 ![Status](https://img.shields.io/badge/status-testnet%20build-orange)
 
-[Landing page](https://monad.opencash.in) · [Pitch deck](https://claude.ai/artifact/F1BYPnRbyc76RZwbXXsQ4m)
+[Web](https://monad.opencash.in)
 
 </div>
 

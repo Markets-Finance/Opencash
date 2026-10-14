@@ -85,6 +85,10 @@ async function paintIdentity(account: TradingAccount) {
 export function initGate(onEnter: () => void) {
   let mode: Mode = "signin";
   let returning = hasStoredAccount();
+  let choosing = false;
+  try {
+    choosing = sessionStorage.getItem("opencash.signedout") !== null;
+  } catch {}
 
   function syncRequired() {
     const creating = mode === "create";
@@ -154,6 +158,7 @@ export function initGate(onEnter: () => void) {
   }
 
   otherLink.addEventListener("click", () => {
+    choosing = true;
     returning = false;
     setMode("signin");
   });
@@ -177,7 +182,7 @@ export function initGate(onEnter: () => void) {
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     if (mode === "signin") {
-      void run(signIn, "Waiting for your passkey…");
+      void run(() => signIn(choosing), "Waiting for your passkey…");
       return;
     }
     const data = new FormData(form);

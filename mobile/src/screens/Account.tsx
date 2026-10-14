@@ -139,6 +139,7 @@ export function Account({
   const [importOpen, setImportOpen] = useState(false);
   const [importKey, setImportKey] = useState("");
   const [referral, setReferral] = useState("");
+  const choosing = useRef(false);
   const [autoFund, setAutoFundState] = useState(true);
   useEffect(() => subscribeAutoFund(setAutoFundState), []);
   const gift = useRef<{ gasSent: boolean; gasOver: boolean } | null>(null);
@@ -242,6 +243,7 @@ export function Account({
     setAccount(null);
     onAuthenticated(null);
     setReturning(false);
+    choosing.current = true;
     setProfile(null);
     onProfileChange(null);
     setVariant(0);
@@ -406,10 +408,10 @@ export function Account({
         referral={referral}
         onReferral={setReferral}
         onSwitch={account === null ? () => { setMissing(false); setFailed(false); setStatus(""); setFormMode(formMode === "create" ? null : "create"); } : undefined}
-        onSubmit={() => { setMissing(false); if (authMode === "signin") void run(signIn, "Waiting for your passkey…"); else submit(); }}
+        onSubmit={() => { setMissing(false); if (authMode === "signin") void run(() => signIn(choosing.current), "Waiting for your passkey…"); else submit(); }}
         missing={missing}
         returning={returning && !missing && account === null && formMode === null}
-        onUseOther={() => setReturning(false)}
+        onUseOther={() => { choosing.current = true; setReturning(false); }}
       />
     );
   }
@@ -546,7 +548,7 @@ export function Account({
               <Action
                 label="Sign in with passkey"
                 emphasis="primary"
-                onPress={() => void run(signIn, "Waiting for your passkey…")}
+                onPress={() => void run(() => signIn(choosing.current), "Waiting for your passkey…")}
               />
               <Action
                 label="Create a new account"
